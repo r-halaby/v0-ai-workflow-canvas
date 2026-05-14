@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.DATABASE_URL!);
+function getSQL() {
+  const databaseUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL or NEON_DATABASE_URL is not configured");
+  }
+  return neon(databaseUrl);
+}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sql = getSQL();
     const { id } = await params;
     const workflows = await sql`
       SELECT * FROM workflows WHERE id = ${id}
@@ -29,6 +36,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sql = getSQL();
     const { id } = await params;
     const { name, description, nodes, edges } = await request.json();
 
@@ -60,6 +68,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sql = getSQL();
     const { id } = await params;
     await sql`DELETE FROM workflows WHERE id = ${id}`;
     return NextResponse.json({ success: true });
