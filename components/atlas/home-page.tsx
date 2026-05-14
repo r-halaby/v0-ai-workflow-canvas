@@ -186,6 +186,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [settingsInitialTab, setSettingsInitialTab] = useState<"general" | "members" | "products" | "conventions">("general");
   const [templates, setTemplates] = useState<CanvasTemplate[]>(SAMPLE_TEMPLATES);
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | "all">("all");
+  const [viewingTemplate, setViewingTemplate] = useState<CanvasTemplate | null>(null);
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
   // Combine all workspace nodes with canvas grouping
@@ -318,7 +319,11 @@ const deleteCanvas = (canvasId: string) => {
     }));
   };
 
-  const handleUseTemplate = (template: CanvasTemplate) => {
+  const handleOpenTemplate = (template: CanvasTemplate) => {
+    setViewingTemplate(template);
+  };
+
+  const handleDuplicateTemplate = (template: CanvasTemplate) => {
     // Create a new canvas from the template
     const newCanvas: Canvas = {
       id: `canvas-${Date.now()}`,
@@ -339,6 +344,7 @@ const deleteCanvas = (canvasId: string) => {
     setTemplates(prev => prev.map(t => 
       t.id === template.id ? { ...t, downloads: t.downloads + 1 } : t
     ));
+    setViewingTemplate(null);
     onOpenCanvas(newCanvas.id);
   };
 
@@ -897,17 +903,17 @@ Recent Canvases
                               </div>
                             </div>
 
-                            {/* Use Template Button */}
+                            {/* Open Template Button */}
                             <button
                               type="button"
-                              onClick={() => handleUseTemplate(template)}
+                              onClick={() => handleOpenTemplate(template)}
                               className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90"
                               style={{
                                 backgroundColor: "#F0FE00",
                                 fontFamily: "system-ui, Inter, sans-serif",
                               }}
                             >
-                              Use
+                              Open
                             </button>
                           </div>
                         </div>
@@ -1519,6 +1525,192 @@ Recent Canvases
         onSettingsChange={onWorkspaceSettingsChange}
         initialTab={settingsInitialTab}
       />
+
+      {/* Template Preview Modal */}
+      {viewingTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setViewingTemplate(null)}
+          />
+          
+          {/* Modal */}
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] mx-4 rounded-2xl overflow-hidden flex flex-col"
+            style={{ backgroundColor: "#0f0f0f", border: "1px solid #2a2a2a" }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-5" style={{ borderBottom: "1px solid #222222" }}>
+              <div className="flex items-center gap-4">
+                {viewingTemplate.createdBy.avatar ? (
+                  <img
+                    src={viewingTemplate.createdBy.avatar}
+                    alt={viewingTemplate.createdBy.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium"
+                    style={{ backgroundColor: "#333333", color: "#ffffff" }}
+                  >
+                    {viewingTemplate.createdBy.initials}
+                  </div>
+                )}
+                <div>
+                  <h2
+                    className="text-white font-semibold text-lg"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    {viewingTemplate.name}
+                  </h2>
+                  <p
+                    className="text-gray-400 text-sm"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    by {viewingTemplate.createdBy.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingTemplate(null)}
+                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Preview Area */}
+            <div className="flex-1 overflow-hidden relative">
+              {viewingTemplate.previewImage ? (
+                <img
+                  src={viewingTemplate.previewImage}
+                  alt={viewingTemplate.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center min-h-[300px]" style={{ backgroundColor: "#1a1a1a" }}>
+                  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="12" y="12" width="56" height="56" rx="6" stroke="#333333" strokeWidth="2"/>
+                    <path d="M28 40H52M40 28V52" stroke="#333333" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+              )}
+
+              {/* Duplicate Banner */}
+              <div 
+                className="absolute bottom-0 left-0 right-0 p-4"
+                style={{ 
+                  background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, transparent 100%)",
+                }}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: "rgba(240, 254, 0, 0.15)" }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="6" y="6" width="11" height="11" rx="2" stroke="#F0FE00" strokeWidth="1.5"/>
+                        <path d="M14 6V5C14 3.89543 13.1046 3 12 3H5C3.89543 3 3 3.89543 3 5V12C3 13.1046 3.89543 14 5 14H6" stroke="#F0FE00" strokeWidth="1.5"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p
+                        className="text-white text-sm font-medium"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Want to edit this template?
+                      </p>
+                      <p
+                        className="text-gray-400 text-xs"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Duplicate it to your workspace to make changes
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDuplicateTemplate(viewingTemplate)}
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90 flex items-center gap-2 flex-shrink-0"
+                    style={{
+                      backgroundColor: "#F0FE00",
+                      fontFamily: "system-ui, Inter, sans-serif",
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M11 5V4C11 3.17157 10.3284 2.5 9.5 2.5H4C3.17157 2.5 2.5 3.17157 2.5 4V9.5C2.5 10.3284 3.17157 11 4 11H5" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                    Duplicate to Workspace
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer with details */}
+            <div className="p-5" style={{ borderTop: "1px solid #222222" }}>
+              <p
+                className="text-gray-300 text-sm mb-4"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                {viewingTemplate.description}
+              </p>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex flex-wrap gap-2">
+                  {viewingTemplate.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2.5 py-1 rounded-lg text-xs"
+                      style={{
+                        backgroundColor: "#1a1a1a",
+                        color: "#888888",
+                        border: "1px solid #2a2a2a",
+                        fontFamily: "system-ui, Inter, sans-serif",
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div
+                    className="flex items-center gap-1.5 text-sm text-gray-400"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M8 3L10 7H14L11 10L12 14L8 11.5L4 14L5 10L2 7H6L8 3Z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    {viewingTemplate.upvotes} upvotes
+                  </div>
+                  <div
+                    className="flex items-center gap-1.5 text-sm text-gray-400"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 2V9M7 9L4 6M7 9L10 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 11H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    {viewingTemplate.downloads} downloads
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sage AI Bot FAB */}
       <button
