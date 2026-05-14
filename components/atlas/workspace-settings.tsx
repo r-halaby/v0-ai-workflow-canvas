@@ -3,10 +3,43 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import type { WorkspaceSettings, MemberRole, ProductConfig } from "@/lib/atlas-types";
-import { PRODUCT_COLORS } from "@/lib/atlas-types";
+import type { WorkspaceSettings, MemberRole, ProductConfig, NamingToken, NamingRule, NamingConventions } from "@/lib/atlas-types";
+import { PRODUCT_COLORS, DEFAULT_NAMING_CONVENTIONS, DEFAULT_NAMING_RULE } from "@/lib/atlas-types";
 
-type SettingsTab = "general" | "members" | "products" | "preferences";
+type SettingsTab = "general" | "members" | "products" | "preferences" | "naming";
+
+const NAMING_TOKENS: { id: NamingToken; label: string; example: string }[] = [
+  { id: "project", label: "Project Name", example: "atlas" },
+  { id: "product", label: "Product", example: "atlas" },
+  { id: "type", label: "File Type", example: "logo" },
+  { id: "version", label: "Version", example: "v1" },
+  { id: "date", label: "Date", example: "2026-05-13" },
+  { id: "author", label: "Author Initials", example: "AC" },
+  { id: "status", label: "Status", example: "draft" },
+  { id: "custom", label: "Custom Text", example: "custom" },
+];
+
+const SEPARATORS = [
+  { value: "_", label: "Underscore (_)" },
+  { value: "-", label: "Hyphen (-)" },
+  { value: ".", label: "Period (.)" },
+  { value: " ", label: "Space ( )" },
+];
+
+const CASE_STYLES = [
+  { value: "lowercase", label: "lowercase" },
+  { value: "uppercase", label: "UPPERCASE" },
+  { value: "titlecase", label: "Title Case" },
+  { value: "kebab-case", label: "kebab-case" },
+  { value: "snake_case", label: "snake_case" },
+];
+
+const DATE_FORMATS = [
+  { value: "YYYY-MM-DD", label: "YYYY-MM-DD (2026-05-13)" },
+  { value: "YYYYMMDD", label: "YYYYMMDD (20260513)" },
+  { value: "MM-DD-YYYY", label: "MM-DD-YYYY (05-13-2026)" },
+  { value: "DD-MM-YYYY", label: "DD-MM-YYYY (13-05-2026)" },
+];
 
 interface WorkspaceSettingsProps {
   open: boolean;
@@ -79,6 +112,19 @@ export function WorkspaceSettingsDialog({
         </svg>
       ),
     },
+    {
+      id: "naming",
+      label: "Naming",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.25 4.5H15.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2.25 9H11.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2.25 13.5H8.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M13.5 9V15.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M10.5 12.75H16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
   ];
 
   const handleInvite = () => {
@@ -132,6 +178,62 @@ export function WorkspaceSettingsDialog({
       ...settings,
       preferences: { ...settings.preferences, [key]: value },
     });
+  };
+
+  const namingConventions = settings.namingConventions || DEFAULT_NAMING_CONVENTIONS;
+
+  const handleNamingChange = (updates: Partial<NamingConventions>) => {
+    onSettingsChange({
+      ...settings,
+      namingConventions: { ...namingConventions, ...updates },
+    });
+  };
+
+  const handleDefaultRuleChange = (updates: Partial<NamingRule>) => {
+    onSettingsChange({
+      ...settings,
+      namingConventions: {
+        ...namingConventions,
+        defaultRule: { ...namingConventions.defaultRule, ...updates },
+      },
+    });
+  };
+
+  const addToken = (token: NamingToken) => {
+    const currentTokens = namingConventions.defaultRule.tokens;
+    if (!currentTokens.includes(token) || token === "custom") {
+      handleDefaultRuleChange({ tokens: [...currentTokens, token] });
+    }
+  };
+
+  const removeToken = (index: number) => {
+    const currentTokens = [...namingConventions.defaultRule.tokens];
+    currentTokens.splice(index, 1);
+    handleDefaultRuleChange({ tokens: currentTokens });
+  };
+
+  const generateExample = (): string => {
+    const { tokens, separator, caseStyle } = namingConventions.defaultRule;
+    const parts = tokens.map((token) => {
+      const tokenDef = NAMING_TOKENS.find((t) => t.id === token);
+      return tokenDef?.example || token;
+    });
+    let result = parts.join(separator);
+    
+    switch (caseStyle) {
+      case "lowercase":
+        return result.toLowerCase();
+      case "uppercase":
+        return result.toUpperCase();
+      case "titlecase":
+        return result.split(separator).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(separator);
+      case "kebab-case":
+        return result.toLowerCase().replace(new RegExp(`\\${separator}`, 'g'), '-');
+      case "snake_case":
+        return result.toLowerCase().replace(new RegExp(`\\${separator}`, 'g'), '_');
+      default:
+        return result;
+    }
   };
 
   return (
@@ -532,6 +634,208 @@ export function WorkspaceSettingsDialog({
                           handlePreferenceChange("showGrid", checked)
                         }
                       />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "naming" && (
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3
+                      className="text-white font-semibold text-base"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      Naming Conventions
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {namingConventions.enabled ? "Enabled" : "Disabled"}
+                      </span>
+                      <Switch
+                        checked={namingConventions.enabled}
+                        onCheckedChange={(checked) => handleNamingChange({ enabled: checked })}
+                      />
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 mb-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Set up standardized naming patterns for files in your workspace. Files will be automatically renamed to match your convention when uploaded.
+                  </p>
+
+                  {/* Token Builder */}
+                  <div className="space-y-4">
+                    <div>
+                      <label
+                        className="block text-xs text-gray-500 mb-2"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Name Structure
+                      </label>
+                      <div
+                        className="p-3 rounded-lg min-h-[48px] flex flex-wrap gap-2 items-center"
+                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                      >
+                        {namingConventions.defaultRule.tokens.map((token, index) => (
+                          <div key={`${token}-${index}`} className="flex items-center">
+                            {index > 0 && (
+                              <span className="text-gray-500 mx-1 text-sm">{namingConventions.defaultRule.separator}</span>
+                            )}
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
+                              style={{
+                                backgroundColor: "#F0FE00",
+                                color: "#121212",
+                                fontFamily: "system-ui, Inter, sans-serif",
+                              }}
+                            >
+                              {NAMING_TOKENS.find((t) => t.id === token)?.label || token}
+                              <button
+                                type="button"
+                                onClick={() => removeToken(index)}
+                                className="hover:opacity-70 transition-opacity"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            </span>
+                          </div>
+                        ))}
+                        {namingConventions.defaultRule.tokens.length === 0 && (
+                          <span className="text-gray-500 text-xs">Add tokens to build your naming pattern</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Add Token Dropdown */}
+                    <div>
+                      <label
+                        className="block text-xs text-gray-500 mb-2"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Add Token
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {NAMING_TOKENS.map((token) => (
+                          <button
+                            key={token.id}
+                            type="button"
+                            onClick={() => addToken(token.id)}
+                            className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                            style={{
+                              backgroundColor: "#2a2a2a",
+                              color: "#ffffff",
+                              border: "1px solid #333333",
+                              fontFamily: "system-ui, Inter, sans-serif",
+                            }}
+                          >
+                            + {token.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Separator */}
+                    <div>
+                      <label
+                        className="block text-xs text-gray-500 mb-1.5"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Separator
+                      </label>
+                      <select
+                        value={namingConventions.defaultRule.separator}
+                        onChange={(e) => handleDefaultRuleChange({ separator: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      >
+                        {SEPARATORS.map((sep) => (
+                          <option key={sep.value} value={sep.value}>
+                            {sep.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Case Style */}
+                    <div>
+                      <label
+                        className="block text-xs text-gray-500 mb-1.5"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Case Style
+                      </label>
+                      <select
+                        value={namingConventions.defaultRule.caseStyle}
+                        onChange={(e) => handleDefaultRuleChange({ caseStyle: e.target.value as any })}
+                        className="w-full px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      >
+                        {CASE_STYLES.map((style) => (
+                          <option key={style.value} value={style.value}>
+                            {style.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Date Format (only show if date token is used) */}
+                    {namingConventions.defaultRule.tokens.includes("date") && (
+                      <div>
+                        <label
+                          className="block text-xs text-gray-500 mb-1.5"
+                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          Date Format
+                        </label>
+                        <select
+                          value={namingConventions.defaultRule.dateFormat}
+                          onChange={(e) => handleDefaultRuleChange({ dateFormat: e.target.value as any })}
+                          className="w-full px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                          style={{
+                            backgroundColor: "#1a1a1a",
+                            border: "1px solid #333333",
+                            fontFamily: "system-ui, Inter, sans-serif",
+                          }}
+                        >
+                          {DATE_FORMATS.map((format) => (
+                            <option key={format.value} value={format.value}>
+                              {format.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Preview */}
+                    <div
+                      className="p-4 rounded-lg"
+                      style={{ backgroundColor: "#0a0a0a", border: "1px solid #222222" }}
+                    >
+                      <label
+                        className="block text-xs text-gray-500 mb-2"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Preview
+                      </label>
+                      <div
+                        className="text-sm text-white font-mono"
+                        style={{ fontFamily: "monospace" }}
+                      >
+                        {generateExample() || "filename"}
+                        <span className="text-gray-500">.fig</span>
+                      </div>
                     </div>
                   </div>
                 </div>

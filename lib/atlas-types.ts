@@ -112,6 +112,53 @@ export interface ProductConfig {
   enabled: boolean;
 }
 
+// Naming convention token types
+export type NamingToken = 
+  | "project" 
+  | "product" 
+  | "type" 
+  | "version" 
+  | "date" 
+  | "author" 
+  | "status"
+  | "custom";
+
+// Naming convention rule
+export interface NamingRule {
+  id: string;
+  tokens: NamingToken[];
+  separator: string;
+  dateFormat: "YYYY-MM-DD" | "YYYYMMDD" | "MM-DD-YYYY" | "DD-MM-YYYY";
+  caseStyle: "lowercase" | "uppercase" | "titlecase" | "kebab-case" | "snake_case";
+  customPrefix?: string;
+  customSuffix?: string;
+  example?: string;
+}
+
+// Naming conventions config
+export interface NamingConventions {
+  enabled: boolean;
+  defaultRule: NamingRule;
+  fileTypeRules: Partial<Record<"design" | "image" | "vector" | "video" | "document", NamingRule>>;
+}
+
+// Default naming rule
+export const DEFAULT_NAMING_RULE: NamingRule = {
+  id: "default",
+  tokens: ["project", "type", "version"],
+  separator: "_",
+  dateFormat: "YYYY-MM-DD",
+  caseStyle: "kebab-case",
+  example: "atlas_logo_v1",
+};
+
+// Default naming conventions
+export const DEFAULT_NAMING_CONVENTIONS: NamingConventions = {
+  enabled: true,
+  defaultRule: DEFAULT_NAMING_RULE,
+  fileTypeRules: {},
+};
+
 // Workspace settings interface
 export interface WorkspaceSettings {
   id: string;
@@ -125,6 +172,7 @@ export interface WorkspaceSettings {
     autoSave: boolean;
     showGrid: boolean;
   };
+  namingConventions?: NamingConventions;
 }
 
 // Default workspace members
@@ -153,6 +201,7 @@ export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
     autoSave: true,
     showGrid: false,
   },
+  namingConventions: DEFAULT_NAMING_CONVENTIONS,
 };
 
 // Uploaded file info
