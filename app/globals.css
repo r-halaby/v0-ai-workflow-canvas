@@ -167,6 +167,17 @@ body {
   border-bottom: none !important;
 }
 
+/* Highlight nodes as valid drop targets when dragging a connection */
+.connecting-nodes .react-flow__node {
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.connecting-nodes .react-flow__node:hover {
+  box-shadow: 0 0 0 2px #F0FE00, 0 0 20px rgba(240, 254, 0, 0.3) !important;
+  transform: scale(1.02);
+  z-index: 1000 !important;
+}
+
 /* React Flow minimap theme support */
 .react-flow__minimap {
   background: #111111 !important;

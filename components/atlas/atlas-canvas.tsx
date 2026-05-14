@@ -129,6 +129,8 @@ export function AtlasCanvas({
   } | null>(null);
   const connectionStartRef = useRef<{ nodeId: string; handleType: string; position: { x: number; y: number } } | null>(null);
   const isDraggingConnectionRef = useRef(false);
+  const [isDraggingConnection, setIsDraggingConnection] = useState(false);
+  const [draggingFromNodeId, setDraggingFromNodeId] = useState<string | null>(null);
   const reactFlowInstance = useReactFlow();
 
   // Listen for handle click events from nodes
@@ -167,10 +169,12 @@ export function AtlasCanvas({
         position: { x: clientX, y: clientY },
       };
       isDraggingConnectionRef.current = false;
+      setIsDraggingConnection(true);
+      setDraggingFromNodeId(params.nodeId);
     }
   }, []);
 
-  // Handle connection end - check if it was a click or drag
+  // Handle connection end - check if it was a click or drag, or if dropped on a node
   const handleConnectEnd = useCallback((event: MouseEvent | TouchEvent, connectionState: { isValid: boolean }) => {
     const start = connectionStartRef.current;
     if (!start) return;
@@ -187,7 +191,42 @@ export function AtlasCanvas({
     if (connectionState?.isValid) {
       connectionStartRef.current = null;
       isDraggingConnectionRef.current = false;
+      setIsDraggingConnection(false);
+      setDraggingFromNodeId(null);
       return;
+    }
+
+    // Check if we dropped on a node (not a handle)
+    const targetElement = document.elementFromPoint(clientX, clientY);
+    const nodeElement = targetElement?.closest('.react-flow__node');
+    
+    if (nodeElement && distance >= 20) {
+      // Get the node ID from the data attribute
+      const targetNodeId = nodeElement.getAttribute('data-id');
+      
+      // Don't connect to self
+      if (targetNodeId && targetNodeId !== start.nodeId) {
+        // Create the connection
+        const connection = {
+          source: start.handleType === "source" ? start.nodeId : targetNodeId,
+          target: start.handleType === "source" ? targetNodeId : start.nodeId,
+          sourceHandle: null,
+          targetHandle: null,
+        };
+        
+        // Use the handleConnect which routes to presentation or regular connect
+        if (presentationMode && onPresentationConnect) {
+          onPresentationConnect(connection);
+        } else {
+          onConnect(connection);
+        }
+        
+        connectionStartRef.current = null;
+        isDraggingConnectionRef.current = false;
+        setIsDraggingConnection(false);
+        setDraggingFromNodeId(null);
+        return;
+      }
     }
 
     // If moved less than 20px and no connection was made, treat as click - show add menu
@@ -208,7 +247,9 @@ export function AtlasCanvas({
 
     connectionStartRef.current = null;
     isDraggingConnectionRef.current = false;
-  }, [reactFlowInstance]);
+    setIsDraggingConnection(false);
+    setDraggingFromNodeId(null);
+  }, [reactFlowInstance, presentationMode, onPresentationConnect, onConnect]);
 
   
 
@@ -433,8 +474,9 @@ export function AtlasCanvas({
   return (
     <div
       ref={reactFlowWrapper}
-      className="flex-1 h-full relative"
+      className={`flex-1 h-full relative ${isDraggingConnection ? 'connecting-nodes' : ''}`}
       style={{ cursor: commentMode ? "crosshair" : isSelecting ? "crosshair" : "default" }}
+      data-dragging-from={draggingFromNodeId}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
