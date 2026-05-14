@@ -124,11 +124,14 @@ export function AddNodeMenu({
             
             {/* Text Submenu */}
             {hoveredSection === "text" && (
-              <div 
-                className="absolute left-full top-0 ml-1 py-1 rounded-lg shadow-lg"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150 }}
-              >
-                <button
+              <>
+                {/* Invisible bridge to prevent hover gap */}
+                <div className="absolute left-full top-0 w-2 h-full" />
+                <div 
+                  className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
+                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
+                >
+                  <button
                   type="button"
                   onClick={() => { onAddTextNode("brief"); onClose(); }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
@@ -166,8 +169,9 @@ export function AddNodeMenu({
                     </svg>
                   </div>
                   Description
-                </button>
-              </div>
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
@@ -211,11 +215,14 @@ export function AddNodeMenu({
             
             {/* Sage Submenu */}
             {hoveredSection === "sage" && (
-              <div 
-                className="absolute left-full top-0 ml-1 py-1 rounded-lg shadow-lg"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150 }}
-              >
-                <button
+              <>
+                {/* Invisible bridge to prevent hover gap */}
+                <div className="absolute left-full top-0 w-2 h-full" />
+                <div 
+                  className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
+                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
+                >
+                  <button
                   type="button"
                   onClick={() => { onAddSageNode("chatbot"); onClose(); }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
@@ -255,8 +262,9 @@ export function AddNodeMenu({
                     </svg>
                   </div>
                   Stakeholder
-                </button>
-              </div>
+                  </button>
+                </div>
+              </>
             )}
           </div>
           
@@ -290,13 +298,16 @@ export function AddNodeMenu({
             
             {/* Operations Submenu */}
             {hoveredSection === "operations" && (
-              <div 
-                className="absolute left-full top-0 ml-1 py-1 rounded-lg shadow-lg"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150 }}
-              >
-                <button
-                  type="button"
-                  onClick={() => { onAddOperationalNode("capacity"); onClose(); }}
+              <>
+                {/* Invisible bridge to prevent hover gap */}
+                <div className="absolute left-full top-0 w-2 h-full" />
+                <div 
+                  className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
+                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => { onAddOperationalNode("capacity"); onClose(); }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
@@ -362,8 +373,9 @@ export function AddNodeMenu({
                     </svg>
                   </div>
                   Team Health
-                </button>
-              </div>
+                  </button>
+                </div>
+              </>
             )}
           </div>
           
