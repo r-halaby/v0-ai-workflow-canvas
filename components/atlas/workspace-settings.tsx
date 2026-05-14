@@ -48,6 +48,7 @@ interface WorkspaceSettingsProps {
   settings: WorkspaceSettings;
   onSettingsChange: (settings: WorkspaceSettings) => void;
   initialTab?: SettingsTab;
+  onMakeTemplate?: () => void;
 }
 
 const ROLE_LABELS: Record<MemberRole, string> = {
@@ -63,6 +64,7 @@ export function WorkspaceSettingsDialog({
   settings,
   onSettingsChange,
   initialTab = "general",
+  onMakeTemplate,
 }: WorkspaceSettingsProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   
@@ -413,6 +415,56 @@ export function WorkspaceSettingsDialog({
                     </div>
                   </div>
                 </div>
+
+                {/* Canvas Actions */}
+                {onMakeTemplate && (
+                  <div>
+                    <h3
+                      className="text-white font-semibold text-base mb-4"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      Canvas Actions
+                    </h3>
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={onMakeTemplate}
+                        className="w-full flex items-center gap-4 px-4 py-3.5 rounded-lg transition-colors hover:bg-white/5 text-left"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                        }}
+                      >
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: "#F0FE0015" }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="3" width="14" height="14" rx="2" stroke="#F0FE00" strokeWidth="1.5"/>
+                            <path d="M7 10H13M10 7V13" stroke="#F0FE00" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className="text-sm font-medium text-white"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            Make Template
+                          </div>
+                          <div
+                            className="text-xs text-gray-500"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            Save this canvas as a reusable template
+                          </div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-500">
+                          <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

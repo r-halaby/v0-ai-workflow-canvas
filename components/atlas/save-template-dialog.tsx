@@ -4,6 +4,47 @@ import React, { useState } from "react";
 import type { Canvas, CanvasTemplate, TemplateCategory, WorkspaceMember } from "@/lib/atlas-types";
 import { TEMPLATE_CATEGORIES } from "@/lib/atlas-types";
 
+type TemplateVisibility = "private" | "workspace" | "community";
+
+const VISIBILITY_OPTIONS: { id: TemplateVisibility; label: string; description: string; icon: React.ReactNode }[] = [
+  {
+    id: "private",
+    label: "Just Me",
+    description: "Only visible to you",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M3 15C3 12.2386 5.23858 10 8 10H10C12.7614 10 15 12.2386 15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    id: "workspace",
+    label: "My Workspace",
+    description: "Shared with your team",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+        <circle cx="12" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M1 14C1 11.7909 2.79086 10 5 10H7C7.7684 10 8.4692 10.2889 9 10.7639C9.5308 10.2889 10.2316 10 11 10H13C15.2091 10 17 11.7909 17 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    id: "community",
+    label: "Atlas Community",
+    description: "Public for all users",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M2 9H16" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M9 2C10.6569 4.33333 11.5 6.66667 11.5 9C11.5 11.3333 10.6569 13.6667 9 16" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M9 2C7.34315 4.33333 6.5 6.66667 6.5 9C6.5 11.3333 7.34315 13.6667 9 16" stroke="currentColor" strokeWidth="1.5"/>
+      </svg>
+    ),
+  },
+];
+
 interface SaveTemplateDialogProps {
   open: boolean;
   onClose: () => void;
@@ -22,6 +63,7 @@ export function SaveTemplateDialog({
   const [name, setName] = useState(canvas.name);
   const [description, setDescription] = useState(canvas.description || "");
   const [category, setCategory] = useState<TemplateCategory>("workflow");
+  const [visibility, setVisibility] = useState<TemplateVisibility>("private");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -57,6 +99,7 @@ export function SaveTemplateDialog({
       name: name.trim(),
       description: description.trim(),
       category,
+      visibility,
       previewImage: canvas.previewImage,
       nodes: canvas.nodes,
       edges: canvas.edges,
@@ -112,7 +155,7 @@ export function SaveTemplateDialog({
                 className="text-sm text-gray-400"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                Share your canvas with the community
+                Create a reusable template from this canvas
               </p>
             </div>
           </div>
@@ -173,7 +216,63 @@ export function SaveTemplateDialog({
             />
           </div>
 
-          {/* Category */}
+          {/* Visibility */}
+          <div>
+            <label
+              className="block text-sm font-medium text-gray-300 mb-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              Who can access this template?
+            </label>
+            <div className="space-y-2">
+              {VISIBILITY_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setVisibility(option.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
+                    visibility === option.id
+                      ? "text-white"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                  style={{
+                    backgroundColor: visibility === option.id ? "#F0FE0015" : "#252525",
+                    border: `1px solid ${visibility === option.id ? "#F0FE00" : "#333333"}`,
+                  }}
+                >
+                  <div
+                    className={`flex-shrink-0 ${
+                      visibility === option.id ? "text-[#F0FE00]" : "text-gray-500"
+                    }`}
+                  >
+                    {option.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className="text-sm font-medium"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      {option.label}
+                    </div>
+                    <div
+                      className="text-xs text-gray-500"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      {option.description}
+                    </div>
+                  </div>
+                  {visibility === option.id && (
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="flex-shrink-0 text-[#F0FE00]">
+                      <path d="M4 9L7.5 12.5L14 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Category - Only show for community templates */}
+          {visibility === "community" && (
           <div>
             <label
               className="block text-sm font-medium text-gray-300 mb-2"
@@ -203,8 +302,10 @@ export function SaveTemplateDialog({
               ))}
             </div>
           </div>
+          )}
 
-          {/* Tags */}
+          {/* Tags - Only for community templates */}
+          {visibility === "community" && (
           <div>
             <label
               className="block text-sm font-medium text-gray-300 mb-2"
@@ -266,8 +367,10 @@ export function SaveTemplateDialog({
               >
                 Add
               </button>
+</div>
             </div>
           </div>
+          )}
 
           {/* Preview info */}
           <div
@@ -283,7 +386,12 @@ export function SaveTemplateDialog({
               className="text-sm text-gray-400"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              Your template will include {canvas.nodes.length} nodes and be attributed to you in the community.
+              {visibility === "community" 
+                ? `Your template will include ${canvas.nodes.length} nodes and be attributed to you in the community.`
+                : visibility === "workspace"
+                ? `Your template will include ${canvas.nodes.length} nodes and be available to your workspace members.`
+                : `Your template will include ${canvas.nodes.length} nodes and be saved to your private templates.`
+              }
             </p>
           </div>
         </div>
@@ -325,7 +433,7 @@ export function SaveTemplateDialog({
                   <path d="M14 10V13C14 13.552 13.552 14 13 14H3C2.448 14 2 13.552 2 13V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                Publish Template
+                {visibility === "community" ? "Publish Template" : "Save Template"}
               </>
             )}
           </button>

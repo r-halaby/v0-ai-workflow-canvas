@@ -702,12 +702,16 @@ export const INITIAL_COMMENTS: CanvasComment[] = [
 // Template category types
 export type TemplateCategory = "workflow" | "branding" | "marketing" | "social" | "presentation" | "other";
 
+// Template visibility type
+export type TemplateVisibility = "private" | "workspace" | "community";
+
 // Template interface
 export interface CanvasTemplate {
   id: string;
   name: string;
   description: string;
   category: TemplateCategory;
+  visibility: TemplateVisibility;
   previewImage?: string;
   nodes: AtlasNode[];
   edges: Edge[];

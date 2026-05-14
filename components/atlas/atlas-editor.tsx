@@ -929,6 +929,10 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         onClose={() => setShowSettingsDialog(false)}
         settings={workspaceSettings}
         onSettingsChange={onWorkspaceSettingsChange}
+        onMakeTemplate={() => {
+          setShowSettingsDialog(false);
+          setShowSaveTemplateDialog(true);
+        }}
       />
 
       {/* Save as Template Dialog */}
