@@ -186,14 +186,14 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
         className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl shadow-2xl"
-        style={{ backgroundColor: "#faf9f6" }}
+        style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a" }}
       >
         {/* Header buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
@@ -201,7 +201,6 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
           <button
             type="button"
             onClick={() => {
-              // If there's an uploaded file, download it
               if (fileData.uploadedFile?.url) {
                 const link = document.createElement("a");
                 link.href = fileData.uploadedFile.url;
@@ -210,17 +209,16 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                 link.click();
                 document.body.removeChild(link);
               } else {
-                // If no uploaded file, show a placeholder toast or alert
                 alert("No file available for download");
               }
             }}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-black/10"
-            style={{ backgroundColor: "rgba(0,0,0,0.05)" }}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+            style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
             title="Download file"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="#666666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3 12V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V12" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3 12V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V12" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
           
@@ -228,11 +226,11 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-black/10"
-            style={{ backgroundColor: "rgba(0,0,0,0.05)" }}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+            style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M12 4L4 12M4 4L12 12" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
@@ -240,7 +238,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
         <div className="overflow-y-auto max-h-[85vh] p-8">
           {/* Title */}
           <h2
-            className="text-2xl font-semibold text-gray-900 mb-6"
+            className="text-2xl font-semibold text-white mb-6"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
             {fileData.label}
@@ -266,7 +264,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
               <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Due Date
               </div>
-              <div className="flex items-center gap-2 text-gray-900" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="flex items-center gap-2 text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
@@ -290,7 +288,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                   {blockers}
                 </span>
               ) : (
-                <span className="text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>None</span>
+                <span className="text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>None</span>
               )}
             </div>
 
@@ -308,7 +306,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                     >
                       {member.name.split(" ").map(n => n[0]).join("")}
                     </div>
-                    <span className="text-sm text-gray-700" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    <span className="text-sm text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                       {member.name.split(" ")[0]} {member.name.split(" ")[1]?.[0]}.
                     </span>
                   </div>
@@ -318,7 +316,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mb-6 p-1 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.05)" }}>
+          <div className="flex gap-1 mb-6 p-1 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
             {(["overview", "todos", "history"] as const).map((tab) => (
               <button
                 key={tab}
@@ -326,8 +324,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === tab
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-[#2a2a2a] text-white"
+                    : "text-gray-500 hover:text-gray-300"
                 }`}
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
@@ -346,10 +344,11 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                   <button
                     type="button"
                     onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a" }}
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M10 4L6 8L10 12" stroke="#333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M10 4L6 8L10 12" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
                 )}
@@ -357,10 +356,11 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                   <button
                     type="button"
                     onClick={() => setCarouselIndex(Math.min(versions.length - 3, carouselIndex + 1))}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a" }}
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M6 4L10 8L6 12" stroke="#333" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M6 4L10 8L6 12" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
                 )}
@@ -371,7 +371,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                     <div
                       key={version.id}
                       className="rounded-xl overflow-hidden transition-transform hover:scale-[1.02] cursor-pointer"
-                      style={{ backgroundColor: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
+                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
                     >
                       {/* Preview Image */}
                       <div className="aspect-[4/3] relative overflow-hidden">
@@ -387,7 +387,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                       <div className="p-3 flex items-center gap-2">
                         <FileTypeIcon extension={fileData.fileExtension} />
                         <div>
-                          <div className="text-sm font-medium text-gray-900" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          <div className="text-sm font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                             {version.versionName}
                           </div>
                           <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -408,7 +408,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                         type="button"
                         onClick={() => setCarouselIndex(i * 3)}
                         className={`w-2 h-2 rounded-full transition-colors ${
-                          Math.floor(carouselIndex / 3) === i ? "bg-gray-800" : "bg-gray-300"
+                          Math.floor(carouselIndex / 3) === i ? "bg-white" : "bg-gray-600"
                         }`}
                       />
                     ))}
@@ -425,15 +425,18 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                   <div
                     key={task.id}
                     className="flex items-center gap-3 p-3 rounded-lg transition-colors"
-                    style={{ backgroundColor: task.completed ? "rgba(0,0,0,0.02)" : "#fff", border: "1px solid #e5e5e5" }}
+                    style={{ 
+                      backgroundColor: task.completed ? "#1a1a1a" : "#1f1f1f", 
+                      border: "1px solid #2a2a2a" 
+                    }}
                   >
                     <Checkbox
                       checked={task.completed}
                       onCheckedChange={() => handleTaskToggle(task.id)}
-                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                      className="data-[state=checked]:bg-[#F0FE00] data-[state=checked]:border-[#F0FE00] data-[state=checked]:text-black border-gray-600"
                     />
                     <span
-                      className={`flex-1 text-sm ${task.completed ? "text-gray-400 line-through" : "text-gray-900"}`}
+                      className={`flex-1 text-sm ${task.completed ? "text-gray-500 line-through" : "text-gray-200"}`}
                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                     >
                       {task.title}
@@ -450,7 +453,7 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                <div className="text-center py-8 text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   No tasks added yet
                 </div>
               )}
@@ -464,13 +467,13 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                   {/* Timeline */}
                   <div className="flex flex-col items-center">
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500"
-                      style={{ backgroundColor: "rgba(0,0,0,0.05)" }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400"
+                      style={{ backgroundColor: "#1a1a1a" }}
                     >
                       {getActivityIcon(activity.type)}
                     </div>
                     {index < activities.length - 1 && (
-                      <div className="w-0.5 flex-1 mt-2" style={{ backgroundColor: "#e5e5e5" }} />
+                      <div className="w-0.5 flex-1 mt-2" style={{ backgroundColor: "#2a2a2a" }} />
                     )}
                   </div>
 
@@ -483,14 +486,14 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
                       >
                         {activity.user.name.split(" ").map(n => n[0]).join("")}
                       </div>
-                      <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                        {activity.user.name}
+                      <span className="text-sm font-medium text-gray-200" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {activity.user.name.split(" ")[0]}
                       </span>
-                      <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                         {formatDate(activity.timestamp)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    <p className="text-sm text-gray-400 ml-7" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                       {activity.description}
                     </p>
                   </div>

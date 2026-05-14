@@ -16,7 +16,6 @@ import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAUL
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
 import { CanvasSideToolbar } from "./canvas-side-toolbar";
-import { FileDetailPanel } from "./file-detail-panel";
 import { FileDetailModal } from "./file-detail-modal";
 import { UploadDialog } from "./upload-dialog";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
@@ -321,13 +320,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           commentCount={comments.filter(c => !c.resolved).length}
         />
 
-        {selectedNode && (
-          <FileDetailPanel
-            node={selectedNode}
-            onUpdate={handleNodeUpdate}
-            onClose={() => setSelectedNode(null)}
-          />
-        )}
+        
       </div>
 
       {/* Upload Dialog */}
