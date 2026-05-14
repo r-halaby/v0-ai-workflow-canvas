@@ -17,9 +17,9 @@ interface HomePageProps {
 export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvasesChange }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
-  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectVisibility, setNewProjectVisibility] = useState<CanvasVisibility>("workspace");
+  const [showNewCanvasDialog, setShowNewCanvasDialog] = useState(false);
+  const [newCanvasName, setNewCanvasName] = useState("");
+  const [newCanvasVisibility, setNewCanvasVisibility] = useState<CanvasVisibility>("workspace");
 
   const recentCanvases = useMemo(() => {
     return [...canvases]
@@ -56,24 +56,24 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
     return filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }, [canvases, sidebarFilter, searchQuery]);
 
-  const handleCreateProject = () => {
-    if (!newProjectName.trim()) return;
+  const handleCreateCanvas = () => {
+    if (!newCanvasName.trim()) return;
 
     const newCanvas: Canvas = {
       id: `canvas-${Date.now()}`,
-      name: newProjectName.trim(),
+      name: newCanvasName.trim(),
       nodes: [],
       edges: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       createdBy: workspaceSettings.members[0],
       isFavorite: false,
-      visibility: newProjectVisibility,
+      visibility: newCanvasVisibility,
     };
 
     onCanvasesChange([...canvases, newCanvas]);
-    setShowNewProjectDialog(false);
-    setNewProjectName("");
+    setShowNewCanvasDialog(false);
+    setNewCanvasName("");
     onOpenCanvas(newCanvas.id);
   };
 
@@ -145,7 +145,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
                 <rect x="2" y="10" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
                 <rect x="10" y="10" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
               </svg>
-              All Projects
+              All Canvases
             </button>
             <button
               type="button"
@@ -193,12 +193,12 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
               className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              Recent Projects
+Recent Canvases
             </div>
             <div className="space-y-1">
               {recentCanvases.length === 0 ? (
                 <div className="px-3 py-2 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  No projects yet
+                  No canvases yet
                 </div>
               ) : (
                 recentCanvases.map((canvas) => (
@@ -370,7 +370,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
             {/* New Project */}
             <button
               type="button"
-              onClick={() => setShowNewProjectDialog(true)}
+              onClick={() => setShowNewCanvasDialog(true)}
               className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               style={{
                 backgroundColor: "#F0FE00",
@@ -378,7 +378,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
-              New project
+              New canvas
             </button>
           </div>
         </div>
@@ -396,14 +396,14 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
                 </svg>
               </div>
               <div className="text-white font-medium mb-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                No projects yet
+                No canvases yet
               </div>
               <div className="text-gray-500 text-sm mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                Create your first project to get started
+                Create your first canvas to get started
               </div>
               <button
                 type="button"
-                onClick={() => setShowNewProjectDialog(true)}
+                onClick={() => setShowNewCanvasDialog(true)}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
                   backgroundColor: "#F0FE00",
@@ -411,7 +411,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
-                New project
+                New canvas
               </button>
             </div>
           ) : (
@@ -494,12 +494,12 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
         </div>
       </div>
 
-      {/* New Project Dialog */}
-      {showNewProjectDialog && (
+      {/* New Canvas Dialog */}
+      {showNewCanvasDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/60"
-            onClick={() => setShowNewProjectDialog(false)}
+            onClick={() => setShowNewCanvasDialog(false)}
           />
           <div
             className="relative w-full max-w-md rounded-xl p-6"
@@ -510,11 +510,11 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
                 className="text-lg font-semibold text-white"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                New Project
+                New Canvas
               </h2>
               <button
                 type="button"
-                onClick={() => setShowNewProjectDialog(false)}
+                onClick={() => setShowNewCanvasDialog(false)}
                 className="text-gray-500 hover:text-white transition-colors"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -529,14 +529,14 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
                   className="block text-xs text-gray-500 mb-1.5"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
-                  Project Name
+                  Canvas Name
                 </label>
                 <input
                   type="text"
                   placeholder="Untitled"
-                  value={newProjectName}
-                  onChange={(e) => setNewProjectName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCreateProject()}
+                  value={newCanvasName}
+                  onChange={(e) => setNewCanvasName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateCanvas()}
                   className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
                   style={{
                     backgroundColor: "#0a0a0a",
@@ -557,14 +557,14 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setNewProjectVisibility("workspace")}
+                    onClick={() => setNewCanvasVisibility("workspace")}
                     className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      newProjectVisibility === "workspace"
+                      newCanvasVisibility === "workspace"
                         ? "text-white"
                         : "text-gray-500"
                     }`}
                     style={{
-                      backgroundColor: newProjectVisibility === "workspace" ? "#333333" : "#0a0a0a",
+                      backgroundColor: newCanvasVisibility === "workspace" ? "#333333" : "#0a0a0a",
                       border: "1px solid #333333",
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
@@ -573,14 +573,14 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
                   </button>
                   <button
                     type="button"
-                    onClick={() => setNewProjectVisibility("private")}
+                    onClick={() => setNewCanvasVisibility("private")}
                     className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      newProjectVisibility === "private"
+                      newCanvasVisibility === "private"
                         ? "text-white"
                         : "text-gray-500"
                     }`}
                     style={{
-                      backgroundColor: newProjectVisibility === "private" ? "#333333" : "#0a0a0a",
+                      backgroundColor: newCanvasVisibility === "private" ? "#333333" : "#0a0a0a",
                       border: "1px solid #333333",
                       fontFamily: "system-ui, Inter, sans-serif",
                     }}
@@ -594,7 +594,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
             <div className="flex justify-end gap-3 mt-6">
               <button
                 type="button"
-                onClick={() => setShowNewProjectDialog(false)}
+                onClick={() => setShowNewCanvasDialog(false)}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
@@ -602,7 +602,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
               </button>
               <button
                 type="button"
-                onClick={handleCreateProject}
+                onClick={handleCreateCanvas}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
                   backgroundColor: "#F0FE00",
