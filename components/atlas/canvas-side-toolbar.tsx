@@ -217,11 +217,6 @@ export function CanvasSideToolbar({
 
       {/* Draggable Add Node Menu */}
       {showAddMenu && (
-        <div style={{ position: "fixed", top: 50, left: 50, backgroundColor: "red", padding: 20, zIndex: 99999, color: "white" }}>
-          DEBUG: Menu should show here!
-        </div>
-      )}
-      {showAddMenu && (
         <AddNodeMenu
           onAddStatusPill={onAddStatusPill}
           onAddTextNode={onAddTextNode}

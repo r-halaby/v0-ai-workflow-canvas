@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface AddNodeMenuProps {
   onAddStatusPill: () => void;
@@ -62,7 +63,9 @@ export function AddNodeMenu({
 
   const fontStyle = { fontFamily: "system-ui, Inter, sans-serif" };
 
-  return (
+  if (typeof document === "undefined") return null;
+  
+  return createPortal(
     <>
       {/* Backdrop to close menu */}
       <div 
@@ -75,13 +78,14 @@ export function AddNodeMenu({
       {/* Main Menu */}
       <div
         style={{ 
-          backgroundColor: "#ff0000", 
-          border: "3px solid #00ff00",
+          backgroundColor: "#1a1a1a", 
+          border: "1px solid #333333",
           borderRadius: 8,
           width: 180,
           position: "fixed",
-          left: 100,
-          top: 100,
+          left: menuPosition.x,
+          top: menuPosition.y,
+          transform: sourceHandlePosition === "left" ? "translateX(-100%)" : "translateX(0)",
           cursor: isDragging ? "grabbing" : "default",
           maxHeight: "80vh",
           overflowY: "auto",
@@ -576,6 +580,7 @@ Generate
           )}
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 }
