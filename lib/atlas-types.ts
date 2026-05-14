@@ -664,6 +664,12 @@ export interface PresentationGroupNodeData {
   label?: string;
   nodeIds: string[];
   thumbnails: string[]; // URLs of thumbnails for preview
+  originalNodes: Array<{
+    id: string;
+    type: string;
+    position: { x: number; y: number };
+    data: Record<string, unknown>;
+  }>; // Store original nodes for restoration when ungrouping
   [key: string]: unknown;
 }
 

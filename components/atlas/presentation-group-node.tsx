@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import Image from "next/image";
 import type { PresentationGroupNodeData } from "@/lib/atlas-types";
 
 export function PresentationGroupNode({
@@ -62,7 +61,7 @@ export function PresentationGroupNode({
           className="text-xs font-medium truncate"
           style={{ color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
         >
-          Slide Group ({count} images)
+          Slide Group ({count})
         </span>
       </div>
 
@@ -75,11 +74,10 @@ export function PresentationGroupNode({
             style={{ backgroundColor: "#0a0a0a" }}
           >
             {url ? (
-              <Image
+              <img
                 src={url}
                 alt={`Preview ${index + 1}`}
-                fill
-                className="object-cover"
+                className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

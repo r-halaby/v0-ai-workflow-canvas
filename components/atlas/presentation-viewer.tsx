@@ -110,11 +110,43 @@ export function PresentationViewer({
     if (!currentSlide) return [];
     if (currentSlide.type === 'single') {
       const node = nodes.find(n => n.id === currentSlide.nodeId);
+      // If it's a presentationGroup node, use its originalNodes data
+      if (node?.type === "presentationGroup") {
+        const groupData = node.data as { originalNodes?: Array<{ id: string; type: string; position: { x: number; y: number }; data: Record<string, unknown> }> };
+        if (groupData.originalNodes) {
+          return groupData.originalNodes.map(orig => ({
+            id: orig.id,
+            type: orig.type,
+            position: orig.position,
+            data: orig.data,
+          })) as Node[];
+        }
+      }
       return node ? [node] : [];
     } else {
-      return currentSlide.nodeIds
+      // For grouped slides, try to find nodes or use originalNodes from group
+      const foundNodes = currentSlide.nodeIds
         .map(id => nodes.find(n => n.id === id))
         .filter((n): n is Node => n !== undefined);
+      
+      // If we didn't find the nodes (they're inside a group), look in presentationGroup nodes
+      if (foundNodes.length === 0) {
+        for (const node of nodes) {
+          if (node.type === "presentationGroup") {
+            const groupData = node.data as { nodeIds?: string[]; originalNodes?: Array<{ id: string; type: string; position: { x: number; y: number }; data: Record<string, unknown> }> };
+            if (groupData.nodeIds?.some(id => currentSlide.nodeIds.includes(id)) && groupData.originalNodes) {
+              return groupData.originalNodes.map(orig => ({
+                id: orig.id,
+                type: orig.type,
+                position: orig.position,
+                data: orig.data,
+              })) as Node[];
+            }
+          }
+        }
+      }
+      
+      return foundNodes;
     }
   }, [currentSlide, nodes]);
 

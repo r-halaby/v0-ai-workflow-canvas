@@ -763,14 +763,15 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     []
   );
 
-  // Create presentation group from selected nodes
+  // Create presentation group from selected nodes (like moodboard - combines into one node)
   const handleCreatePresentationGroup = useCallback((nodeIds: string[]) => {
     if (nodeIds.length < 2) return;
     
     const groupId = `presentationGroup-${Date.now()}`;
     
-    // Get the selected nodes to extract thumbnails and calculate position
+    // Get the selected nodes
     const selectedNodes = nodes.filter(n => nodeIds.includes(n.id));
+    if (selectedNodes.length < 2) return;
     
     // Calculate center position of selected nodes
     const avgX = selectedNodes.reduce((sum, n) => sum + n.position.x, 0) / selectedNodes.length;
@@ -784,30 +785,39 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       })
       .filter(url => url);
     
+    // Store original nodes for restoration when leaving presentation mode
+    const originalNodes = selectedNodes.map(n => ({
+      id: n.id,
+      type: n.type || "file",
+      position: { ...n.position },
+      data: { ...n.data } as Record<string, unknown>,
+    }));
+    
     // Create the presentation group node
     const groupNode: AtlasNode = {
       id: groupId,
       type: "presentationGroup",
-      position: { x: avgX + 250, y: avgY }, // Position to the right of selected nodes
+      position: { x: avgX, y: avgY },
       data: {
         label: `Slide Group (${nodeIds.length} images)`,
         nodeIds,
         thumbnails,
+        originalNodes,
       },
     };
     
-    // Store the group data and add the node
+    // Store the group data
     setPresentationGroups(groups => [...groups, { id: groupId, nodeIds }]);
     
-    // Add the group node and deselect the original nodes
+    // Remove original nodes and add the group node (like moodboard)
     setNodes(nds => [
-      ...nds.map(n => ({
-        ...n,
-        selected: false,
-      })),
+      ...nds.filter(n => !nodeIds.includes(n.id)),
       groupNode,
     ]);
-  }, [nodes, setNodes]);
+    
+    // Remove edges connected to the grouped nodes
+    setEdges(eds => eds.filter(e => !nodeIds.includes(e.source) && !nodeIds.includes(e.target)));
+  }, [nodes, setNodes, setEdges]);
 
   // Start presentation
   const handleStartPresentation = useCallback(() => {
@@ -816,14 +826,46 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     }
   }, [presentationEdges, presentationGroups]);
 
-  // Clear presentation edges when exiting presentation mode
+  // Handle presentation mode change - ungroup all presentation groups when exiting
   const handlePresentationModeChange = useCallback((enabled: boolean) => {
     setPresentationMode(enabled);
     if (!enabled) {
-      // Optionally clear edges when exiting, or keep them
-      // setPresentationEdges([]);
+      // Find all presentation group nodes and restore their original nodes
+      const groupNodes = nodes.filter(n => n.type === "presentationGroup");
+      
+      if (groupNodes.length > 0) {
+        // Collect all original nodes to restore
+        const nodesToRestore: AtlasNode[] = [];
+        const groupNodeIds: string[] = [];
+        
+        for (const groupNode of groupNodes) {
+          groupNodeIds.push(groupNode.id);
+          const groupData = groupNode.data as { originalNodes?: Array<{ id: string; type: string; position: { x: number; y: number }; data: Record<string, unknown> }> };
+          
+          if (groupData.originalNodes) {
+            for (const original of groupData.originalNodes) {
+              nodesToRestore.push({
+                id: original.id,
+                type: original.type,
+                position: original.position,
+                data: original.data,
+              } as AtlasNode);
+            }
+          }
+        }
+        
+        // Remove group nodes and add back original nodes
+        setNodes(nds => [
+          ...nds.filter(n => !groupNodeIds.includes(n.id)),
+          ...nodesToRestore,
+        ]);
+        
+        // Clear presentation groups and edges
+        setPresentationGroups([]);
+        setPresentationEdges([]);
+      }
     }
-  }, []);
+  }, [nodes, setNodes]);
 
   const handleDoubleClickCanvas = useCallback(
     (position: { x: number; y: number }, screenPosition: { x: number; y: number }) => {
