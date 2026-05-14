@@ -24,13 +24,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Vercel Blob with public access
+    // Upload to Vercel Blob with private access (store is configured as private)
     const blob = await put(`atlas/${Date.now()}-${fileName}`, file, {
-      access: "public",
+      access: "private",
     });
 
+    // Return pathname for private blob access (use /api/file route to serve)
     return NextResponse.json({
-      url: blob.url,
+      url: blob.url, // Not directly accessible, use /api/file?pathname=...
       pathname: blob.pathname,
       size: file.size,
       uploadedAt: new Date().toISOString(),
