@@ -602,6 +602,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       const newNodes: AtlasNode[] = files.map((file, index) => {
         const label = file.fileName.replace(file.extension, "");
         const previewImages = file.previewUrl ? [file.previewUrl] : undefined;
+        const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
         
         return {
           id: `file-${Date.now()}-${index}`,
@@ -613,6 +614,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             product: "atlas" as const,
             status: "draft" as const,
             fileExtension: file.extension,
+            fileType: isImage ? "image" : "document",
+            fileCategory: isImage ? "image" : "document",
             lastModified: "Updated just now",
             uploadedFile: file.uploadedFile,
             previewImages,
@@ -685,6 +688,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         const newNodes: AtlasNode[] = uploadedResults.map((file, index) => {
           const label = file.fileName.replace(file.extension, "");
           const previewImages = file.previewUrl ? [file.previewUrl] : undefined;
+          const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
           
           // Offset each file slightly from drop position
           const offsetX = (index % 3) * 260;
@@ -703,6 +707,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               product: "atlas" as const,
               status: "draft" as const,
               fileExtension: file.extension,
+              fileType: isImage ? "image" : "document",
+              fileCategory: isImage ? "image" : "document",
               lastModified: "Updated just now",
               uploadedFile: file.uploadedFile,
               previewImages,
