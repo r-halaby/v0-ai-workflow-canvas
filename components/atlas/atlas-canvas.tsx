@@ -437,11 +437,12 @@ export function AtlasCanvas({
     return [...regularEdges, ...presentationEdges];
   }, [edges, presentationEdges]);
 
-  // Style edges with dashed animation
+  // Style edges with dashed animation - check if edge ID starts with "presentation-" for presentation edges
   const styledEdges = useMemo(() => {
     const presentationEdgeIds = new Set(presentationEdges.map(e => e.id));
     return allEdges.map((edge) => {
-      const isPresentation = presentationEdgeIds.has(edge.id);
+      // Check both the set and the edge ID prefix for presentation edges
+      const isPresentation = presentationEdgeIds.has(edge.id) || edge.id.startsWith("presentation-");
       return {
         ...edge,
         style: {
