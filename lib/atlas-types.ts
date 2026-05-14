@@ -91,22 +91,69 @@ export interface TaskItem {
   assignee?: WorkspaceMember;
 }
 
+// Member role type
+export type MemberRole = "owner" | "admin" | "editor" | "viewer";
+
 // Workspace member interface
 export interface WorkspaceMember {
   id: string;
   name: string;
+  email?: string;
   avatar?: string;
   initials: string;
+  role?: MemberRole;
+}
+
+// Product configuration
+export interface ProductConfig {
+  id: ProductType;
+  name: string;
+  color: string;
+  enabled: boolean;
+}
+
+// Workspace settings interface
+export interface WorkspaceSettings {
+  id: string;
+  name: string;
+  description?: string;
+  members: WorkspaceMember[];
+  products: ProductConfig[];
+  preferences: {
+    defaultProduct: ProductType;
+    defaultStatus: FileStatus;
+    autoSave: boolean;
+    showGrid: boolean;
+  };
 }
 
 // Default workspace members
 export const WORKSPACE_MEMBERS: WorkspaceMember[] = [
-  { id: "m1", name: "Alex Chen", initials: "AC" },
-  { id: "m2", name: "Sarah Miller", initials: "SM" },
-  { id: "m3", name: "James Wilson", initials: "JW" },
-  { id: "m4", name: "Emily Davis", initials: "ED" },
-  { id: "m5", name: "Michael Brown", initials: "MB" },
+  { id: "m1", name: "Alex Chen", email: "alex@ideate.com", initials: "AC", role: "owner" },
+  { id: "m2", name: "Sarah Miller", email: "sarah@ideate.com", initials: "SM", role: "admin" },
+  { id: "m3", name: "James Wilson", email: "james@ideate.com", initials: "JW", role: "editor" },
+  { id: "m4", name: "Emily Davis", email: "emily@ideate.com", initials: "ED", role: "editor" },
+  { id: "m5", name: "Michael Brown", email: "michael@ideate.com", initials: "MB", role: "viewer" },
 ];
+
+// Default workspace settings
+export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
+  id: "ws-1",
+  name: "Ideate Design Team",
+  description: "Brand and marketing design workspace",
+  members: WORKSPACE_MEMBERS,
+  products: [
+    { id: "atlas", name: "Atlas", color: "#534AB7", enabled: true },
+    { id: "synthesis", name: "Synthesis", color: "#1D9E75", enabled: true },
+    { id: "sage", name: "Sage", color: "#BA7517", enabled: true },
+  ],
+  preferences: {
+    defaultProduct: "atlas",
+    defaultStatus: "draft",
+    autoSave: true,
+    showGrid: false,
+  },
+};
 
 // Uploaded file info
 export interface UploadedFile {

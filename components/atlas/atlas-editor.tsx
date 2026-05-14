@@ -11,12 +11,13 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FilterState, FileExtension, FileNodeData, UploadedFile } from "@/lib/atlas-types";
-import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension } from "@/lib/atlas-types";
+import type { AtlasNode, FilterState, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings } from "@/lib/atlas-types";
+import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
 import { FileDetailPanel } from "./file-detail-panel";
 import { UploadDialog } from "./upload-dialog";
+import { WorkspaceSettingsDialog } from "./workspace-settings";
 
 function AtlasEditorInner() {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(INITIAL_FILE_NODES);
@@ -24,6 +25,8 @@ function AtlasEditorInner() {
   const [filters, setFilters] = useState<FilterState>({ product: "all", status: "all" });
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>(DEFAULT_WORKSPACE_SETTINGS);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -181,6 +184,7 @@ function AtlasEditorInner() {
         onFiltersChange={setFilters}
         onAddNode={handleAddNode}
         onUploadClick={() => setShowUploadDialog(true)}
+        onSettingsClick={() => setShowSettingsDialog(true)}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -209,6 +213,14 @@ function AtlasEditorInner() {
         open={showUploadDialog}
         onClose={() => setShowUploadDialog(false)}
         onFilesUploaded={handleFilesUploaded}
+      />
+
+      {/* Settings Dialog */}
+      <WorkspaceSettingsDialog
+        open={showSettingsDialog}
+        onClose={() => setShowSettingsDialog(false)}
+        settings={workspaceSettings}
+        onSettingsChange={setWorkspaceSettings}
       />
     </div>
   );
