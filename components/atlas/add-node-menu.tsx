@@ -75,18 +75,17 @@ export function AddNodeMenu({
       {/* Main Menu */}
       <div
         style={{ 
-          backgroundColor: "#1a1a1a", 
-          border: "1px solid #333333",
+          backgroundColor: "#ff0000", 
+          border: "3px solid #00ff00",
           borderRadius: 8,
           width: 180,
           position: "fixed",
-          left: menuPosition.x,
-          top: menuPosition.y,
-          transform: sourceHandlePosition === "left" ? "translateX(-100%)" : "translateX(0)",
+          left: 100,
+          top: 100,
           cursor: isDragging ? "grabbing" : "default",
           maxHeight: "80vh",
           overflowY: "auto",
-          zIndex: 50,
+          zIndex: 9999,
           boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
         }}
         onMouseMove={handleMouseMove}
