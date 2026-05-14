@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/lib/auth-context";
 import type { WorkspaceSettings, MemberRole, ProductConfig, NamingToken, NamingRule, NamingConventions } from "@/lib/atlas-types";
 import { PRODUCT_COLORS, DEFAULT_NAMING_CONVENTIONS, DEFAULT_NAMING_RULE } from "@/lib/atlas-types";
 
@@ -63,6 +64,11 @@ export function WorkspaceSettingsDialog({
 }: WorkspaceSettingsProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<MemberRole>("viewer");
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     {
@@ -127,23 +133,64 @@ export function WorkspaceSettingsDialog({
     },
   ];
 
-  const handleInvite = () => {
-    if (!inviteEmail.trim()) return;
+  const handleInvite = useCallback(async () => {
+    if (!inviteEmail.trim() || !user) return;
     
-    const newMember = {
-      id: `m-${Date.now()}`,
-      name: inviteEmail.split("@")[0],
-      email: inviteEmail,
-      initials: inviteEmail.slice(0, 2).toUpperCase(),
-      role: "viewer" as MemberRole,
-    };
-    
-    onSettingsChange({
-      ...settings,
-      members: [...settings.members, newMember],
-    });
-    setInviteEmail("");
-  };
+    setInviteLoading(true);
+    setInviteError(null);
+    setInviteLink(null);
+
+    try {
+      // First ensure user has a workspace
+      const workspaceRes = await fetch("/api/workspace");
+      const workspaceData = await workspaceRes.json();
+      
+      if (!workspaceRes.ok || !workspaceData.workspace) {
+        setInviteError("Failed to get workspace. Please try again.");
+        return;
+      }
+
+      const res = await fetch("/api/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceId: workspaceData.workspace.id,
+          email: inviteEmail.toLowerCase(),
+          role: inviteRole,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setInviteError(data.error || "Failed to send invitation");
+        return;
+      }
+
+      // Show the invite link
+      setInviteLink(data.inviteLink);
+      
+      // Add to local members list as pending
+      const newMember = {
+        id: `pending-${Date.now()}`,
+        name: inviteEmail.split("@")[0],
+        email: inviteEmail,
+        initials: inviteEmail.slice(0, 2).toUpperCase(),
+        role: inviteRole,
+      };
+      
+      onSettingsChange({
+        ...settings,
+        members: [...settings.members, newMember],
+      });
+      
+      setInviteEmail("");
+    } catch {
+      setInviteError("Failed to send invitation. Please try again.");
+    } finally {
+      setInviteLoading(false);
+    }
+  }, [inviteEmail, inviteRole, user, settings, onSettingsChange]);
 
   const handleRoleChange = (memberId: string, role: MemberRole) => {
     onSettingsChange({
@@ -370,32 +417,74 @@ export function WorkspaceSettingsDialog({
                   </h3>
                   
                   {/* Invite */}
-                  <div className="flex gap-2 mb-6">
-                    <input
-                      type="email"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="Email address"
-                      onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-                      className="flex-1 px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
-                      style={{
-                        backgroundColor: "#1a1a1a",
-                        border: "1px solid #333333",
-                        fontFamily: "system-ui, Inter, sans-serif",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleInvite}
-                      className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                      style={{
-                        backgroundColor: "#F0FE00",
-                        color: "#121212",
-                        fontFamily: "system-ui, Inter, sans-serif",
-                      }}
-                    >
-                      Invite
-                    </button>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => {
+                          setInviteEmail(e.target.value);
+                          setInviteError(null);
+                          setInviteLink(null);
+                        }}
+                        placeholder="Email address"
+                        onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+                        disabled={inviteLoading}
+                        className="flex-1 px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30 disabled:opacity-50"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      />
+                      <select
+                        value={inviteRole}
+                        onChange={(e) => setInviteRole(e.target.value as MemberRole)}
+                        disabled={inviteLoading}
+                        className="px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none disabled:opacity-50"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      >
+                        <option value="viewer">Viewer</option>
+                        <option value="editor">Editor</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={handleInvite}
+                        disabled={inviteLoading || !inviteEmail.trim() || !user}
+                        className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        style={{
+                          backgroundColor: "#F0FE00",
+                          color: "#121212",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      >
+                        {inviteLoading ? "Sending..." : "Invite"}
+                      </button>
+                    </div>
+                    {inviteError && (
+                      <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {inviteError}
+                      </div>
+                    )}
+                    {inviteLink && (
+                      <div className="p-3 rounded-lg" style={{ backgroundColor: "rgba(240, 254, 0, 0.05)", border: "1px solid rgba(240, 254, 0, 0.2)" }}>
+                        <div className="text-xs text-gray-400 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Share this invitation link:</div>
+                        <div className="flex items-center gap-2">
+                          <input type="text" value={inviteLink} readOnly className="flex-1 px-2 py-1.5 rounded text-xs text-gray-300 focus:outline-none" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "monospace" }} />
+                          <button type="button" onClick={() => navigator.clipboard.writeText(inviteLink)} className="px-3 py-1.5 rounded text-xs font-medium transition-colors hover:bg-white/10" style={{ backgroundColor: "#2a2a2a", color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>Copy</button>
+                        </div>
+                      </div>
+                    )}
+                    {!user && (
+                      <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: "rgba(234, 179, 8, 0.1)", border: "1px solid rgba(234, 179, 8, 0.2)", color: "#eab308", fontFamily: "system-ui, Inter, sans-serif" }}>
+                        Sign in to invite team members
+                      </div>
+                    )}
                   </div>
 
                   {/* Member List */}
@@ -414,40 +503,39 @@ export function WorkspaceSettingsDialog({
                             {member.initials}
                           </div>
                           <div>
-                            <div
-                              className="text-sm text-white font-medium"
-                              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                            >
-                              {member.name}
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                {member.name}
+                              </span>
+                              {member.id.startsWith("pending-") && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: "rgba(240, 254, 0, 0.1)", color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}>
+                                  Pending
+                                </span>
+                              )}
                             </div>
-                            <div
-                              className="text-xs text-gray-500"
-                              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                            >
+                            <div className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                               {member.email}
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <select
-                            value={member.role || "viewer"}
-                            onChange={(e) =>
-                              handleRoleChange(member.id, e.target.value as MemberRole)
-                            }
-                            disabled={member.role === "owner"}
-                            className="px-2 py-1.5 rounded-lg text-xs text-white focus:outline-none disabled:opacity-50"
-                            style={{
-                              backgroundColor: "#2a2a2a",
-                              border: "1px solid #333333",
-                              fontFamily: "system-ui, Inter, sans-serif",
-                            }}
-                          >
-                            {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                              <option key={value} value={value}>
-                                {label}
-                              </option>
-                            ))}
-                          </select>
+                          {member.id.startsWith("pending-") ? (
+                            <span className="px-2 py-1.5 text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                              {ROLE_LABELS[member.role || "viewer"]}
+                            </span>
+                          ) : (
+                            <select
+                              value={member.role || "viewer"}
+                              onChange={(e) => handleRoleChange(member.id, e.target.value as MemberRole)}
+                              disabled={member.role === "owner"}
+                              className="px-2 py-1.5 rounded-lg text-xs text-white focus:outline-none disabled:opacity-50"
+                              style={{ backgroundColor: "#2a2a2a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                                <option key={value} value={value}>{label}</option>
+                              ))}
+                            </select>
+                          )}
                           {member.role !== "owner" && (
                             <button
                               type="button"
