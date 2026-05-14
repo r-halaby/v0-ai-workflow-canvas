@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useMemo, useState } from "react";
+import React, { useCallback, useRef, useMemo, useState, useEffect } from "react";
 import {
   ReactFlow,
   Background,
