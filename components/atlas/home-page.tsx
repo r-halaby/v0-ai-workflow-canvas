@@ -12,7 +12,8 @@ import { FileNode } from "./file-node";
 import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "favorites" | "workspace" | "private";
-type HomeView = "home" | "canvases" | "favorites" | "community" | "workspace-canvas" | "files";
+type HomeView = "home" | "canvases" | "favorites" | "community" | "workspace-canvas";
+type CanvasSubView = "canvases" | "files";
 
 const nodeTypes = { fileNode: FileNode };
 
@@ -177,6 +178,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
+  const [canvasSubView, setCanvasSubView] = useState<CanvasSubView>("canvases");
   const [showNewCanvasDialog, setShowNewCanvasDialog] = useState(false);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -538,19 +540,6 @@ const deleteCanvas = (canvasId: string) => {
               </svg>
               Community
             </button>
-            <button
-              type="button"
-              onClick={() => setActiveView("files")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeView === "files" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H6L8 5H14.5C15.3284 5 16 5.67157 16 6.5V13.5C16 14.3284 15.3284 15 14.5 15H3.5C2.67157 15 2 14.3284 2 13.5V4.5Z" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-              Files
-            </button>
           </nav>
 
           {/* Favorites Section */}
@@ -908,187 +897,7 @@ const deleteCanvas = (canvasId: string) => {
           </div>
         </div>
 
-        {activeView === "files" ? (
-          /* Files Tree View */
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-6 overflow-y-auto flex-1">
-              <h2
-                className="text-xl font-semibold text-white mb-6"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                All Files
-              </h2>
-
-              {/* Projects with their canvases and files */}
-              {projects.map((project) => (
-                <div key={project.id} className="mb-2">
-                  {/* Project Row */}
-                  <button
-                    type="button"
-                    onClick={() => toggleFilesProjectExpanded(project.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 transition-colors"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    <svg 
-                      width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
-                      className={`transition-transform flex-shrink-0 ${expandedFilesProjects.has(project.id) ? "rotate-90" : ""}`}
-                    >
-                      <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                      <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H5.5L7 5H12.5C13.3284 5 14 5.67157 14 6.5V11.5C14 12.3284 13.3284 13 12.5 13H3.5C2.67157 13 2 12.3284 2 11.5V4.5Z" fill={project.color} fillOpacity="0.2" stroke={project.color} strokeWidth="1.5"/>
-                    </svg>
-                    <span className="truncate flex-1 text-left font-medium">{project.name}</span>
-                    <span className="text-xs text-gray-500">{getProjectCanvases(project.id).length} canvases</span>
-                  </button>
-
-                  {/* Project's Canvases */}
-                  {expandedFilesProjects.has(project.id) && (
-                    <div className="ml-5 border-l border-gray-800 pl-2">
-                      {getProjectCanvases(project.id).map((canvas) => (
-                        <div key={canvas.id}>
-                          {/* Canvas Row */}
-                          <button
-                            type="button"
-                            onClick={() => toggleFilesCanvasExpanded(canvas.id)}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-400 hover:bg-white/5 transition-colors"
-                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                          >
-                            <svg 
-                              width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
-                              className={`transition-transform flex-shrink-0 ${expandedFilesCanvases.has(canvas.id) ? "rotate-90" : ""}`}
-                            >
-                              <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                              <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                            </svg>
-                            <span className="truncate flex-1 text-left">{canvas.name}</span>
-                            <span className="text-xs text-gray-600">{getCanvasFiles(canvas).length} files</span>
-                          </button>
-
-                          {/* Canvas's Files */}
-                          {expandedFilesCanvases.has(canvas.id) && (
-                            <div className="ml-5 border-l border-gray-800 pl-2">
-                              {getCanvasFiles(canvas).length === 0 ? (
-                                <div className="px-3 py-1.5 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                                  No files
-                                </div>
-                              ) : (
-                                getCanvasFiles(canvas).map((node) => (
-                                  <button
-                                    key={node.id}
-                                    type="button"
-                                    onClick={() => onOpenCanvas(canvas.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors"
-                                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                                      <path d="M3 1.5H8.5L11 4V12.5H3V1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                      <path d="M8.5 1.5V4H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                    <span className="truncate">{(node.data as { label?: string }).label || "Untitled"}</span>
-                                  </button>
-                                ))
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      {getProjectCanvases(project.id).length === 0 && (
-                        <div className="px-3 py-1.5 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                          No canvases
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* Ungrouped Canvases */}
-              {getUngroupedCanvases().length > 0 && (
-                <div className="mb-2">
-                  <div
-                    className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    Ungrouped Canvases
-                  </div>
-                  {getUngroupedCanvases().map((canvas) => (
-                    <div key={canvas.id}>
-                      {/* Canvas Row */}
-                      <button
-                        type="button"
-                        onClick={() => toggleFilesCanvasExpanded(canvas.id)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-400 hover:bg-white/5 transition-colors"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        <svg 
-                          width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
-                          className={`transition-transform flex-shrink-0 ${expandedFilesCanvases.has(canvas.id) ? "rotate-90" : ""}`}
-                        >
-                          <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                          <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                        </svg>
-                        <span className="truncate flex-1 text-left">{canvas.name}</span>
-                        <span className="text-xs text-gray-600">{getCanvasFiles(canvas).length} files</span>
-                      </button>
-
-                      {/* Canvas's Files */}
-                      {expandedFilesCanvases.has(canvas.id) && (
-                        <div className="ml-5 border-l border-gray-800 pl-2">
-                          {getCanvasFiles(canvas).length === 0 ? (
-                            <div className="px-3 py-1.5 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                              No files
-                            </div>
-                          ) : (
-                            getCanvasFiles(canvas).map((node) => (
-                              <button
-                                key={node.id}
-                                type="button"
-                                onClick={() => onOpenCanvas(canvas.id)}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors"
-                                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                              >
-                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-                                  <path d="M3 1.5H8.5L11 4V12.5H3V1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d="M8.5 1.5V4H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                                <span className="truncate">{(node.data as { label?: string }).label || "Untitled"}</span>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Empty State */}
-              {projects.length === 0 && canvases.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div
-                    className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
-                  >
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M4 8C4 6.34315 5.34315 5 7 5H11L14 8H21C22.6569 8 24 9.34315 24 11V20C24 21.6569 22.6569 23 21 23H7C5.34315 23 4 21.6569 4 20V8Z" stroke="#666666" strokeWidth="2"/>
-                    </svg>
-                  </div>
-                  <p className="text-gray-400 text-sm mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                    No files yet
-                  </p>
-                  <p className="text-gray-600 text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                    Create a canvas and upload files to see them here
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : activeView === "community" ? (
+        {activeView === "community" ? (
           /* Community Templates View */
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Category Filter Bar */}
@@ -1620,9 +1429,42 @@ const deleteCanvas = (canvasId: string) => {
         </div>
           </>
         ) : (activeView === "canvases" || activeView === "favorites") ? (
-          /* Canvas Grid Only - No Chaos Ribbon */
-          <div className="flex-1 overflow-y-auto p-6">
-          {filteredCanvases.length > 0 ? (
+          /* Canvas/Files View with Tab Switcher */
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Tab Switcher - Only show on canvases view, not favorites */}
+            {activeView === "canvases" && (
+              <div className="px-6 py-3 flex items-center gap-1" style={{ borderBottom: "1px solid #222222" }}>
+                <button
+                  type="button"
+                  onClick={() => setCanvasSubView("canvases")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    canvasSubView === "canvases" 
+                      ? "bg-white/10 text-white" 
+                      : "text-gray-500 hover:text-white hover:bg-white/5"
+                  }`}
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Canvases
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCanvasSubView("files")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    canvasSubView === "files" 
+                      ? "bg-white/10 text-white" 
+                      : "text-gray-500 hover:text-white hover:bg-white/5"
+                  }`}
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Files
+                </button>
+              </div>
+            )}
+
+            {/* Content Area */}
+            {(activeView === "favorites" || canvasSubView === "canvases") ? (
+              <div className="flex-1 overflow-y-auto p-6">
+              {filteredCanvases.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredCanvases.map((canvas) => (
                 <div
@@ -1726,7 +1568,180 @@ const deleteCanvas = (canvasId: string) => {
               </button>
             </div>
           )}
-        </div>
+              </div>
+            ) : (
+              /* Files Tree View */
+              <div className="flex-1 overflow-y-auto p-6">
+                {/* Projects with their canvases and files */}
+                {projects.map((project) => (
+                  <div key={project.id} className="mb-2">
+                    {/* Project Row */}
+                    <button
+                      type="button"
+                      onClick={() => toggleFilesProjectExpanded(project.id)}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 transition-colors"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <svg 
+                        width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
+                        className={`transition-transform flex-shrink-0 ${expandedFilesProjects.has(project.id) ? "rotate-90" : ""}`}
+                      >
+                        <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+                        <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H5.5L7 5H12.5C13.3284 5 14 5.67157 14 6.5V11.5C14 12.3284 13.3284 13 12.5 13H3.5C2.67157 13 2 12.3284 2 11.5V4.5Z" fill={project.color} fillOpacity="0.2" stroke={project.color} strokeWidth="1.5"/>
+                      </svg>
+                      <span className="truncate flex-1 text-left font-medium">{project.name}</span>
+                      <span className="text-xs text-gray-500">{getProjectCanvases(project.id).length} canvases</span>
+                    </button>
+
+                    {/* Project's Canvases */}
+                    {expandedFilesProjects.has(project.id) && (
+                      <div className="ml-5 border-l border-gray-800 pl-2">
+                        {getProjectCanvases(project.id).map((canvas) => (
+                          <div key={canvas.id}>
+                            {/* Canvas Row */}
+                            <button
+                              type="button"
+                              onClick={() => toggleFilesCanvasExpanded(canvas.id)}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-400 hover:bg-white/5 transition-colors"
+                              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              <svg 
+                                width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
+                                className={`transition-transform flex-shrink-0 ${expandedFilesCanvases.has(canvas.id) ? "rotate-90" : ""}`}
+                              >
+                                <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+                                <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                              </svg>
+                              <span className="truncate flex-1 text-left">{canvas.name}</span>
+                              <span className="text-xs text-gray-600">{getCanvasFiles(canvas).length} files</span>
+                            </button>
+
+                            {/* Canvas's Files */}
+                            {expandedFilesCanvases.has(canvas.id) && (
+                              <div className="ml-5 border-l border-gray-800 pl-2">
+                                {getCanvasFiles(canvas).length === 0 ? (
+                                  <div className="px-3 py-1.5 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                    No files
+                                  </div>
+                                ) : (
+                                  getCanvasFiles(canvas).map((node) => (
+                                    <button
+                                      key={node.id}
+                                      type="button"
+                                      onClick={() => onOpenCanvas(canvas.id)}
+                                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors"
+                                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                    >
+                                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+                                        <path d="M3 1.5H8.5L11 4V12.5H3V1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M8.5 1.5V4H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                      </svg>
+                                      <span className="truncate">{(node.data as { label?: string }).label || "Untitled"}</span>
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {getProjectCanvases(project.id).length === 0 && (
+                          <div className="px-3 py-1.5 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            No canvases
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Ungrouped Canvases */}
+                {getUngroupedCanvases().length > 0 && (
+                  <div className="mb-2">
+                    <div
+                      className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      Ungrouped Canvases
+                    </div>
+                    {getUngroupedCanvases().map((canvas) => (
+                      <div key={canvas.id}>
+                        {/* Canvas Row */}
+                        <button
+                          type="button"
+                          onClick={() => toggleFilesCanvasExpanded(canvas.id)}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-400 hover:bg-white/5 transition-colors"
+                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          <svg 
+                            width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
+                            className={`transition-transform flex-shrink-0 ${expandedFilesCanvases.has(canvas.id) ? "rotate-90" : ""}`}
+                          >
+                            <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+                            <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                          </svg>
+                          <span className="truncate flex-1 text-left">{canvas.name}</span>
+                          <span className="text-xs text-gray-600">{getCanvasFiles(canvas).length} files</span>
+                        </button>
+
+                        {/* Canvas's Files */}
+                        {expandedFilesCanvases.has(canvas.id) && (
+                          <div className="ml-5 border-l border-gray-800 pl-2">
+                            {getCanvasFiles(canvas).length === 0 ? (
+                              <div className="px-3 py-1.5 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                No files
+                              </div>
+                            ) : (
+                              getCanvasFiles(canvas).map((node) => (
+                                <button
+                                  key={node.id}
+                                  type="button"
+                                  onClick={() => onOpenCanvas(canvas.id)}
+                                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors"
+                                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+                                    <path d="M3 1.5H8.5L11 4V12.5H3V1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M8.5 1.5V4H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                  <span className="truncate">{(node.data as { label?: string }).label || "Untitled"}</span>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {projects.length === 0 && canvases.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div
+                      className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
+                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                    >
+                      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 8C4 6.34315 5.34315 5 7 5H11L14 8H21C22.6569 8 24 9.34315 24 11V20C24 21.6569 22.6569 23 21 23H7C5.34315 23 4 21.6569 4 20V8Z" stroke="#666666" strokeWidth="2"/>
+                      </svg>
+                    </div>
+                    <p className="text-gray-400 text-sm mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      No files yet
+                    </p>
+                    <p className="text-gray-600 text-xs" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      Create a canvas and upload files to see them here
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         ) : null}
       </div>
 
