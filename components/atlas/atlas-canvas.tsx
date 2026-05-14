@@ -273,6 +273,10 @@ export function AtlasCanvas({
         onConnectEnd={handleConnectEnd}
         onPaneClick={handlePaneClick}
         onNodeDoubleClick={(event, node) => {
+          // Don't open modal if clicking on a handle
+          const target = event.target as HTMLElement;
+          if (target.closest(".react-flow__handle")) return;
+          
           if (node.type === "file" && onNodeDoubleClick) {
             onNodeDoubleClick(node.id);
           }
