@@ -195,17 +195,47 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
         className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl shadow-2xl"
         style={{ backgroundColor: "#faf9f6" }}
       >
-        {/* Close button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors z-10"
-          style={{ backgroundColor: "rgba(0,0,0,0.05)" }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M12 4L4 12M4 4L12 12" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        </button>
+        {/* Header buttons */}
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+          {/* Download button */}
+          <button
+            type="button"
+            onClick={() => {
+              // If there's an uploaded file, download it
+              if (fileData.uploadedFile?.url) {
+                const link = document.createElement("a");
+                link.href = fileData.uploadedFile.url;
+                link.download = fileData.fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              } else {
+                // If no uploaded file, show a placeholder toast or alert
+                alert("No file available for download");
+              }
+            }}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-black/10"
+            style={{ backgroundColor: "rgba(0,0,0,0.05)" }}
+            title="Download file"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="#666666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3 12V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V12" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+          
+          {/* Close button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-black/10"
+            style={{ backgroundColor: "rgba(0,0,0,0.05)" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M12 4L4 12M4 4L12 12" stroke="#666666" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
 
         <div className="overflow-y-auto max-h-[85vh] p-8">
           {/* Title */}
