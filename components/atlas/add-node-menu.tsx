@@ -1,21 +1,8 @@
 "use client";
 
 import React from "react";
-import type { FileExtension } from "@/lib/atlas-types";
-
-const FILE_TYPE_OPTIONS: { label: string; extension: FileExtension }[] = [
-  { label: "Figma", extension: ".fig" },
-  { label: "Photoshop", extension: ".psd" },
-  { label: "Illustrator", extension: ".ai" },
-  { label: "After Effects", extension: ".aep" },
-  { label: "Premiere", extension: ".prproj" },
-  { label: "PowerPoint", extension: ".pptx" },
-  { label: "PDF", extension: ".pdf" },
-  { label: "Image", extension: ".png" },
-];
 
 interface AddNodeMenuProps {
-  onAddNode: (extension: FileExtension) => void;
   onAddStatusPill: () => void;
   onAddTextNode: (textType: "brief" | "note" | "description") => void;
   onClose: () => void;
@@ -25,12 +12,10 @@ interface AddNodeMenuProps {
 }
 
 export function AddNodeMenu({
-  onAddNode,
   onAddStatusPill,
   onAddTextNode,
   onClose,
   position,
-  sourceNodeId,
   sourceHandlePosition,
 }: AddNodeMenuProps) {
   // Calculate position styles
@@ -53,11 +38,11 @@ export function AddNodeMenu({
       
       {/* Menu */}
       <div
-        className="py-1 rounded-lg shadow-lg z-50 max-h-[400px] overflow-y-auto"
+        className="py-1 rounded-lg shadow-lg z-50"
         style={{ 
           backgroundColor: "#1a1a1a", 
           border: "1px solid #333333", 
-          minWidth: 180,
+          width: 160,
           ...positionStyles,
         }}
       >
@@ -134,28 +119,7 @@ export function AddNodeMenu({
           Status Pill
         </button>
         
-        {/* Divider */}
-        <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
-        
-        {/* File Types Section */}
-        <div className="px-3 py-1 text-xs text-gray-500 uppercase tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-          Files
         </div>
-        {FILE_TYPE_OPTIONS.map((option) => (
-          <button
-            key={option.extension}
-            type="button"
-            onClick={() => {
-              onAddNode(option.extension);
-              onClose();
-            }}
-            className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
     </>
   );
 }

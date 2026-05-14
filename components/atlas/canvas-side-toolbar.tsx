@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import type { FileExtension } from "@/lib/atlas-types";
 
 interface CanvasSideToolbarProps {
-  onAddNode: (extension: FileExtension) => void;
   onAddStatusPill: () => void;
   onAddTextNode: (textType: "brief" | "note" | "description") => void;
   onSettingsClick: () => void;
@@ -15,16 +13,7 @@ interface CanvasSideToolbarProps {
   commentCount: number;
 }
 
-const FILE_TYPE_OPTIONS: { label: string; extension: FileExtension }[] = [
-  { label: "Design File", extension: ".fig" },
-  { label: "Document", extension: ".pdf" },
-  { label: "Video", extension: ".mp4" },
-  { label: "Image", extension: ".psd" },
-  { label: "Brand Asset", extension: ".ai" },
-];
-
 export function CanvasSideToolbar({
-  onAddNode,
   onAddStatusPill,
   onAddTextNode,
   onSettingsClick,
@@ -155,7 +144,7 @@ export function CanvasSideToolbar({
         {showAddMenu && (
           <div
             className="absolute right-full mr-2 top-0 py-1 rounded-lg shadow-lg"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", minWidth: 180 }}
+            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 160 }}
           >
             {/* Text Nodes Section */}
             <div className="px-3 py-1 text-xs text-gray-500 uppercase tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -229,28 +218,6 @@ export function CanvasSideToolbar({
               <div className="w-4 h-2.5 rounded-full" style={{ backgroundColor: "#e5e5e5" }} />
               Status Pill
             </button>
-            
-            {/* Divider */}
-            <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
-            
-            {/* File Types Section */}
-            <div className="px-3 py-1 text-xs text-gray-500 uppercase tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-              Files
-            </div>
-            {FILE_TYPE_OPTIONS.map((option) => (
-              <button
-                key={option.extension}
-                type="button"
-                onClick={() => {
-                  onAddNode(option.extension);
-                  setShowAddMenu(false);
-                }}
-                className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                {option.label}
-              </button>
-            ))}
           </div>
         )}
       </div>

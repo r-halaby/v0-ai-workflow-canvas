@@ -509,13 +509,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onCancelNewComment={handleCancelNewComment}
           onNodeDoubleClick={setDetailModalNodeId}
           onFileDrop={handleFileDrop}
-          onAddNode={handleAddNode}
           onAddStatusPill={handleAddStatusPill}
           onAddTextNode={handleAddTextNode}
         />
 
         <CanvasSideToolbar
-          onAddNode={handleAddNode}
           onAddStatusPill={handleAddStatusPill}
           onAddTextNode={handleAddTextNode}
           onSettingsClick={() => setShowSettingsDialog(true)}

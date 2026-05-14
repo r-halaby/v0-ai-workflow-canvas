@@ -17,7 +17,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import type { AtlasNode, CanvasComment, WorkspaceMember, FileExtension } from "@/lib/atlas-types";
+import type { AtlasNode, CanvasComment, WorkspaceMember } from "@/lib/atlas-types";
 import { FileNode } from "./file-node";
 import { StatusPillNode } from "./status-pill-node";
 import { TextNode } from "./text-node";
@@ -52,7 +52,6 @@ interface AtlasCanvasProps {
   onCancelNewComment: () => void;
   onNodeDoubleClick?: (nodeId: string) => void;
   onFileDrop?: (files: FileList, position: { x: number; y: number }) => void;
-  onAddNode?: (extension: FileExtension, position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddStatusPill?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddTextNode?: (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => void;
 }
@@ -79,7 +78,6 @@ export function AtlasCanvas({
   onCancelNewComment,
   onNodeDoubleClick,
   onFileDrop,
-  onAddNode,
   onAddStatusPill,
   onAddTextNode,
 }: AtlasCanvasProps) {
@@ -177,13 +175,6 @@ export function AtlasCanvas({
   
 
   // Handle menu callbacks
-  const handleMenuAddNode = useCallback((extension: FileExtension) => {
-    if (handleMenu && onAddNode) {
-      onAddNode(extension, handleMenu.canvasPosition, handleMenu.sourceNodeId);
-    }
-    setHandleMenu(null);
-  }, [handleMenu, onAddNode]);
-
   const handleMenuAddStatusPill = useCallback(() => {
     if (handleMenu && onAddStatusPill) {
       onAddStatusPill(handleMenu.canvasPosition, handleMenu.sourceNodeId);
@@ -458,12 +449,10 @@ export function AtlasCanvas({
       {/* Handle click menu */}
       {handleMenu && (
         <AddNodeMenu
-          onAddNode={handleMenuAddNode}
           onAddStatusPill={handleMenuAddStatusPill}
           onAddTextNode={handleMenuAddTextNode}
           onClose={() => setHandleMenu(null)}
           position={handleMenu.position}
-          sourceNodeId={handleMenu.sourceNodeId}
           sourceHandlePosition={handleMenu.handlePosition}
         />
       )}
