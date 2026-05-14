@@ -262,7 +262,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
         {/* Hover Details Panel */}
         <div
           style={{
-            maxHeight: isHovered ? 100 : 0,
+            maxHeight: isHovered ? 160 : 0,
             opacity: isHovered ? 1 : 0,
             overflow: "hidden",
             transition: "max-height 0.2s ease, opacity 0.2s ease",
