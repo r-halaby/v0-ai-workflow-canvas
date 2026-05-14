@@ -28,7 +28,7 @@ export function AddNodeMenu({
   const [menuPosition, setMenuPosition] = useState(position || { x: 200, y: 200 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.menu-content')) return;
@@ -53,27 +53,6 @@ export function AddNodeMenu({
 
   const fontStyle = { fontFamily: "system-ui, Inter, sans-serif" };
 
-  const menuItemStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "8px 12px",
-    textAlign: "left",
-    fontSize: 14,
-    color: "#d1d5db",
-    backgroundColor: "transparent",
-    border: "none",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    ...fontStyle,
-  };
-
-  const submenuItemStyle: React.CSSProperties = {
-    ...menuItemStyle,
-    fontSize: 13,
-    padding: "8px 12px",
-  };
-
   return (
     <>
       {/* Backdrop to close menu */}
@@ -84,7 +63,7 @@ export function AddNodeMenu({
         onMouseUp={handleMouseUp}
       />
       
-      {/* Menu */}
+      {/* Main Menu */}
       <div
         style={{ 
           backgroundColor: "#1a1a1a", 
@@ -127,79 +106,37 @@ export function AddNodeMenu({
         </div>
 
         <div className="menu-content" style={{ padding: "4px 0" }}>
-          {/* Text - with submenu */}
-          <div 
-            style={{ position: "relative" }}
-            onMouseEnter={() => setOpenSubmenu("text")}
-            onMouseLeave={() => setOpenSubmenu(null)}
+          {/* Text */}
+          <button
+            type="button"
+            onClick={() => setActiveSubmenu(activeSubmenu === "text" ? null : "text")}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              textAlign: "left",
+              fontSize: 14,
+              color: "#d1d5db",
+              backgroundColor: activeSubmenu === "text" ? "rgba(255,255,255,0.1)" : "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              ...fontStyle,
+            }}
           >
-            <div
-              style={{
-                ...menuItemStyle,
-                justifyContent: "space-between",
-                backgroundColor: openSubmenu === "text" ? "rgba(255,255,255,0.1)" : "transparent",
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#3B82F620", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 4H12M2 7H10M2 10H8" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                </div>
-                Text
-              </span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            
-            {/* Text Submenu */}
-            {openSubmenu === "text" && (
-              <div 
-                style={{ 
-                  position: "absolute", 
-                  left: "100%", 
-                  top: 0, 
-                  marginLeft: 4,
-                  backgroundColor: "#1a1a1a", 
-                  border: "1px solid #333333",
-                  borderRadius: 8,
-                  padding: "4px 0",
-                  width: 150,
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-                  zIndex: 60,
-                }}
-              >
-                <button 
-                  type="button" 
-                  onClick={() => { onAddTextNode("brief"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Creative Brief
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { onAddTextNode("note"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Note
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { onAddTextNode("description"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Description
-                </button>
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#3B82F620", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 4H12M2 7H10M2 10H8" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
               </div>
-            )}
-          </div>
+              Text
+            </span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "text" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+              <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
 
           {/* Divider */}
           <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
@@ -208,9 +145,20 @@ export function AddNodeMenu({
           <button
             type="button"
             onClick={() => { onAddStatusPill(); onClose(); }}
-            style={menuItemStyle}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"; setOpenSubmenu(null); }}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              textAlign: "left",
+              fontSize: 14,
+              color: "#d1d5db",
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              ...fontStyle,
+            }}
           >
             <div style={{ width: 16, height: 10, borderRadius: 5, backgroundColor: "#e5e5e5" }} />
             Status Pill
@@ -219,171 +167,69 @@ export function AddNodeMenu({
           {/* Divider */}
           <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
           
-          {/* Sage - with submenu */}
-          <div 
-            style={{ position: "relative" }}
-            onMouseEnter={() => setOpenSubmenu("sage")}
-            onMouseLeave={() => setOpenSubmenu(null)}
+          {/* Sage */}
+          <button
+            type="button"
+            onClick={() => setActiveSubmenu(activeSubmenu === "sage" ? null : "sage")}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              textAlign: "left",
+              fontSize: 14,
+              color: "#d1d5db",
+              backgroundColor: activeSubmenu === "sage" ? "rgba(255,255,255,0.1)" : "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              ...fontStyle,
+            }}
           >
-            <div
-              style={{
-                ...menuItemStyle,
-                justifyContent: "space-between",
-                backgroundColor: openSubmenu === "sage" ? "rgba(255,255,255,0.1)" : "transparent",
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <img src="/sage-logo.svg" alt="Sage" style={{ width: 16, height: 16 }} />
-                Sage
-              </span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            
-            {/* Sage Submenu */}
-            {openSubmenu === "sage" && (
-              <div 
-                style={{ 
-                  position: "absolute", 
-                  left: "100%", 
-                  top: 0, 
-                  marginLeft: 4,
-                  backgroundColor: "#1a1a1a", 
-                  border: "1px solid #333333",
-                  borderRadius: 8,
-                  padding: "4px 0",
-                  width: 150,
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-                  zIndex: 60,
-                }}
-              >
-                <button 
-                  type="button" 
-                  onClick={() => { onAddSageNode("chatbot"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Sage Chat
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { onAddSageNode("overview"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Overview
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { onAddSageNode("stakeholder"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Stakeholder
-                </button>
-              </div>
-            )}
-          </div>
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <img src="/sage-logo.svg" alt="Sage" style={{ width: 16, height: 16 }} />
+              Sage
+            </span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "sage" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+              <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
           
           {/* Divider */}
           <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
           
-          {/* Ops Data - with submenu */}
-          <div 
-            style={{ position: "relative" }}
-            onMouseEnter={() => setOpenSubmenu("ops")}
-            onMouseLeave={() => setOpenSubmenu(null)}
+          {/* Ops Data */}
+          <button
+            type="button"
+            onClick={() => setActiveSubmenu(activeSubmenu === "ops" ? null : "ops")}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              textAlign: "left",
+              fontSize: 14,
+              color: "#d1d5db",
+              backgroundColor: activeSubmenu === "ops" ? "rgba(255,255,255,0.1)" : "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              ...fontStyle,
+            }}
           >
-            <div
-              style={{
-                ...menuItemStyle,
-                justifyContent: "space-between",
-                backgroundColor: openSubmenu === "ops" ? "rgba(255,255,255,0.1)" : "transparent",
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#8b5cf620", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2">
-                    <path d="M3 3v18h18" />
-                    <path d="M7 16l4-8 4 4 6-6" />
-                  </svg>
-                </div>
-                Ops Data
-              </span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            
-            {/* Ops Data Submenu */}
-            {openSubmenu === "ops" && (
-              <div 
-                style={{ 
-                  position: "absolute", 
-                  left: "100%", 
-                  top: 0, 
-                  marginLeft: 4,
-                  backgroundColor: "#1a1a1a", 
-                  border: "1px solid #333333",
-                  borderRadius: 8,
-                  padding: "4px 0",
-                  width: 150,
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-                  zIndex: 60,
-                }}
-              >
-                <button 
-                  type="button" 
-                  onClick={() => { onAddOperationalNode("capacity"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Capacity
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { onAddOperationalNode("financial"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Financial
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { onAddOperationalNode("projectHealth"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Project Health
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { onAddOperationalNode("pipeline"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Pipeline
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { onAddOperationalNode("teamHealth"); onClose(); }} 
-                  style={submenuItemStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  Team Health
-                </button>
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#8b5cf620", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2">
+                  <path d="M3 3v18h18" />
+                  <path d="M7 16l4-8 4 4 6-6" />
+                </svg>
               </div>
-            )}
-          </div>
+              Ops Data
+            </span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "ops" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+              <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
           
           {/* Divider */}
           <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
@@ -404,9 +250,20 @@ export function AddNodeMenu({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            style={menuItemStyle}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"; setOpenSubmenu(null); }}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              textAlign: "left",
+              fontSize: 14,
+              color: "#d1d5db",
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              ...fontStyle,
+            }}
           >
             <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#52525b20", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
@@ -417,6 +274,226 @@ export function AddNodeMenu({
           </button>
         </div>
       </div>
+
+      {/* Submenu Panel - appears to the right */}
+      {activeSubmenu && (
+        <div
+          style={{ 
+            backgroundColor: "#1a1a1a", 
+            border: "1px solid #333333",
+            borderRadius: 8,
+            width: 160,
+            position: "fixed",
+            left: menuPosition.x + (sourceHandlePosition === "left" ? -180 : 180) + 8,
+            top: menuPosition.y + (activeSubmenu === "text" ? 40 : activeSubmenu === "sage" ? 130 : 185),
+            zIndex: 51,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+            padding: "4px 0",
+          }}
+        >
+          {activeSubmenu === "text" && (
+            <>
+              <button
+                type="button"
+                onClick={() => { onAddTextNode("brief"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Creative Brief
+              </button>
+              <button
+                type="button"
+                onClick={() => { onAddTextNode("note"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Note
+              </button>
+              <button
+                type="button"
+                onClick={() => { onAddTextNode("description"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Description
+              </button>
+            </>
+          )}
+
+          {activeSubmenu === "sage" && (
+            <>
+              <button
+                type="button"
+                onClick={() => { onAddSageNode("chatbot"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Sage Chat
+              </button>
+              <button
+                type="button"
+                onClick={() => { onAddSageNode("overview"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Overview
+              </button>
+              <button
+                type="button"
+                onClick={() => { onAddSageNode("stakeholder"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Stakeholder
+              </button>
+            </>
+          )}
+
+          {activeSubmenu === "ops" && (
+            <>
+              <button
+                type="button"
+                onClick={() => { onAddOperationalNode("capacity"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Capacity
+              </button>
+              <button
+                type="button"
+                onClick={() => { onAddOperationalNode("financial"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Financial
+              </button>
+              <button
+                type="button"
+                onClick={() => { onAddOperationalNode("projectHealth"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Project Health
+              </button>
+              <button
+                type="button"
+                onClick={() => { onAddOperationalNode("pipeline"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Pipeline
+              </button>
+              <button
+                type="button"
+                onClick={() => { onAddOperationalNode("teamHealth"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Team Health
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </>
   );
 }
