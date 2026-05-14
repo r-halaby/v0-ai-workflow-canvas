@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import type { MoodboardNodeData } from "@/lib/atlas-types";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import type { MoodboardNodeData, MoodboardImagePosition } from "@/lib/atlas-types";
 
 type LayoutMode = "masonry" | "freeform" | "grid";
 
@@ -9,22 +9,122 @@ interface MoodboardExpandedProps {
   data: MoodboardNodeData;
   onClose: () => void;
   onUngroup: () => void;
+  onDataChange?: (data: MoodboardNodeData) => void;
 }
 
-export function MoodboardExpanded({ data, onClose, onUngroup }: MoodboardExpandedProps) {
+export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: MoodboardExpandedProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("masonry");
+  const [positions, setPositions] = useState<Record<string, MoodboardImagePosition>>(() => {
+    return data.freeformPositions || {};
+  });
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const maxZIndexRef = useRef(data.images?.length || 0);
 
-  // Generate deterministic random positions for freeform layout
-  const freeformPositions = useMemo(() => {
-    if (!data.images) return [];
-    return data.images.map((_, index) => ({
-      x: 5 + (index * 17 + index * index * 7) % 60,
-      y: 5 + (index * 23 + index * 11) % 50,
-      rotation: ((index * 7) % 11) - 5,
-      scale: 0.8 + (index % 3) * 0.15,
+  // Calculate non-overlapping initial positions for images without saved positions
+  const initialPositions = useMemo(() => {
+    if (!data.images) return {};
+    
+    const cols = 4;
+    const imageWidth = 220;
+    const imageHeight = 180;
+    const gap = 24;
+    const padding = 24;
+    
+    const newPositions: Record<string, MoodboardImagePosition> = {};
+    
+    data.images.forEach((img, index) => {
+      // Use saved position if available
+      if (positions[img.id]) {
+        newPositions[img.id] = positions[img.id];
+      } else {
+        // Calculate grid position to avoid overlap
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        newPositions[img.id] = {
+          x: padding + col * (imageWidth + gap),
+          y: padding + row * (imageHeight + gap),
+          zIndex: index + 1,
+        };
+      }
+    });
+    
+    return newPositions;
+  }, [data.images, positions]);
+
+  // Merge saved positions with initial positions
+  const currentPositions = useMemo(() => {
+    return { ...initialPositions, ...positions };
+  }, [initialPositions, positions]);
+
+  // Auto-save positions when they change
+  useEffect(() => {
+    if (Object.keys(positions).length > 0 && onDataChange) {
+      const timeoutId = setTimeout(() => {
+        onDataChange({
+          ...data,
+          freeformPositions: positions,
+        });
+      }, 300); // Debounce saves
+      return () => clearTimeout(timeoutId);
+    }
+  }, [positions, data, onDataChange]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent, imageId: string) => {
+    if (layoutMode !== "freeform") return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    setDraggingId(imageId);
+    setSelectedImage(imageId);
+    
+    // Bring to front
+    maxZIndexRef.current += 1;
+    setPositions(prev => ({
+      ...prev,
+      [imageId]: {
+        ...currentPositions[imageId],
+        zIndex: maxZIndexRef.current,
+      },
     }));
-  }, [data.images]);
+  }, [layoutMode, currentPositions]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!draggingId || !containerRef.current) return;
+    
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newX = e.clientX - containerRect.left - dragOffset.x;
+    const newY = e.clientY - containerRect.top - dragOffset.y;
+    
+    setPositions(prev => ({
+      ...prev,
+      [draggingId]: {
+        ...prev[draggingId],
+        x: Math.max(0, newX),
+        y: Math.max(0, newY),
+        zIndex: prev[draggingId]?.zIndex || maxZIndexRef.current,
+      },
+    }));
+  }, [draggingId, dragOffset]);
+
+  const handleMouseUp = useCallback(() => {
+    setDraggingId(null);
+  }, []);
+
+  // Handle mouse leave from container
+  const handleMouseLeave = useCallback(() => {
+    if (draggingId) {
+      setDraggingId(null);
+    }
+  }, [draggingId]);
 
   return (
     <div 
@@ -58,7 +158,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup }: MoodboardExpande
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                {data.label || "Moodboard"}
+                {data.label || "Moodboard"} ({data.images?.length || 0})
               </h2>
               <p className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 {data.images?.length || 0} images
@@ -173,15 +273,16 @@ export function MoodboardExpanded({ data, onClose, onUngroup }: MoodboardExpande
                   onClick={() => setSelectedImage(img.id === selectedImage ? null : img.id)}
                 >
                   <div 
-                    className="relative rounded-lg overflow-hidden transition-all duration-200"
+                    className="relative rounded-xl overflow-hidden transition-all duration-200"
                     style={{
-                      border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid #333333",
+                      border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid transparent",
                     }}
                   >
                     <img
                       src={img.url}
                       alt={img.fileName}
                       className="w-full h-auto object-contain"
+                      draggable={false}
                     />
                     
                     {/* Hover overlay */}
@@ -204,39 +305,52 @@ export function MoodboardExpanded({ data, onClose, onUngroup }: MoodboardExpande
           {/* Freeform Layout */}
           {layoutMode === "freeform" && (
             <div 
-              className="relative w-full"
-              style={{ minHeight: "600px" }}
+              ref={containerRef}
+              className="relative w-full select-none"
+              style={{ minHeight: "600px", cursor: draggingId ? "grabbing" : "default" }}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
             >
-              {data.images?.map((img, index) => {
-                const pos = freeformPositions[index];
+              {data.images?.map((img) => {
+                const pos = currentPositions[img.id] || { x: 0, y: 0, zIndex: 1 };
+                const isSelected = selectedImage === img.id;
+                const isDragging = draggingId === img.id;
+                
                 return (
                   <div
                     key={img.id}
-                    className="absolute cursor-pointer group transition-all duration-300 hover:z-10"
+                    className="absolute group"
                     style={{
-                      left: `${pos.x}%`,
-                      top: `${pos.y}%`,
-                      transform: `rotate(${pos.rotation}deg) scale(${pos.scale})`,
-                      maxWidth: "280px",
+                      left: pos.x,
+                      top: pos.y,
+                      zIndex: pos.zIndex,
+                      cursor: isDragging ? "grabbing" : "grab",
+                      transition: isDragging ? "none" : "box-shadow 0.2s ease",
                     }}
-                    onClick={() => setSelectedImage(img.id === selectedImage ? null : img.id)}
+                    onMouseDown={(e) => handleMouseDown(e, img.id)}
                   >
                     <div 
-                      className="relative rounded-lg overflow-hidden transition-all duration-200 shadow-xl group-hover:shadow-2xl"
+                      className="relative rounded-xl overflow-hidden transition-all duration-200"
                       style={{
-                        border: selectedImage === img.id ? "3px solid #ffffff" : "2px solid #333333",
-                        backgroundColor: "#1a1a1a",
+                        maxWidth: "220px",
+                        border: isSelected ? "2px solid #ffffff" : "none",
+                        boxShadow: isDragging 
+                          ? "0 20px 40px rgba(0,0,0,0.5)" 
+                          : "0 4px 12px rgba(0,0,0,0.3)",
+                        transform: isDragging ? "scale(1.02)" : "scale(1)",
                       }}
                     >
                       <img
                         src={img.url}
                         alt={img.fileName}
                         className="w-full h-auto object-contain"
+                        draggable={false}
                       />
                       
                       {/* Hover overlay */}
                       <div 
-                        className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
                         style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
                       >
                         <div className="p-3 w-full">
@@ -262,7 +376,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup }: MoodboardExpande
                   onClick={() => setSelectedImage(img.id === selectedImage ? null : img.id)}
                 >
                   <div 
-                    className="relative rounded-lg overflow-hidden transition-all duration-200 aspect-square"
+                    className="relative rounded-xl overflow-hidden transition-all duration-200 aspect-square"
                     style={{
                       border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid #333333",
                     }}
@@ -271,6 +385,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup }: MoodboardExpande
                       src={img.url}
                       alt={img.fileName}
                       className="w-full h-full object-cover"
+                      draggable={false}
                     />
                     
                     {/* Hover overlay */}

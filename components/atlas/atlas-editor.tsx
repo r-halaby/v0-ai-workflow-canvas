@@ -983,6 +983,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             data={moodboardNode.data as MoodboardNodeData}
             onClose={() => setExpandedMoodboardId(null)}
             onUngroup={handleUngroupMoodboard}
+            onDataChange={(newData) => {
+              setNodes(prevNodes => prevNodes.map(n => 
+                n.id === expandedMoodboardId 
+                  ? { ...n, data: newData }
+                  : n
+              ));
+            }}
           />
         );
       })()}

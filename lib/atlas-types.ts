@@ -353,6 +353,13 @@ export interface TeamHealthNodeData {
   lastUpdated: string;
 }
 
+// Moodboard image position for freeform layout
+export interface MoodboardImagePosition {
+  x: number; // pixel position from left
+  y: number; // pixel position from top
+  zIndex: number;
+}
+
 // Moodboard node data interface - groups multiple images together
 export interface MoodboardNodeData {
   label: string;
@@ -364,6 +371,7 @@ export interface MoodboardNodeData {
   }[];
   isExpanded: boolean;
   createdAt: string;
+  freeformPositions?: Record<string, MoodboardImagePosition>; // imageId -> position
 }
 
 // Atlas node type
