@@ -659,6 +659,14 @@ export interface PresentationGroup {
   label?: string;
 }
 
+// Presentation group node data
+export interface PresentationGroupNodeData {
+  label?: string;
+  nodeIds: string[];
+  thumbnails: string[]; // URLs of thumbnails for preview
+  [key: string]: unknown;
+}
+
 // Canvas interface
 export interface Canvas {
   id: string;

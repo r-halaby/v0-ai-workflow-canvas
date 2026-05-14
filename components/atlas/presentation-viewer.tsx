@@ -36,21 +36,16 @@ export function PresentationViewer({
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Slide can be either a single node or a group of nodes
-  type Slide = { type: 'single'; nodeId: string } | { type: 'group'; group: PresentationGroup };
+  type Slide = { type: 'single'; nodeId: string } | { type: 'group'; nodeIds: string[] };
 
-  // Build ordered slides from presentation edges and groups
+  // Build ordered slides from presentation edges
   const slides = React.useMemo<Slide[]>(() => {
     const result: Slide[] = [];
     
-    // Add grouped slides first
-    for (const group of presentationGroups) {
-      result.push({ type: 'group', group });
-    }
-    
-    // Get node IDs that are in groups
+    // Get node IDs that are in groups (from presentationGroups data)
     const groupedNodeIds = new Set(presentationGroups.flatMap(g => g.nodeIds));
     
-    // Build sequence from edges (excluding grouped nodes)
+    // Build sequence from edges
     if (presentationEdges.length > 0) {
       const sources = new Set(presentationEdges.map(e => e.source));
       const targets = new Set(presentationEdges.map(e => e.target));
@@ -80,16 +75,33 @@ export function PresentationViewer({
         currentId = nextEdge.target;
       }
 
-      // Add non-grouped nodes as single slides
+      // Add slides based on sequence
       for (const nodeId of sequence) {
-        if (!groupedNodeIds.has(nodeId)) {
+        // Skip nodes that are part of a group (they'll be shown via the group node)
+        if (groupedNodeIds.has(nodeId)) continue;
+        
+        // Check if this is a presentation group node
+        const node = nodes.find(n => n.id === nodeId);
+        if (node?.type === "presentationGroup") {
+          const groupData = node.data as { nodeIds?: string[] };
+          if (groupData.nodeIds && groupData.nodeIds.length > 0) {
+            result.push({ type: 'group', nodeIds: groupData.nodeIds });
+          }
+        } else {
           result.push({ type: 'single', nodeId });
         }
       }
     }
 
+    // If no edges but we have group nodes, add them as slides
+    if (presentationEdges.length === 0 && presentationGroups.length > 0) {
+      for (const group of presentationGroups) {
+        result.push({ type: 'group', nodeIds: group.nodeIds });
+      }
+    }
+
     return result;
-  }, [presentationEdges, presentationGroups]);
+  }, [presentationEdges, presentationGroups, nodes]);
 
   const currentSlide = slides[currentIndex];
   
@@ -100,7 +112,7 @@ export function PresentationViewer({
       const node = nodes.find(n => n.id === currentSlide.nodeId);
       return node ? [node] : [];
     } else {
-      return currentSlide.group.nodeIds
+      return currentSlide.nodeIds
         .map(id => nodes.find(n => n.id === id))
         .filter((n): n is Node => n !== undefined);
     }

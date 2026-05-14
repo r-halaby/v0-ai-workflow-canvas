@@ -767,17 +767,47 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const handleCreatePresentationGroup = useCallback((nodeIds: string[]) => {
     if (nodeIds.length < 2) return;
     
-    const groupId = `group-${Date.now()}`;
-    const newGroup = { id: groupId, nodeIds };
+    const groupId = `presentationGroup-${Date.now()}`;
     
-    setPresentationGroups(groups => [...groups, newGroup]);
+    // Get the selected nodes to extract thumbnails and calculate position
+    const selectedNodes = nodes.filter(n => nodeIds.includes(n.id));
     
-    // Deselect the nodes after grouping
-    setNodes(nds => nds.map(n => ({
-      ...n,
-      selected: nodeIds.includes(n.id) ? false : n.selected,
-    })));
-  }, [setNodes]);
+    // Calculate center position of selected nodes
+    const avgX = selectedNodes.reduce((sum, n) => sum + n.position.x, 0) / selectedNodes.length;
+    const avgY = selectedNodes.reduce((sum, n) => sum + n.position.y, 0) / selectedNodes.length;
+    
+    // Extract thumbnails from file nodes
+    const thumbnails = selectedNodes
+      .map(n => {
+        const fileData = n.data as { thumbnail?: string; uploadedFile?: { url?: string } };
+        return fileData.thumbnail || fileData.uploadedFile?.url || "";
+      })
+      .filter(url => url);
+    
+    // Create the presentation group node
+    const groupNode: AtlasNode = {
+      id: groupId,
+      type: "presentationGroup",
+      position: { x: avgX + 250, y: avgY }, // Position to the right of selected nodes
+      data: {
+        label: `Slide Group (${nodeIds.length} images)`,
+        nodeIds,
+        thumbnails,
+      },
+    };
+    
+    // Store the group data and add the node
+    setPresentationGroups(groups => [...groups, { id: groupId, nodeIds }]);
+    
+    // Add the group node and deselect the original nodes
+    setNodes(nds => [
+      ...nds.map(n => ({
+        ...n,
+        selected: false,
+      })),
+      groupNode,
+    ]);
+  }, [nodes, setNodes]);
 
   // Start presentation
   const handleStartPresentation = useCallback(() => {
