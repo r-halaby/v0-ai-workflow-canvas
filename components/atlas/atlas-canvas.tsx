@@ -123,10 +123,7 @@ export function AtlasCanvas({
       <ReactFlow
         nodes={filteredNodes}
         edges={styledEdges}
-        onNodesChange={(changes) => {
-          console.log("[v0] onNodesChange:", changes);
-          onNodesChange(changes);
-        }}
+        onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onPaneClick={handlePaneClick}
@@ -176,7 +173,7 @@ export function AtlasCanvas({
           animated: true,
         }}
         style={{ backgroundColor: "#0a0a0a" }}
-        panOnDrag={!commentMode}
+        panOnDrag={commentMode ? false : [1, 2]}
         zoomOnScroll={true}
         zoomOnPinch={true}
         zoomOnDoubleClick={false}
@@ -200,27 +197,30 @@ export function AtlasCanvas({
       </ReactFlow>
 
       {/* Comment Pins Layer */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="relative w-full h-full pointer-events-auto">
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
+        <div className="relative w-full h-full">
           {comments.map((comment) => (
-            <CommentPin
-              key={comment.id}
-              comment={comment}
-              isSelected={selectedCommentId === comment.id}
-              onSelect={() => onCommentSelect(comment.id)}
-              onUpdate={onCommentUpdate}
-              onDelete={() => onCommentDelete(comment.id)}
-              currentUser={currentUser}
-            />
+            <div key={comment.id} className="pointer-events-auto" style={{ position: "absolute", left: comment.position.x, top: comment.position.y }}>
+              <CommentPin
+                comment={comment}
+                isSelected={selectedCommentId === comment.id}
+                onSelect={() => onCommentSelect(comment.id)}
+                onUpdate={onCommentUpdate}
+                onDelete={() => onCommentDelete(comment.id)}
+                currentUser={currentUser}
+              />
+            </div>
           ))}
 
           {/* New comment input */}
           {newCommentPosition && (
-            <NewCommentInput
-              position={newCommentPosition}
-              onSubmit={(content) => onCommentAdd(content, newCommentPosition)}
-              onCancel={onCancelNewComment}
-            />
+            <div className="pointer-events-auto" style={{ position: "absolute", left: newCommentPosition.x, top: newCommentPosition.y }}>
+              <NewCommentInput
+                position={{ x: 0, y: 0 }}
+                onSubmit={(content) => onCommentAdd(content, newCommentPosition)}
+                onCancel={onCancelNewComment}
+              />
+            </div>
           )}
         </div>
       </div>

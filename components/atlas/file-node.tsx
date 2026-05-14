@@ -183,12 +183,7 @@ const STATUS_LABELS: Record<string, string> = {
   approved: "Approved",
 };
 
-interface FileNodeProps extends NodeProps<FileNodeData> {
-  data: FileNodeData;
-  selected?: boolean;
-}
-
-export function FileNode({ data, selected }: FileNodeProps) {
+export function FileNode({ data, selected }: NodeProps) {
   const [isTaskOpen, setIsTaskOpen] = useState(false);
   const [tasks, setTasks] = useState<TaskItem[]>(data.tasks || []);
   const [newTaskTitle, setNewTaskTitle] = useState("");

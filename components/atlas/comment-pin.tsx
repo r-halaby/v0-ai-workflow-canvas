@@ -74,10 +74,8 @@ export function CommentPin({ comment, isSelected, onSelect, onUpdate, onDelete, 
   return (
     <div
       data-comment-id={comment.id}
-      className="absolute z-30"
+      className="z-30"
       style={{
-        left: comment.position.x,
-        top: comment.position.y,
         transform: "translate(-50%, -50%)",
       }}
     >
@@ -304,10 +302,8 @@ export function NewCommentInput({ position, onSubmit, onCancel }: NewCommentInpu
 
   return (
     <div
-      className="absolute z-40"
+      className="z-40"
       style={{
-        left: position.x,
-        top: position.y,
         transform: "translate(-50%, -50%)",
       }}
       onClick={(e) => e.stopPropagation()}
