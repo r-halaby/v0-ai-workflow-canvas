@@ -193,12 +193,12 @@ export function FileNode({ data, selected }: NodeProps) {
         style={{
           background: "#141414",
           borderRadius: 12,
-          border: selected ? `2px solid ${productColor}` : "1px solid #2a2a2a",
+          border: "1px solid #2a2a2a",
           boxShadow: isHovered 
             ? "0 8px 32px rgba(0,0,0,0.4)" 
             : "0 2px 8px rgba(0,0,0,0.2)",
           overflow: "hidden",
-          transition: "box-shadow 0.2s ease, border 0.2s ease",
+          transition: "box-shadow 0.2s ease",
         }}
       >
         {/* Image Preview */}
