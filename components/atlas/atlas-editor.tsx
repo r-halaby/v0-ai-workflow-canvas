@@ -280,7 +280,6 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: "#0a0a0a" }}>
       <AtlasToolbar
-        onUploadClick={() => setShowUploadDialog(true)}
         canvasName={canvas.name}
         onBack={onBack}
       />
