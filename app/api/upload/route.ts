@@ -7,6 +7,29 @@ import { createClient } from "@/lib/supabase/server";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
+// Map file extensions to MIME types for proper Vercel Blob handling
+const EXTENSION_TO_MIME: Record<string, string> = {
+  // Design files
+  ".ai": "application/postscript",
+  ".psd": "image/vnd.adobe.photoshop",
+  ".fig": "application/octet-stream",
+  ".xd": "application/octet-stream",
+  ".sketch": "application/octet-stream",
+  // Images
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+  // Documents
+  ".pdf": "application/pdf",
+  // Video
+  ".mp4": "video/mp4",
+  ".mov": "video/quicktime",
+  ".webm": "video/webm",
+};
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -35,8 +58,10 @@ export async function POST(request: NextRequest) {
 
     // Upload to Vercel Blob (private store)
     const userPrefix = user?.id || "anonymous";
+    const contentType = EXTENSION_TO_MIME[extension] || file.type || "application/octet-stream";
     const blob = await put(`atlas/${userPrefix}/${Date.now()}-${fileName}`, file, {
       access: "private",
+      contentType,
     });
 
     // Save file metadata to Supabase if user is authenticated
