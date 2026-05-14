@@ -141,12 +141,17 @@ export interface FilterState {
   status: FileStatus | "all";
 }
 
-// Initial file nodes for the branding project
+// Initial file nodes for the branding project - Left to Right workflow
+// Column 1: Brand Guidelines (starting point)
+// Column 2: Logo Suite, Feedback Log
+// Column 3: Campaign Moodboard, Client Presentation
+// Column 4: Hero Photography, Social Templates
+// Column 5: Brand Video (final output)
 export const INITIAL_FILE_NODES: AtlasNode[] = [
   {
     id: "file-1",
     type: "file",
-    position: { x: 100, y: 100 },
+    position: { x: 50, y: 180 },
     data: {
       label: "Brand Guidelines",
       fileName: "Brand Guidelines.pdf",
@@ -170,7 +175,7 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
   {
     id: "file-2",
     type: "file",
-    position: { x: 400, y: 50 },
+    position: { x: 350, y: 50 },
     data: {
       label: "Logo Suite",
       fileName: "Logo Suite.ai",
@@ -191,9 +196,33 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
     },
   },
   {
+    id: "file-6",
+    type: "file",
+    position: { x: 350, y: 310 },
+    data: {
+      label: "Feedback Log",
+      fileName: "Feedback Log.pdf",
+      product: "sage",
+      status: "in-review",
+      fileExtension: ".pdf",
+      lastModified: "Updated 3 days ago",
+      tasks: [
+        { id: "t12", title: "Incorporate client notes", completed: false, assignee: WORKSPACE_MEMBERS[2] },
+        { id: "t13", title: "Archive resolved items", completed: true, assignee: WORKSPACE_MEMBERS[3] },
+        { id: "t14", title: "Schedule review meeting", completed: false },
+      ],
+      previewImages: [
+        "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=200&h=200&fit=crop",
+      ],
+    },
+  },
+  {
     id: "file-3",
     type: "file",
-    position: { x: 700, y: 150 },
+    position: { x: 650, y: 50 },
     data: {
       label: "Campaign Moodboard",
       fileName: "Campaign Moodboard.fig",
@@ -218,7 +247,7 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
   {
     id: "file-4",
     type: "file",
-    position: { x: 100, y: 350 },
+    position: { x: 650, y: 310 },
     data: {
       label: "Client Presentation",
       fileName: "Client Presentation.pptx",
@@ -241,7 +270,7 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
   {
     id: "file-5",
     type: "file",
-    position: { x: 1000, y: 200 },
+    position: { x: 950, y: 50 },
     data: {
       label: "Hero Photography",
       fileName: "Hero Photography.psd",
@@ -259,33 +288,9 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
     },
   },
   {
-    id: "file-6",
-    type: "file",
-    position: { x: 450, y: 400 },
-    data: {
-      label: "Feedback Log",
-      fileName: "Feedback Log.pdf",
-      product: "sage",
-      status: "in-review",
-      fileExtension: ".pdf",
-      lastModified: "Updated 3 days ago",
-      tasks: [
-        { id: "t12", title: "Incorporate client notes", completed: false, assignee: WORKSPACE_MEMBERS[2] },
-        { id: "t13", title: "Archive resolved items", completed: true, assignee: WORKSPACE_MEMBERS[3] },
-        { id: "t14", title: "Schedule review meeting", completed: false },
-      ],
-      previewImages: [
-        "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=200&h=200&fit=crop",
-        "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=200&h=200&fit=crop",
-        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=200&h=200&fit=crop",
-        "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=200&h=200&fit=crop",
-      ],
-    },
-  },
-  {
     id: "file-7",
     type: "file",
-    position: { x: 750, y: 450 },
+    position: { x: 950, y: 310 },
     data: {
       label: "Social Templates",
       fileName: "Social Templates.fig",
@@ -307,7 +312,7 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
   {
     id: "file-8",
     type: "file",
-    position: { x: 1050, y: 500 },
+    position: { x: 1250, y: 180 },
     data: {
       label: "Brand Video",
       fileName: "Brand Video.mp4",
@@ -329,14 +334,20 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
   },
 ];
 
-// Initial edges
+// Initial edges - Left to Right flow
 export const INITIAL_EDGES: Edge[] = [
+  // From Brand Guidelines to Column 2
   { id: "e1", source: "file-1", target: "file-2", type: "default", animated: true },
-  { id: "e2", source: "file-2", target: "file-3", type: "default", animated: true },
-  { id: "e3", source: "file-3", target: "file-5", type: "default", animated: true },
-  { id: "e4", source: "file-6", target: "file-3", type: "default", animated: true },
-  { id: "e5", source: "file-4", target: "file-1", type: "default", animated: true },
-  { id: "e6", source: "file-7", target: "file-3", type: "default", animated: true },
+  { id: "e2", source: "file-1", target: "file-6", type: "default", animated: true },
+  // From Column 2 to Column 3
+  { id: "e3", source: "file-2", target: "file-3", type: "default", animated: true },
+  { id: "e4", source: "file-6", target: "file-4", type: "default", animated: true },
+  // From Column 3 to Column 4
+  { id: "e5", source: "file-3", target: "file-5", type: "default", animated: true },
+  { id: "e6", source: "file-4", target: "file-7", type: "default", animated: true },
+  // From Column 4 to Brand Video
+  { id: "e7", source: "file-5", target: "file-8", type: "default", animated: true },
+  { id: "e8", source: "file-7", target: "file-8", type: "default", animated: true },
 ];
 
 // File type to category mapping
