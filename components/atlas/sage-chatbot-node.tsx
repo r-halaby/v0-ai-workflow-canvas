@@ -31,14 +31,28 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     }));
   }, [id, positionAbsoluteX, positionAbsoluteY]);
   
-  const chatHook = useChat({
-    api: "/api/sage",
+  const { messages, sendMessage, status } = useChat({
     id: `sage-${id}`,
     initialMessages: nodeData.messages?.map(m => ({
       id: m.id,
       role: m.role as "user" | "assistant",
       content: m.content,
     })) || [],
+    transport: {
+      send: async ({ messages: msgs }) => {
+        const response = await fetch("/api/sage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: msgs }),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to send message");
+        }
+        
+        return response;
+      },
+    },
     onToolCall: async ({ toolCall }) => {
       // Handle tool results from the AI
       const result = toolCall.args as SageAction;
@@ -53,17 +67,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     },
   });
   
-  const messages = chatHook.messages;
-  const isLoading = chatHook.status === "streaming" || chatHook.status === "submitted";
-  
-  // Create append function that works
-  const appendMessage = useCallback(async (message: { role: "user" | "assistant"; content: string }) => {
-    try {
-      await chatHook.append(message);
-    } catch (error) {
-      console.error("[v0] Error appending message:", error);
-    }
-  }, [chatHook]);
+  const isLoading = status === "streaming" || status === "submitted";
 
   // Handle creating pills from a suggestion
   const handleCreateFromSuggestion = useCallback(() => {
@@ -77,13 +81,19 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     }
   }, [pendingSuggestion, emitSageAction]);
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     if (!inputValue.trim() || isLoading) {
       return;
     }
-    appendMessage({ role: "user", content: inputValue });
+    const messageToSend = inputValue;
     setInputValue("");
-  }, [inputValue, isLoading, appendMessage]);
+    try {
+      await sendMessage({ role: "user", content: messageToSend });
+    } catch (error) {
+      console.error("[v0] Error sending message:", error);
+      setInputValue(messageToSend); // Restore input on error
+    }
+  }, [inputValue, isLoading, sendMessage]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     e.stopPropagation();
