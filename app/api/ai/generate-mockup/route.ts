@@ -18,12 +18,34 @@ export async function POST(request: Request) {
       // Build the message content
       const content: Array<{ type: "text"; text: string } | { type: "image"; image: URL }> = [];
       
-      // Add source image if provided
+      // Add source image if provided and valid
       if (sourceImageUrl) {
-        content.push({
-          type: "image",
-          image: new URL(sourceImageUrl),
-        });
+        try {
+          // Handle different URL formats
+          let imageUrl: URL;
+          if (sourceImageUrl.startsWith('data:')) {
+            // Skip data URLs for now - AI SDK may not support them directly as URL
+            // We'll just use the prompt without the source image
+          } else if (sourceImageUrl.startsWith('http://') || sourceImageUrl.startsWith('https://')) {
+            imageUrl = new URL(sourceImageUrl);
+            content.push({
+              type: "image",
+              image: imageUrl,
+            });
+          } else if (sourceImageUrl.startsWith('/')) {
+            // Relative URL - prepend the host
+            const host = request.headers.get('host') || 'localhost:3000';
+            const protocol = request.headers.get('x-forwarded-proto') || 'https';
+            imageUrl = new URL(sourceImageUrl, `${protocol}://${host}`);
+            content.push({
+              type: "image",
+              image: imageUrl,
+            });
+          }
+        } catch (urlError) {
+          console.error("Invalid source image URL:", sourceImageUrl, urlError);
+          // Continue without the source image rather than failing completely
+        }
       }
       
       content.push({

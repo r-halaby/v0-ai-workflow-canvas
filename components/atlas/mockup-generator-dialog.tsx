@@ -35,10 +35,16 @@ export function MockupGeneratorDialog({
   const [selectedMockups, setSelectedMockups] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
-  const sourceImageUrl = sourceFile.previewImages?.[0] || sourceFile.uploadedFile?.url;
+  const sourceImageUrl = sourceFile.uploadedFile?.url || sourceFile.previewImages?.[0];
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
+
+    // Validate source image URL
+    if (!sourceImageUrl) {
+      setError("No source image available. Please ensure the file has an uploaded image.");
+      return;
+    }
 
     setIsGenerating(true);
     setError(null);
