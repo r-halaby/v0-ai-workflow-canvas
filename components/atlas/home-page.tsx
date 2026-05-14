@@ -818,21 +818,17 @@ Recent Canvases
         onClick={() => setShowSageChat(!showSageChat)}
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 z-50"
         style={{
-          backgroundColor: showSageChat ? "#333333" : "#F0FE00",
+          backgroundColor: "#141414",
+          border: "1px solid #2a2a2a",
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
         }}
       >
         {showSageChat ? (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 6L6 18M6 6L18 18" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M18 6L6 18M6 6L18 18" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         ) : (
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M14 3C8.477 3 4 7.477 4 13C4 14.89 4.525 16.66 5.438 18.168L4 24L9.832 22.562C11.34 23.475 13.11 24 15 24C20.523 24 25 19.523 25 14C25 8.477 20.523 4 15 4" stroke="#121212" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="10" cy="13" r="1.5" fill="#121212"/>
-            <circle cx="14" cy="13" r="1.5" fill="#121212"/>
-            <circle cx="18" cy="13" r="1.5" fill="#121212"/>
-          </svg>
+          <img src="/sage-logo.svg" alt="Sage" className="w-7 h-7" />
         )}
       </button>
 
