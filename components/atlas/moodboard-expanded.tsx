@@ -369,9 +369,9 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
                     onMouseDown={(e) => handleMouseDown(e, img.id)}
                   >
                     <div 
-                      className="relative rounded-lg overflow-hidden"
+                      className="relative overflow-hidden"
                       style={{
-                        width: "180px",
+                        maxWidth: "200px",
                         border: isSelected ? "3px solid #ffffff" : "none",
                         boxShadow: isDragging 
                           ? "0 25px 50px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.4)" 
@@ -383,10 +383,6 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
                         alt={img.fileName}
                         className="w-full h-auto block"
                         draggable={false}
-                        style={{ 
-                          aspectRatio: "1 / 1",
-                          objectFit: "cover",
-                        }}
                       />
                       
                       {/* Hover overlay */}
