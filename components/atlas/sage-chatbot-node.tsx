@@ -31,7 +31,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     }));
   }, [id, positionAbsoluteX, positionAbsoluteY]);
   
-  const { messages, append, isLoading } = useChat({
+  const chatHook = useChat({
     api: "/api/sage",
     id: `sage-${id}`,
     initialMessages: nodeData.messages?.map(m => ({
@@ -52,6 +52,18 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
       }
     },
   });
+  
+  const messages = chatHook.messages;
+  const isLoading = chatHook.status === "streaming" || chatHook.status === "submitted";
+  
+  // Create append function that works
+  const appendMessage = useCallback(async (message: { role: "user" | "assistant"; content: string }) => {
+    try {
+      await chatHook.append(message);
+    } catch (error) {
+      console.error("[v0] Error appending message:", error);
+    }
+  }, [chatHook]);
 
   // Handle creating pills from a suggestion
   const handleCreateFromSuggestion = useCallback(() => {
@@ -66,29 +78,23 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
   }, [pendingSuggestion, emitSageAction]);
 
   const handleSend = useCallback(() => {
-    console.log("[v0] handleSend called, inputValue:", inputValue, "isLoading:", isLoading);
     if (!inputValue.trim() || isLoading) {
-      console.log("[v0] handleSend early return");
       return;
     }
-    console.log("[v0] Calling append with:", inputValue);
-    append({ role: "user", content: inputValue });
+    appendMessage({ role: "user", content: inputValue });
     setInputValue("");
-  }, [inputValue, isLoading, append]);
+  }, [inputValue, isLoading, appendMessage]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    console.log("[v0] handleKeyDown called, key:", e.key);
-    e.stopPropagation(); // Prevent React Flow from capturing the event
+    e.stopPropagation();
     if (e.key === "Enter" && !e.shiftKey) {
-      console.log("[v0] Enter pressed, calling handleSend");
       e.preventDefault();
       handleSend();
     }
   }, [handleSend]);
 
   const handleButtonClick = useCallback((e: React.MouseEvent) => {
-    console.log("[v0] handleButtonClick called");
-    e.stopPropagation(); // Prevent React Flow from capturing the event
+    e.stopPropagation();
     e.preventDefault();
     handleSend();
   }, [handleSend]);
