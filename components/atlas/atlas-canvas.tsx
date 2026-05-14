@@ -78,6 +78,9 @@ interface AtlasCanvasProps {
   onAddOperationalNode?: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onCreateMoodboard?: (nodeIds: string[]) => void;
   onMoodboardClick?: (nodeId: string) => void;
+  presentationMode?: boolean;
+  presentationEdges?: Edge[];
+  onPresentationConnect?: (connection: Connection) => void;
 }
 
 export function AtlasCanvas({
@@ -109,6 +112,9 @@ export function AtlasCanvas({
   onAddOperationalNode,
   onCreateMoodboard,
   onMoodboardClick,
+  presentationMode = false,
+  presentationEdges = [],
+  onPresentationConnect,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
@@ -382,19 +388,40 @@ export function AtlasCanvas({
     });
   }, [nodes, searchQuery]);
 
+  // Combine regular edges with presentation edges
+  const allEdges = useMemo(() => {
+    const presentationEdgeIds = new Set(presentationEdges.map(e => e.id));
+    // Filter out presentation edges from regular edges to avoid duplicates
+    const regularEdges = edges.filter(e => !presentationEdgeIds.has(e.id));
+    return [...regularEdges, ...presentationEdges];
+  }, [edges, presentationEdges]);
+
   // Style edges with dashed animation
   const styledEdges = useMemo(() => {
-    return edges.map((edge) => ({
-      ...edge,
-      style: {
-        ...edge.style,
-        strokeWidth: 2,
-        stroke: "#52525b",
-        strokeDasharray: "5 5",
-      },
-      animated: true,
-    }));
-  }, [edges]);
+    const presentationEdgeIds = new Set(presentationEdges.map(e => e.id));
+    return allEdges.map((edge) => {
+      const isPresentation = presentationEdgeIds.has(edge.id);
+      return {
+        ...edge,
+        style: {
+          ...edge.style,
+          strokeWidth: isPresentation ? 3 : 2,
+          stroke: isPresentation ? "#F0FE00" : "#52525b",
+          strokeDasharray: isPresentation ? "8 4" : "5 5",
+        },
+        animated: true,
+      };
+    });
+  }, [allEdges, presentationEdges]);
+
+  // Handle connect - route to presentation connect if in presentation mode
+  const handleConnect = useCallback((connection: Connection) => {
+    if (presentationMode && onPresentationConnect) {
+      onPresentationConnect(connection);
+    } else {
+      onConnect(connection);
+    }
+  }, [presentationMode, onPresentationConnect, onConnect]);
 
   const handlePaneClick = useCallback(() => {
     // Deselect comment when clicking on empty canvas
@@ -420,7 +447,7 @@ export function AtlasCanvas({
         edges={styledEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={handleConnect}
         onConnectStart={handleConnectStart}
         onConnectEnd={handleConnectEnd}
         onPaneClick={handlePaneClick}
@@ -624,6 +651,26 @@ export function AtlasCanvas({
               Create Moodboard ({selectedNodes.length} images)
             </span>
           </button>
+        </div>
+      )}
+
+      {/* Presentation Mode Indicator */}
+      {presentationMode && (
+        <div 
+          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-full flex items-center gap-2"
+          style={{ 
+            backgroundColor: "#F0FE00", 
+            color: "#121212",
+            fontFamily: "system-ui, Inter, sans-serif",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="3" width="16" height="11" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M7 17H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M10 14V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <span className="text-sm font-medium">Building Presentation</span>
+          <span className="text-xs opacity-70">Connect nodes to set slide order</span>
         </div>
       )}
     </div>

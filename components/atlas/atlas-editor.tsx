@@ -21,6 +21,7 @@ import { UploadDialog } from "./upload-dialog";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { MockupGeneratorDialog } from "./mockup-generator-dialog";
 import { MoodboardExpanded } from "./moodboard-expanded";
+import { PresentationViewer } from "./presentation-viewer";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -52,6 +53,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
   // Moodboard state
   const [expandedMoodboardId, setExpandedMoodboardId] = useState<string | null>(null);
+
+  // Presentation state
+  const [presentationMode, setPresentationMode] = useState(false);
+  const [presentationEdges, setPresentationEdges] = useState<Edge[]>([]);
+  const [isPresenting, setIsPresenting] = useState(false);
 
   // Listen for mockup generation events from file nodes
   useEffect(() => {
@@ -526,6 +532,39 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     [expandedMoodboardId, nodes, setNodes]
   );
 
+  // Handle presentation edge connection
+  const handlePresentationConnect = useCallback(
+    (connection: Connection) => {
+      if (!connection.source || !connection.target) return;
+      
+      const newEdge: Edge = {
+        id: `presentation-${connection.source}-${connection.target}`,
+        source: connection.source,
+        target: connection.target,
+        type: "default",
+      };
+      
+      setPresentationEdges(eds => [...eds, newEdge]);
+    },
+    []
+  );
+
+  // Start presentation
+  const handleStartPresentation = useCallback(() => {
+    if (presentationEdges.length > 0) {
+      setIsPresenting(true);
+    }
+  }, [presentationEdges]);
+
+  // Clear presentation edges when exiting presentation mode
+  const handlePresentationModeChange = useCallback((enabled: boolean) => {
+    setPresentationMode(enabled);
+    if (!enabled) {
+      // Optionally clear edges when exiting, or keep them
+      // setPresentationEdges([]);
+    }
+  }, []);
+
   const handleDoubleClickCanvas = useCallback(
     (position: { x: number; y: number }) => {
       const today = new Date();
@@ -799,6 +838,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onAddOperationalNode={handleAddOperationalNode}
           onCreateMoodboard={handleCreateMoodboard}
           onMoodboardClick={handleMoodboardClick}
+          presentationMode={presentationMode}
+          presentationEdges={presentationEdges}
+          onPresentationConnect={handlePresentationConnect}
         />
 
         <CanvasSideToolbar
@@ -812,6 +854,10 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           commentMode={commentMode}
           onCommentModeChange={handleCommentModeChange}
           commentCount={comments.filter(c => !c.resolved).length}
+          presentationMode={presentationMode}
+          onPresentationModeChange={handlePresentationModeChange}
+          onStartPresentation={handleStartPresentation}
+          presentationEdgeCount={presentationEdges.length}
         />
 
         
@@ -875,6 +921,18 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           />
         );
       })()}
+
+      {/* Presentation Viewer */}
+      {isPresenting && (
+        <PresentationViewer
+          nodes={nodes}
+          presentationEdges={presentationEdges}
+          onClose={() => {
+            setIsPresenting(false);
+            setPresentationMode(false);
+          }}
+        />
+      )}
     </div>
   );
 }

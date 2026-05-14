@@ -13,6 +13,10 @@ interface CanvasSideToolbarProps {
   commentMode: boolean;
   onCommentModeChange: (enabled: boolean) => void;
   commentCount: number;
+  presentationMode: boolean;
+  onPresentationModeChange: (enabled: boolean) => void;
+  onStartPresentation: () => void;
+  presentationEdgeCount: number;
 }
 
 export function CanvasSideToolbar({
@@ -26,6 +30,10 @@ export function CanvasSideToolbar({
   commentMode,
   onCommentModeChange,
   commentCount,
+  presentationMode,
+  onPresentationModeChange,
+  onStartPresentation,
+  presentationEdgeCount,
 }: CanvasSideToolbarProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -78,6 +86,49 @@ export function CanvasSideToolbar({
             style={{ backgroundColor: "#F0FE00", color: "#121212" }}
           >
             {commentCount}
+          </div>
+        )}
+      </div>
+
+      {/* Presentation Mode */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => {
+            if (presentationMode) {
+              // If in build mode and has edges, show options
+              if (presentationEdgeCount > 0) {
+                onStartPresentation();
+              } else {
+                onPresentationModeChange(false);
+              }
+            } else {
+              onPresentationModeChange(true);
+            }
+          }}
+          className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${
+            presentationMode ? "text-[#121212]" : "text-gray-400 hover:text-white hover:bg-white/10"
+          }`}
+          style={{
+            backgroundColor: presentationMode ? "#F0FE00" : "transparent",
+          }}
+          title={presentationMode ? (presentationEdgeCount > 0 ? "Start presentation" : "Exit presentation mode") : "Build presentation"}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="3" width="16" height="11" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M7 17H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M10 14V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M8 8L12 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
+        
+        {/* Presentation edge count badge */}
+        {presentationEdgeCount > 0 && presentationMode && (
+          <div
+            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-medium px-1"
+            style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+          >
+            {presentationEdgeCount}
           </div>
         )}
       </div>
