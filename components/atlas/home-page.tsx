@@ -383,7 +383,200 @@ Recent Canvases
           </div>
         </div>
 
-        {/* Project Grid */}
+        {/* Chaos Ribbon Module */}
+        <div className="px-6 pt-6">
+          <div
+            className="rounded-xl p-5"
+            style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3
+                  className="text-white font-semibold text-base"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Project Chaos Ribbon
+                </h3>
+                <p
+                  className="text-gray-500 text-sm mt-0.5"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Brand Refresh 2026 • Day 18 of 30
+                </p>
+              </div>
+              {/* Legend */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#4ADE80" }} />
+                  <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Smooth</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FCD34D" }} />
+                  <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Minor</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FB923C" }} />
+                  <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Moderate</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#F87171" }} />
+                  <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>High</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline Ribbon */}
+            <div className="relative mb-3">
+              {/* Today marker */}
+              <div className="absolute top-0 left-[60%] -translate-x-1/2 -translate-y-full pb-1">
+                <div
+                  className="px-2 py-0.5 rounded text-xs font-medium"
+                  style={{ backgroundColor: "#333333", color: "#ffffff", fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Today
+                </div>
+              </div>
+              
+              {/* Ribbon squares */}
+              <div className="flex gap-1 pt-6">
+                {/* Week 1 - mostly smooth */}
+                {[...Array(7)].map((_, i) => (
+                  <div
+                    key={`w1-${i}`}
+                    className="flex-1 h-8 rounded"
+                    style={{ backgroundColor: i < 5 ? "#4ADE80" : i === 5 ? "#FCD34D" : "#FB923C" }}
+                  />
+                ))}
+                {/* Week 2 - mixed */}
+                {[...Array(7)].map((_, i) => (
+                  <div
+                    key={`w2-${i}`}
+                    className="flex-1 h-8 rounded relative"
+                    style={{ backgroundColor: i < 2 ? "#FCD34D" : i < 4 ? "#FB923C" : i === 4 ? "#F87171" : "#FB923C" }}
+                  >
+                    {i === 2 && (
+                      <span className="absolute inset-0 flex items-center justify-center text-xs">$</span>
+                    )}
+                    {i === 3 && (
+                      <svg className="absolute inset-0 m-auto" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <circle cx="6" cy="6" r="4" stroke="#000" strokeWidth="1.5"/>
+                        <path d="M6 4V6.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    )}
+                  </div>
+                ))}
+                {/* Week 3 - current week with today marker */}
+                {[...Array(7)].map((_, i) => (
+                  <div
+                    key={`w3-${i}`}
+                    className={`flex-1 h-8 rounded relative ${i >= 4 ? "opacity-40" : ""}`}
+                    style={{ backgroundColor: i < 2 ? "#FB923C" : i === 2 ? "#FCD34D" : i === 3 ? "#4ADE80" : "#FCD34D" }}
+                  >
+                    {i === 3 && (
+                      <svg className="absolute inset-0 m-auto" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6C3 4 5 8 6 6C7 4 9 8 10 6" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    )}
+                    {i === 4 && (
+                      <svg className="absolute inset-0 m-auto" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <circle cx="6" cy="6" r="4" stroke="#000" strokeWidth="1.5"/>
+                        <path d="M6 4V6.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    )}
+                  </div>
+                ))}
+                {/* Week 4 - future (dimmed) */}
+                {[...Array(7)].map((_, i) => (
+                  <div
+                    key={`w4-${i}`}
+                    className="flex-1 h-8 rounded opacity-40"
+                    style={{ backgroundColor: i % 2 === 0 ? "#FCD34D" : "#FB923C" }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Week labels */}
+            <div className="flex text-xs text-gray-500 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <div className="flex-1">Week 1</div>
+              <div className="flex-1 text-center">Week 2</div>
+              <div className="flex-1 text-center">Week 3</div>
+              <div className="flex-1 text-right">Week 4</div>
+            </div>
+
+            {/* Today's Detail Card */}
+            <div
+              className="rounded-lg p-4"
+              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div
+                    className="text-xs font-medium text-gray-500 mb-1"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    Today
+                  </div>
+                  <div
+                    className="text-sm text-gray-400 mb-3"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    Moderate disruptions
+                  </div>
+
+                  {/* Blocker */}
+                  <div className="flex items-start gap-2 mb-3">
+                    <svg className="mt-0.5 text-red-400" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M8 5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+                    </svg>
+                    <div>
+                      <div
+                        className="text-red-400 font-medium text-sm"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Critical Blocker
+                      </div>
+                      <div
+                        className="text-white text-sm mt-0.5"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Stakeholder Approval Delayed - Out of Office
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="px-2 py-1 rounded text-xs font-medium"
+                      style={{ backgroundColor: "rgba(248, 113, 113, 0.2)", color: "#F87171" }}
+                    >
+                      Blocker
+                    </span>
+                    <span
+                      className="px-2 py-1 rounded text-xs font-medium"
+                      style={{ backgroundColor: "rgba(248, 113, 113, 0.2)", color: "#F87171" }}
+                    >
+                      High Severity
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  className="text-sm text-gray-400"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Phase Halted
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Canvas Grid */}
         <div className="flex-1 overflow-y-auto p-6">
           {filteredCanvases.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
