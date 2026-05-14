@@ -18,6 +18,7 @@ import { AtlasToolbar } from "./atlas-toolbar";
 import { CanvasSideToolbar } from "./canvas-side-toolbar";
 import { FileDetailModal } from "./file-detail-modal";
 import { UploadDialog } from "./upload-dialog";
+import { UploadProgress } from "./upload-progress";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { MockupGeneratorDialog } from "./mockup-generator-dialog";
 import { MoodboardExpanded } from "./moodboard-expanded";
@@ -38,6 +39,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Array<{
+    id: string;
+    fileName: string;
+    progress: number;
+    status: "uploading" | "complete" | "error";
+    error?: string;
+  }>>([]);
   const [searchQuery, setSearchQuery] = useState("");
   
   // Comment mode state
@@ -639,26 +647,61 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         previewUrl?: string;
       }> = [];
 
+      // Filter supported files first
+      const supportedFiles: File[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-
-        // Skip unsupported files
-        if (!SUPPORTED_EXTENSIONS.includes(extension as FileExtension)) {
-          continue;
+        if (SUPPORTED_EXTENSIONS.includes(extension as FileExtension)) {
+          supportedFiles.push(file);
         }
+      }
+
+      if (supportedFiles.length === 0) return;
+
+      // Initialize upload progress for all files
+      const initialProgress = supportedFiles.map((file, index) => ({
+        id: `upload-${Date.now()}-${index}`,
+        fileName: file.name,
+        progress: 0,
+        status: "uploading" as const,
+      }));
+      setUploadProgress(initialProgress);
+
+      for (let i = 0; i < supportedFiles.length; i++) {
+        const file = supportedFiles[i];
+        const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+        const uploadId = initialProgress[i].id;
+
+        // Update progress to show we're starting this file
+        setUploadProgress(prev => prev.map(p => 
+          p.id === uploadId ? { ...p, progress: 10 } : p
+        ));
 
         try {
           const formData = new FormData();
           formData.append("file", file);
+
+          // Update to 30% when starting upload
+          setUploadProgress(prev => prev.map(p => 
+            p.id === uploadId ? { ...p, progress: 30 } : p
+          ));
 
           const response = await fetch("/api/upload", {
             method: "POST",
             body: formData,
           });
 
+          // Update to 70% after response received
+          setUploadProgress(prev => prev.map(p => 
+            p.id === uploadId ? { ...p, progress: 70 } : p
+          ));
+
           if (!response.ok) {
-            console.error("Upload failed for", file.name);
+            const errorText = await response.text();
+            setUploadProgress(prev => prev.map(p => 
+              p.id === uploadId ? { ...p, status: "error", error: errorText || "Upload failed" } : p
+            ));
             continue;
           }
 
@@ -678,8 +721,16 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             },
             previewUrl: isImage ? servedUrl : undefined,
           });
+
+          // Mark as complete
+          setUploadProgress(prev => prev.map(p => 
+            p.id === uploadId ? { ...p, progress: 100, status: "complete" } : p
+          ));
         } catch (error) {
           console.error("Error uploading file:", file.name, error);
+          setUploadProgress(prev => prev.map(p => 
+            p.id === uploadId ? { ...p, status: "error", error: "Upload failed" } : p
+          ));
         }
       }
 
@@ -869,6 +920,12 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
         
       </div>
+
+      {/* Upload Progress Indicator */}
+      <UploadProgress 
+        uploads={uploadProgress} 
+        onDismiss={() => setUploadProgress([])} 
+      />
 
       {/* Upload Dialog */}
       <UploadDialog
