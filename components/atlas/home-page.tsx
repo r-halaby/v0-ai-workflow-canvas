@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasTemplate, TemplateCategory } from "@/lib/atlas-types";
+import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasTemplate, TemplateCategory, Project } from "@/lib/atlas-types";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
-import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_TEMPLATES, TEMPLATE_CATEGORIES } from "@/lib/atlas-types";
+import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_TEMPLATES, TEMPLATE_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
 import "@xyflow/react/dist/style.css";
@@ -178,8 +178,14 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
   const [showNewCanvasDialog, setShowNewCanvasDialog] = useState(false);
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [newCanvasName, setNewCanvasName] = useState("");
   const [newCanvasVisibility, setNewCanvasVisibility] = useState<CanvasVisibility>("workspace");
+  const [newCanvasProjectId, setNewCanvasProjectId] = useState<string | undefined>(undefined);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLORS[0]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [showSageChat, setShowSageChat] = useState(false);
   const [sageMessage, setSageMessage] = useState("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -275,6 +281,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
     const newCanvas: Canvas = {
       id: `canvas-${Date.now()}`,
       name: newCanvasName.trim(),
+      projectId: newCanvasProjectId,
       nodes: [],
       edges: [],
       createdAt: new Date().toISOString(),
@@ -287,7 +294,41 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
     onCanvasesChange([...canvases, newCanvas]);
     setShowNewCanvasDialog(false);
     setNewCanvasName("");
+    setNewCanvasProjectId(undefined);
     onOpenCanvas(newCanvas.id);
+  };
+
+  const handleCreateProject = () => {
+    if (!newProjectName.trim()) return;
+
+    const newProject: Project = {
+      id: `project-${Date.now()}`,
+      name: newProjectName.trim(),
+      color: newProjectColor,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: workspaceSettings.members[0],
+      isExpanded: true,
+    };
+
+    setProjects([...projects, newProject]);
+    setShowNewProjectDialog(false);
+    setNewProjectName("");
+    setNewProjectColor(PROJECT_COLORS[0]);
+  };
+
+  const toggleProjectExpanded = (projectId: string) => {
+    setProjects(projects.map(p => 
+      p.id === projectId ? { ...p, isExpanded: !p.isExpanded } : p
+    ));
+  };
+
+  const getProjectCanvases = (projectId: string) => {
+    return canvases.filter(c => c.projectId === projectId);
+  };
+
+  const getUngroupedCanvases = () => {
+    return canvases.filter(c => !c.projectId);
   };
 
   const toggleFavorite = (canvasId: string) => {
@@ -494,13 +535,70 @@ const deleteCanvas = (canvasId: string) => {
             </div>
           )}
 
-          {/* Recent Projects */}
+          {/* Projects Section */}
+          {projects.length > 0 && (
+            <div className="mb-6">
+              <div
+                className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Projects
+              </div>
+              <div className="space-y-1">
+                {projects.map((project) => (
+                  <div key={project.id}>
+                    <button
+                      type="button"
+                      onClick={() => toggleProjectExpanded(project.id)}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <svg 
+                        width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
+                        className={`transition-transform ${project.isExpanded ? "rotate-90" : ""}`}
+                      >
+                        <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <div
+                        className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      <span className="truncate flex-1 text-left">{project.name}</span>
+                      <span className="text-xs text-gray-600">{getProjectCanvases(project.id).length}</span>
+                    </button>
+                    {project.isExpanded && (
+                      <div className="ml-4 space-y-0.5">
+                        {getProjectCanvases(project.id).map((canvas) => (
+                          <button
+                            key={canvas.id}
+                            type="button"
+                            onClick={() => onOpenCanvas(canvas.id)}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:text-white hover:bg-white/5 transition-colors truncate"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            <span className="truncate">{canvas.name}</span>
+                          </button>
+                        ))}
+                        {getProjectCanvases(project.id).length === 0 && (
+                          <div className="px-3 py-1.5 text-xs text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            No canvases
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recent Canvases */}
           <div className="mb-6">
             <div
               className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-Recent Canvases
+              Recent Canvases
             </div>
             <div className="space-y-1">
               {recentCanvases.length === 0 ? (
@@ -690,19 +788,80 @@ Recent Canvases
               Invite
             </button>
 
-            {/* New Project */}
-            <button
-              type="button"
-              onClick={() => setShowNewCanvasDialog(true)}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: "#F0FE00",
-                color: "#121212",
-                fontFamily: "system-ui, Inter, sans-serif",
-              }}
-            >
-              New canvas
-            </button>
+            {/* Create New Button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowCreateMenu(!showCreateMenu)}
+                className="w-10 h-10 rounded-lg flex items-center justify-center text-[#121212] transition-colors hover:opacity-90"
+                style={{ backgroundColor: "#F0FE00" }}
+                title="Create new"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+
+              {/* Create Dropdown */}
+              {showCreateMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowCreateMenu(false)}
+                  />
+                  <div
+                    className="absolute right-0 top-full mt-2 py-2 rounded-xl shadow-xl z-50 min-w-[200px]"
+                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        setShowNewProjectDialog(true);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: "#252525" }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M2 4.5C2 3.67157 2.67157 3 3.5 3H5.5L7 5H12.5C13.3284 5 14 5.67157 14 6.5V11.5C14 12.3284 13.3284 13 12.5 13H3.5C2.67157 13 2 12.3284 2 11.5V4.5Z" stroke="#F0FE00" strokeWidth="1.5"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="font-medium">New Project</div>
+                        <div className="text-xs text-gray-500">Group canvases together</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        setShowNewCanvasDialog(true);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: "#252525" }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="2" y="2" width="12" height="12" rx="2" stroke="#3B82F6" strokeWidth="1.5"/>
+                          <path d="M5.5 8H10.5M8 5.5V10.5" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="font-medium">New Canvas</div>
+                        <div className="text-xs text-gray-500">Create a blank canvas</div>
+                      </div>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1401,6 +1560,35 @@ Recent Canvases
                 />
               </div>
 
+              {/* Project Selection */}
+              {projects.length > 0 && (
+                <div>
+                  <label
+                    className="block text-xs text-gray-500 mb-1.5"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    Project (Optional)
+                  </label>
+                  <select
+                    value={newCanvasProjectId || ""}
+                    onChange={(e) => setNewCanvasProjectId(e.target.value || undefined)}
+                    className="w-full px-3 py-2.5 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30 appearance-none cursor-pointer"
+                    style={{
+                      backgroundColor: "#0a0a0a",
+                      border: "1px solid #333333",
+                      fontFamily: "system-ui, Inter, sans-serif",
+                    }}
+                  >
+                    <option value="">No project</option>
+                    {projects.map(project => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label
                   className="block text-xs text-gray-500 mb-1.5"
@@ -1465,6 +1653,110 @@ Recent Canvases
                 }}
               >
                 Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Project Dialog */}
+      {showNewProjectDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setShowNewProjectDialog(false)}
+          />
+          <div
+            className="relative w-full max-w-md rounded-xl p-6"
+            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2
+                className="text-lg font-semibold text-white"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                New Project
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowNewProjectDialog(false)}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label
+                  className="block text-xs text-gray-500 mb-1.5"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Project Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="My Project"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateProject()}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30"
+                  style={{
+                    backgroundColor: "#0a0a0a",
+                    border: "1px solid #333333",
+                    fontFamily: "system-ui, Inter, sans-serif",
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label
+                  className="block text-xs text-gray-500 mb-1.5"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Color
+                </label>
+                <div className="flex gap-2 flex-wrap">
+                  {PROJECT_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setNewProjectColor(color)}
+                      className="w-8 h-8 rounded-lg transition-all"
+                      style={{
+                        backgroundColor: color,
+                        border: newProjectColor === color ? "2px solid white" : "2px solid transparent",
+                        transform: newProjectColor === color ? "scale(1.1)" : "scale(1)",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowNewProjectDialog(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateProject}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: "#F0FE00",
+                  color: "#121212",
+                  fontFamily: "system-ui, Inter, sans-serif",
+                }}
+              >
+                Create Project
               </button>
             </div>
           </div>

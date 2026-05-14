@@ -618,12 +618,37 @@ export interface CommentReply {
 // Canvas visibility type
 export type CanvasVisibility = "workspace" | "private";
 
+// Project interface for grouping canvases
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  color: string; // Accent color for the project
+  createdAt: string;
+  updatedAt: string;
+  createdBy: WorkspaceMember;
+  isExpanded: boolean; // For UI collapse state
+}
+
+// Project colors
+export const PROJECT_COLORS = [
+  "#F0FE00", // Yellow (default)
+  "#3B82F6", // Blue
+  "#10B981", // Green
+  "#F59E0B", // Orange
+  "#EF4444", // Red
+  "#8B5CF6", // Purple
+  "#EC4899", // Pink
+  "#06B6D4", // Cyan
+];
+
 // Canvas interface
 export interface Canvas {
   id: string;
   name: string;
   description?: string;
   previewImage?: string;
+  projectId?: string; // Optional project grouping
   nodes: AtlasNode[];
   edges: Edge[];
   comments: CanvasComment[];
