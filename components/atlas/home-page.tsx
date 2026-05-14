@@ -9,7 +9,7 @@ import { FileNode } from "./file-node";
 import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "favorites" | "workspace" | "private";
-type HomeView = "canvases" | "community" | "workspace-canvas";
+type HomeView = "home" | "canvases" | "favorites" | "community" | "workspace-canvas";
 
 const nodeTypes = { fileNode: FileNode };
 
@@ -109,7 +109,7 @@ interface HomePageProps {
 export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvasesChange }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
-  const [activeView, setActiveView] = useState<HomeView>("canvases");
+  const [activeView, setActiveView] = useState<HomeView>("home");
   const [showNewCanvasDialog, setShowNewCanvasDialog] = useState(false);
   const [newCanvasName, setNewCanvasName] = useState("");
   const [newCanvasVisibility, setNewCanvasVisibility] = useState<CanvasVisibility>("workspace");
@@ -174,8 +174,8 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
   const filteredCanvases = useMemo(() => {
     let filtered = canvases;
 
-    // Apply sidebar filter
-    if (sidebarFilter === "favorites") {
+    // Apply view/sidebar filter
+    if (activeView === "favorites" || sidebarFilter === "favorites") {
       filtered = filtered.filter((c) => c.isFavorite);
     } else if (sidebarFilter === "workspace") {
       filtered = filtered.filter((c) => c.visibility === "workspace");
@@ -194,7 +194,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
     }
 
     return filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  }, [canvases, sidebarFilter, searchQuery]);
+  }, [canvases, sidebarFilter, searchQuery, activeView]);
 
   const handleCreateCanvas = () => {
     if (!newCanvasName.trim()) return;
@@ -273,9 +273,23 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
           <nav className="space-y-1 mb-6">
             <button
               type="button"
+              onClick={() => setActiveView("home")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                activeView === "home" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2.25 6.75L9 2.25L15.75 6.75V14.25C15.75 14.6478 15.592 15.0294 15.3107 15.3107C15.0294 15.592 14.6478 15.75 14.25 15.75H3.75C3.35218 15.75 2.97064 15.592 2.68934 15.3107C2.40804 15.0294 2.25 14.6478 2.25 14.25V6.75Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6.75 15.75V9H11.25V15.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Home
+            </button>
+            <button
+              type="button"
               onClick={() => { setSidebarFilter("all"); setActiveView("canvases"); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                sidebarFilter === "all" && activeView === "canvases" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "canvases" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -289,9 +303,9 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
             </button>
             <button
               type="button"
-              onClick={() => { setSidebarFilter("favorites"); setActiveView("canvases"); }}
+              onClick={() => { setSidebarFilter("favorites"); setActiveView("favorites"); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                sidebarFilter === "favorites" && activeView === "canvases" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "favorites" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -390,10 +404,11 @@ Recent Canvases
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                <rect x="10" y="2" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                <rect x="2" y="10" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                <rect x="10" y="10" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                <ellipse cx="9" cy="9" rx="3" ry="7" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M2 9H16" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M3.5 5H14.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M3.5 13H14.5" stroke="currentColor" strokeWidth="1.5"/>
               </svg>
               All Workspace
             </button>
@@ -468,14 +483,11 @@ Recent Canvases
             className="text-lg font-medium text-white"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
-            {activeView === "community" ? "Community" : activeView === "workspace-canvas" ? "All Workspace" : (
-              <>
-                {sidebarFilter === "all" && "All"}
-                {sidebarFilter === "favorites" && "Favorites"}
-                {sidebarFilter === "workspace" && "Workspace"}
-                {sidebarFilter === "private" && "Private"}
-              </>
-            )}
+            {activeView === "home" && "Home"}
+            {activeView === "canvases" && "All Canvases"}
+            {activeView === "favorites" && "Favorites"}
+            {activeView === "community" && "Community"}
+            {activeView === "workspace-canvas" && "All Workspace"}
           </div>
 
           <div className="flex items-center gap-3">
@@ -607,9 +619,9 @@ Recent Canvases
               />
             </ReactFlowProvider>
           </div>
-        ) : (
+        ) : activeView === "home" ? (
           <>
-            {/* Chaos Ribbon Module */}
+            {/* Chaos Ribbon Module - Only on Home view */}
             <div className="px-6 pt-6">
           <div
             className="rounded-xl p-5"
@@ -912,7 +924,118 @@ Recent Canvases
           )}
         </div>
           </>
-        )}
+        ) : (activeView === "canvases" || activeView === "favorites") ? (
+          /* Canvas Grid Only - No Chaos Ribbon */
+          <div className="flex-1 overflow-y-auto p-6">
+          {filteredCanvases.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredCanvases.map((canvas) => (
+                <div
+                  key={canvas.id}
+                  onClick={() => onOpenCanvas(canvas.id)}
+                  className="group cursor-pointer rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
+                  style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                >
+                  {/* Preview */}
+                  <div className="aspect-video relative overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
+                    {canvas.previewImage ? (
+                      <img
+                        src={canvas.previewImage}
+                        alt={canvas.name}
+                        className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="8" y="8" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
+                          <rect x="26" y="8" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
+                          <rect x="8" y="26" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
+                          <rect x="26" y="26" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
+                        </svg>
+                      </div>
+                    )}
+                    {/* Favorite button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(canvas.id);
+                      }}
+                      className="absolute top-2 right-2 p-1.5 rounded-lg transition-opacity opacity-0 group-hover:opacity-100"
+                      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 18 18"
+                        fill={canvas.isFavorite ? "#F0FE00" : "none"}
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z"
+                          stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"}
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-3">
+                    <div
+                      className="text-white font-medium text-sm truncate"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      {canvas.name}
+                    </div>
+                    <div
+                      className="text-gray-500 text-xs mt-1"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      Edited {formatDate(canvas.updatedAt)} by {canvas.createdBy.name.split(" ")[0]} {canvas.createdBy.name.split(" ")[1]?.charAt(0)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center py-20">
+              <div
+                className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+              >
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="4" y="4" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+                  <rect x="18" y="4" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+                  <rect x="4" y="18" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+                  <rect x="18" y="18" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+                </svg>
+              </div>
+              <p
+                className="text-gray-500 text-sm mb-4"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                {activeView === "favorites" ? "No favorite canvases yet" : "No canvases yet"}
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowNewCanvasDialog(true)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: "#F0FE00",
+                  color: "#121212",
+                  fontFamily: "system-ui, Inter, sans-serif",
+                }}
+              >
+                New canvas
+              </button>
+            </div>
+          )}
+        </div>
+        ) : null}
       </div>
 
       {/* New Canvas Dialog */}
