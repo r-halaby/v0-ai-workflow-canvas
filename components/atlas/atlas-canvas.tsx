@@ -351,34 +351,47 @@ export function AtlasCanvas({
 
   const handleSelectionEnd = useCallback(() => {
     if (isSelecting && selectionStart && selectionCurrent) {
-      // Calculate selection box bounds
-      const left = Math.min(selectionStart.x, selectionCurrent.x);
-      const right = Math.max(selectionStart.x, selectionCurrent.x);
-      const top = Math.min(selectionStart.y, selectionCurrent.y);
-      const bottom = Math.max(selectionStart.y, selectionCurrent.y);
+      // Calculate selection box bounds in screen coordinates
+      const selLeft = Math.min(selectionStart.x, selectionCurrent.x);
+      const selRight = Math.max(selectionStart.x, selectionCurrent.x);
+      const selTop = Math.min(selectionStart.y, selectionCurrent.y);
+      const selBottom = Math.max(selectionStart.y, selectionCurrent.y);
 
       // Find nodes within selection box
       const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-      if (bounds) {
+      if (bounds && reactFlowInstance) {
         const selectedNodeIds = nodes.filter(node => {
           // Get node position in screen coordinates
-          const nodePos = reactFlowInstance.flowToScreenPosition(node.position);
-          return (
-            nodePos.x >= left - bounds.left &&
-            nodePos.x <= right - bounds.left &&
-            nodePos.y >= top - bounds.top &&
-            nodePos.y <= bottom - bounds.top
+          const nodeScreenPos = reactFlowInstance.flowToScreenPosition(node.position);
+          
+          // Estimate node dimensions (default file node size)
+          const nodeWidth = 220;
+          const nodeHeight = 180;
+          const zoom = reactFlowInstance.getZoom();
+          
+          // Calculate node bounds in screen space
+          const nodeLeft = nodeScreenPos.x;
+          const nodeRight = nodeScreenPos.x + nodeWidth * zoom;
+          const nodeTop = nodeScreenPos.y;
+          const nodeBottom = nodeScreenPos.y + nodeHeight * zoom;
+          
+          // Check if node intersects with selection box
+          const intersects = !(
+            nodeRight < selLeft ||
+            nodeLeft > selRight ||
+            nodeBottom < selTop ||
+            nodeTop > selBottom
           );
+          
+          return intersects;
         }).map(n => n.id);
 
         // Select the nodes in ReactFlow
-        if (selectedNodeIds.length > 0) {
-          const updatedNodes = nodes.map(node => ({
-            ...node,
-            selected: selectedNodeIds.includes(node.id),
-          }));
-          onNodesUpdate(updatedNodes);
-        }
+        const updatedNodes = nodes.map(node => ({
+          ...node,
+          selected: selectedNodeIds.includes(node.id),
+        }));
+        onNodesUpdate(updatedNodes);
       }
     }
     setIsSelecting(false);
