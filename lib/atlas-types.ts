@@ -664,6 +664,150 @@ export const INITIAL_COMMENTS: CanvasComment[] = [
   },
 ];
 
+// Template category types
+export type TemplateCategory = "workflow" | "branding" | "marketing" | "social" | "presentation" | "other";
+
+// Template interface
+export interface CanvasTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: TemplateCategory;
+  previewImage?: string;
+  nodes: AtlasNode[];
+  edges: Edge[];
+  createdAt: string;
+  createdBy: WorkspaceMember;
+  upvotes: number;
+  upvotedBy: string[]; // Array of user IDs who upvoted
+  downloads: number;
+  tags: string[];
+}
+
+// Template categories with labels
+export const TEMPLATE_CATEGORIES: Record<TemplateCategory, { label: string; icon: string }> = {
+  workflow: { label: "Workflow", icon: "flow" },
+  branding: { label: "Branding", icon: "palette" },
+  marketing: { label: "Marketing", icon: "megaphone" },
+  social: { label: "Social Media", icon: "share" },
+  presentation: { label: "Presentation", icon: "slides" },
+  other: { label: "Other", icon: "grid" },
+};
+
+// Sample community templates
+export const SAMPLE_TEMPLATES: CanvasTemplate[] = [
+  {
+    id: "template-1",
+    name: "Brand Identity Kit",
+    description: "Complete brand identity workflow with logo variations, color palettes, and typography guidelines.",
+    category: "branding",
+    previewImage: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&h=400&fit=crop",
+    nodes: [],
+    edges: [],
+    createdAt: "2026-04-15T10:00:00Z",
+    createdBy: {
+      id: "user-community-1",
+      name: "Sarah Chen",
+      email: "sarah@example.com",
+      initials: "SC",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+      role: "Designer",
+    },
+    upvotes: 234,
+    upvotedBy: [],
+    downloads: 1205,
+    tags: ["branding", "identity", "logo", "colors"],
+  },
+  {
+    id: "template-2",
+    name: "Social Campaign Planner",
+    description: "Plan and organize your social media campaigns with this visual workflow template.",
+    category: "social",
+    previewImage: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=400&fit=crop",
+    nodes: [],
+    edges: [],
+    createdAt: "2026-04-20T14:30:00Z",
+    createdBy: {
+      id: "user-community-2",
+      name: "Marcus Johnson",
+      email: "marcus@example.com",
+      initials: "MJ",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
+      role: "Marketing Lead",
+    },
+    upvotes: 189,
+    upvotedBy: [],
+    downloads: 892,
+    tags: ["social", "campaign", "planning", "content"],
+  },
+  {
+    id: "template-3",
+    name: "Product Launch Workflow",
+    description: "End-to-end product launch planning with milestones, assets, and team coordination.",
+    category: "workflow",
+    previewImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop",
+    nodes: [],
+    edges: [],
+    createdAt: "2026-05-01T09:00:00Z",
+    createdBy: {
+      id: "user-community-3",
+      name: "Emily Park",
+      email: "emily@example.com",
+      initials: "EP",
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
+      role: "Product Manager",
+    },
+    upvotes: 312,
+    upvotedBy: [],
+    downloads: 1567,
+    tags: ["launch", "product", "workflow", "planning"],
+  },
+  {
+    id: "template-4",
+    name: "Marketing Brief Template",
+    description: "Structured creative brief template for marketing campaigns with stakeholder sections.",
+    category: "marketing",
+    previewImage: "https://images.unsplash.com/photo-1553028826-f4804a6dba3b?w=600&h=400&fit=crop",
+    nodes: [],
+    edges: [],
+    createdAt: "2026-05-05T11:00:00Z",
+    createdBy: {
+      id: "user-community-4",
+      name: "David Kim",
+      email: "david@example.com",
+      initials: "DK",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
+      role: "Creative Director",
+    },
+    upvotes: 156,
+    upvotedBy: [],
+    downloads: 734,
+    tags: ["brief", "marketing", "creative", "campaign"],
+  },
+  {
+    id: "template-5",
+    name: "Pitch Deck Builder",
+    description: "Visual canvas for building compelling pitch decks with story flow and slide planning.",
+    category: "presentation",
+    previewImage: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=400&fit=crop",
+    nodes: [],
+    edges: [],
+    createdAt: "2026-05-08T16:00:00Z",
+    createdBy: {
+      id: "user-community-5",
+      name: "Lisa Wang",
+      email: "lisa@example.com",
+      initials: "LW",
+      avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&h=100&fit=crop",
+      role: "Founder",
+    },
+    upvotes: 278,
+    upvotedBy: [],
+    downloads: 1123,
+    tags: ["pitch", "deck", "presentation", "startup"],
+  },
+];
+
 // Initial canvases
 export const INITIAL_CANVASES: Canvas[] = [
   {

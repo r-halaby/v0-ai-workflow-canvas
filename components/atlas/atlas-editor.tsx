@@ -12,7 +12,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasTemplate } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -24,22 +24,25 @@ import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { MockupGeneratorDialog } from "./mockup-generator-dialog";
 import { MoodboardExpanded } from "./moodboard-expanded";
 import { PresentationViewer } from "./presentation-viewer";
+import { SaveTemplateDialog } from "./save-template-dialog";
 
 interface AtlasEditorProps {
   canvas: Canvas;
   onCanvasChange: (canvas: Canvas) => void;
+  onSaveTemplate?: (template: CanvasTemplate) => void;
   onBack: () => void;
   workspaceSettings: WorkspaceSettings;
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
 }
 
-function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange }: AtlasEditorProps) {
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveTemplate }: AtlasEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Array<{
     id: string;
     fileName: string;
@@ -844,6 +847,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         canvasName={canvas.name}
         onBack={onBack}
         onCanvasNameChange={(name) => onCanvasChange({ ...canvas, name })}
+        onSaveAsTemplate={() => setShowSaveTemplateDialog(true)}
       />
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
@@ -925,6 +929,18 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         onClose={() => setShowSettingsDialog(false)}
         settings={workspaceSettings}
         onSettingsChange={onWorkspaceSettingsChange}
+      />
+
+      {/* Save as Template Dialog */}
+      <SaveTemplateDialog
+        open={showSaveTemplateDialog}
+        onClose={() => setShowSaveTemplateDialog(false)}
+        canvas={canvas}
+        currentUser={workspaceSettings.members[0]}
+        onSaveTemplate={(template) => {
+          onSaveTemplate?.(template);
+          setShowSaveTemplateDialog(false);
+        }}
       />
 
       {/* File Detail Modal */}

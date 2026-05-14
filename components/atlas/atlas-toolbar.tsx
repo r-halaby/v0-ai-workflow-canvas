@@ -6,12 +6,26 @@ interface AtlasToolbarProps {
   canvasName?: string;
   onBack?: () => void;
   onCanvasNameChange?: (name: string) => void;
+  onSaveAsTemplate?: () => void;
 }
 
-export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange }: AtlasToolbarProps) {
+export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange, onSaveAsTemplate }: AtlasToolbarProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(canvasName || "");
+  const [showMenu, setShowMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -81,6 +95,59 @@ export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange }: AtlasTo
               {canvasName}
             </button>
           )}
+
+          {/* Canvas Menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8" cy="3" r="1.5" fill="currentColor"/>
+                <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+                <circle cx="8" cy="13" r="1.5" fill="currentColor"/>
+              </svg>
+            </button>
+
+            {showMenu && (
+              <div
+                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[180px]"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSaveAsTemplate?.();
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M5.5 8H10.5M8 5.5V10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  Save as Template
+                </button>
+                <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(true);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.5 2.5L13.5 4.5L5 13H3V11L11.5 2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Rename Canvas
+                </button>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

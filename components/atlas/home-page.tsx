@@ -4,9 +4,9 @@ import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode } from "@/lib/atlas-types";
+import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasTemplate, TemplateCategory } from "@/lib/atlas-types";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
-import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS } from "@/lib/atlas-types";
+import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_TEMPLATES, TEMPLATE_CATEGORIES } from "@/lib/atlas-types";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
 import "@xyflow/react/dist/style.css";
@@ -184,6 +184,9 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [sageMessage, setSageMessage] = useState("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<"general" | "members" | "products" | "conventions">("general");
+  const [templates, setTemplates] = useState<CanvasTemplate[]>(SAMPLE_TEMPLATES);
+  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | "all">("all");
+  const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
   // Combine all workspace nodes with canvas grouping
   const workspaceNodesData = useMemo(() => {
@@ -296,11 +299,62 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
 
   const [canvasToDelete, setCanvasToDelete] = useState<string | null>(null);
   
-  const deleteCanvas = (canvasId: string) => {
+const deleteCanvas = (canvasId: string) => {
     onCanvasesChange(canvases.filter((c) => c.id !== canvasId));
     setCanvasToDelete(null);
   };
 
+  const handleUpvoteTemplate = (templateId: string) => {
+    setTemplates(prev => prev.map(t => {
+      if (t.id !== templateId) return t;
+      const hasUpvoted = t.upvotedBy.includes(currentUserId);
+      return {
+        ...t,
+        upvotes: hasUpvoted ? t.upvotes - 1 : t.upvotes + 1,
+        upvotedBy: hasUpvoted 
+          ? t.upvotedBy.filter(id => id !== currentUserId)
+          : [...t.upvotedBy, currentUserId],
+      };
+    }));
+  };
+
+  const handleUseTemplate = (template: CanvasTemplate) => {
+    // Create a new canvas from the template
+    const newCanvas: Canvas = {
+      id: `canvas-${Date.now()}`,
+      name: `${template.name} (Copy)`,
+      description: template.description,
+      previewImage: template.previewImage,
+      nodes: template.nodes,
+      edges: template.edges,
+      comments: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: workspaceSettings.members[0],
+      isFavorite: false,
+      visibility: "workspace",
+    };
+    onCanvasesChange([...canvases, newCanvas]);
+    // Increment download count
+    setTemplates(prev => prev.map(t => 
+      t.id === template.id ? { ...t, downloads: t.downloads + 1 } : t
+    ));
+    onOpenCanvas(newCanvas.id);
+  };
+
+  const filteredTemplates = useMemo(() => {
+    return templates.filter(t => {
+      if (selectedCategory !== "all" && t.category !== selectedCategory) return false;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return t.name.toLowerCase().includes(query) || 
+               t.description.toLowerCase().includes(query) ||
+               t.tags.some(tag => tag.includes(query));
+      }
+      return true;
+    }).sort((a, b) => b.upvotes - a.upvotes);
+  }, [templates, selectedCategory, searchQuery]);
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -647,55 +701,221 @@ Recent Canvases
         </div>
 
         {activeView === "community" ? (
-          /* Community Coming Soon View */
-          <div className="flex-1 flex flex-col items-center justify-center p-6">
-            <div
-              className="max-w-md text-center"
-            >
-              <div
-                className="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+          /* Community Templates View */
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Category Filter Bar */}
+            <div className="px-6 py-4 flex items-center gap-3 overflow-x-auto" style={{ borderBottom: "1px solid #222222" }}>
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("all")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedCategory === "all" 
+                    ? "text-[#0a0a0a]" 
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+                style={{
+                  backgroundColor: selectedCategory === "all" ? "#F0FE00" : "#1a1a1a",
+                  border: `1px solid ${selectedCategory === "all" ? "#F0FE00" : "#333333"}`,
+                  fontFamily: "system-ui, Inter, sans-serif",
+                }}
               >
-                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="20" cy="12" r="6" stroke="#F0FE00" strokeWidth="2"/>
-                  <circle cx="8" cy="28" r="4" stroke="#F0FE00" strokeWidth="2"/>
-                  <circle cx="32" cy="28" r="4" stroke="#F0FE00" strokeWidth="2"/>
-                  <path d="M20 18C26 18 30 22 30 28" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M20 18C14 18 10 22 10 28" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <h2
-                className="text-2xl font-semibold text-white mb-3"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                Community
-              </h2>
-              <p
-                className="text-gray-400 mb-6 leading-relaxed"
-                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              >
-                Coming soon. This is where the content feed and marketplace will live. Share templates, discover workflows, and connect with other creators.
-              </p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <div
-                  className="px-4 py-2 rounded-full text-sm"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}
+                All Templates
+              </button>
+              {(Object.keys(TEMPLATE_CATEGORIES) as TemplateCategory[]).map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                    selectedCategory === cat 
+                      ? "text-[#0a0a0a]" 
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                  style={{
+                    backgroundColor: selectedCategory === cat ? "#F0FE00" : "#1a1a1a",
+                    border: `1px solid ${selectedCategory === cat ? "#F0FE00" : "#333333"}`,
+                    fontFamily: "system-ui, Inter, sans-serif",
+                  }}
                 >
-                  Template Marketplace
+                  {TEMPLATE_CATEGORIES[cat].label}
+                </button>
+              ))}
+            </div>
+
+            {/* Templates Grid */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {filteredTemplates.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div
+                    className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
+                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="4" width="20" height="20" rx="3" stroke="#666666" strokeWidth="2"/>
+                      <path d="M10 14H18M14 10V18" stroke="#666666" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <p className="text-gray-400 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    No templates found
+                  </p>
                 </div>
-                <div
-                  className="px-4 py-2 rounded-full text-sm"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  Community Feed
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {filteredTemplates.map((template) => {
+                    const hasUpvoted = template.upvotedBy.includes(currentUserId);
+                    return (
+                      <div
+                        key={template.id}
+                        className="group rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
+                        style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
+                      >
+                        {/* Preview Image */}
+                        <div className="relative aspect-[16/10] overflow-hidden">
+                          {template.previewImage ? (
+                            <img
+                              src={template.previewImage}
+                              alt={template.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
+                              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="8" y="8" width="32" height="32" rx="4" stroke="#333333" strokeWidth="2"/>
+                                <path d="M16 24H32M24 16V32" stroke="#333333" strokeWidth="2" strokeLinecap="round"/>
+                              </svg>
+                            </div>
+                          )}
+                          {/* Category Badge */}
+                          <div
+                            className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-medium"
+                            style={{ 
+                              backgroundColor: "rgba(0,0,0,0.7)", 
+                              color: "#F0FE00",
+                              fontFamily: "system-ui, Inter, sans-serif",
+                            }}
+                          >
+                            {TEMPLATE_CATEGORIES[template.category].label}
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-4">
+                          <h3
+                            className="text-white font-semibold text-base mb-1 truncate"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            {template.name}
+                          </h3>
+                          <p
+                            className="text-gray-400 text-sm mb-3 line-clamp-2"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            {template.description}
+                          </p>
+
+                          {/* Creator */}
+                          <div className="flex items-center gap-2 mb-3">
+                            {template.createdBy.avatar ? (
+                              <img
+                                src={template.createdBy.avatar}
+                                alt={template.createdBy.name}
+                                className="w-6 h-6 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium"
+                                style={{ backgroundColor: "#333333", color: "#ffffff" }}
+                              >
+                                {template.createdBy.initials}
+                              </div>
+                            )}
+                            <span
+                              className="text-sm text-gray-400"
+                              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              {template.createdBy.name}
+                            </span>
+                          </div>
+
+                          {/* Tags */}
+                          <div className="flex flex-wrap gap-1.5 mb-4">
+                            {template.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag}
+                                className="px-2 py-0.5 rounded text-xs"
+                                style={{
+                                  backgroundColor: "#252525",
+                                  color: "#888888",
+                                  fontFamily: "system-ui, Inter, sans-serif",
+                                }}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* Stats & Actions */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              {/* Upvote Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleUpvoteTemplate(template.id)}
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors ${
+                                  hasUpvoted 
+                                    ? "text-[#F0FE00]" 
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                }`}
+                                style={{
+                                  backgroundColor: hasUpvoted ? "rgba(240, 254, 0, 0.1)" : "transparent",
+                                  fontFamily: "system-ui, Inter, sans-serif",
+                                }}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path
+                                    d="M8 3L10 7H14L11 10L12 14L8 11.5L4 14L5 10L2 7H6L8 3Z"
+                                    fill={hasUpvoted ? "currentColor" : "none"}
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                                {template.upvotes}
+                              </button>
+
+                              {/* Downloads */}
+                              <div
+                                className="flex items-center gap-1.5 text-sm text-gray-500"
+                                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M7 2V9M7 9L4 6M7 9L10 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M2 11H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                </svg>
+                                {template.downloads}
+                              </div>
+                            </div>
+
+                            {/* Use Template Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleUseTemplate(template)}
+                              className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90"
+                              style={{
+                                backgroundColor: "#F0FE00",
+                                fontFamily: "system-ui, Inter, sans-serif",
+                              }}
+                            >
+                              Use
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div
-                  className="px-4 py-2 rounded-full text-sm"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  Creator Profiles
-                </div>
-              </div>
+              )}
             </div>
           </div>
         ) : activeView === "workspace-canvas" ? (
