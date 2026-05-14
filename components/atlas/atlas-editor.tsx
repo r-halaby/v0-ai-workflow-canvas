@@ -922,23 +922,36 @@ onAddOperationalNode={handleAddOperationalNode}
           onPresentationConnect={handlePresentationConnect}
         />
 
-        <CanvasSideToolbar
-          onAddStatusPill={handleAddStatusPill}
-          onAddTextNode={handleAddTextNode}
-          onAddSageNode={handleAddSageNode}
-          onAddOperationalNode={handleAddOperationalNode}
-          onUploadFile={(files) => handleFileDrop(files, { x: 400, y: 300 })}
-          onSettingsClick={() => setShowSettingsDialog(true)}
-          onSearchChange={setSearchQuery}
-          searchQuery={searchQuery}
-          commentMode={commentMode}
-          onCommentModeChange={handleCommentModeChange}
-          commentCount={comments.filter(c => !c.resolved).length}
-          presentationMode={presentationMode}
-          onPresentationModeChange={handlePresentationModeChange}
-          onStartPresentation={handleStartPresentation}
-          presentationEdgeCount={presentationEdges.length}
-        />
+<CanvasSideToolbar
+  onAddStatusPill={handleAddStatusPill}
+  onAddTextNode={handleAddTextNode}
+  onAddSageNode={handleAddSageNode}
+  onAddOperationalNode={handleAddOperationalNode}
+  onUploadFile={(files) => handleFileDrop(files, { x: 400, y: 300 })}
+  onOpenAIGenerate={(type) => {
+    if (type === "mockup") {
+      // Find first file node with an image to use as source
+      const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
+      if (fileNode) {
+        setMockupSourceFile(fileNode.data as FileNodeData);
+      } else {
+        alert("Please upload an image first to generate mockups from.");
+      }
+    } else if (type === "collateral") {
+      alert("Collateral generation coming soon!");
+    }
+  }}
+  onSettingsClick={() => setShowSettingsDialog(true)}
+  onSearchChange={setSearchQuery}
+  searchQuery={searchQuery}
+  commentMode={commentMode}
+  onCommentModeChange={handleCommentModeChange}
+  commentCount={comments.filter(c => !c.resolved).length}
+  presentationMode={presentationMode}
+  onPresentationModeChange={handlePresentationModeChange}
+  onStartPresentation={handleStartPresentation}
+  presentationEdgeCount={presentationEdges.length}
+  />
 
         
       </div>

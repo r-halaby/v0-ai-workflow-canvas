@@ -9,6 +9,7 @@ interface CanvasSideToolbarProps {
   onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
   onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => void;
   onUploadFile: (files: FileList) => void;
+  onOpenAIGenerate: (type: "mockup" | "collateral") => void;
   onSettingsClick: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
@@ -27,6 +28,7 @@ export function CanvasSideToolbar({
   onAddSageNode,
   onAddOperationalNode,
   onUploadFile,
+  onOpenAIGenerate,
   onSettingsClick,
   onSearchChange,
   searchQuery,
@@ -215,6 +217,7 @@ export function CanvasSideToolbar({
           onAddSageNode={onAddSageNode}
           onAddOperationalNode={onAddOperationalNode}
           onUploadFile={onUploadFile}
+          onOpenAIGenerate={onOpenAIGenerate}
           onClose={() => setShowAddMenu(false)}
           position={addMenuPosition}
         />
