@@ -1288,6 +1288,11 @@ onAddOperationalNode={handleAddOperationalNode}
             setIsPresenting(false);
             setPresentationMode(false);
           }}
+          presentationName={canvas.presentationName || "Untitled Presentation"}
+          onPresentationNameChange={(name) => {
+            onCanvasChange({ ...canvas, presentationName: name });
+          }}
+          workspaceName={workspaceSettings.name}
         />
       )}
     </div>

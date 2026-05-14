@@ -667,6 +667,7 @@ export interface Canvas {
   createdBy: WorkspaceMember;
   isFavorite: boolean;
   visibility: CanvasVisibility;
+  presentationName?: string; // Optional name for presentation mode
 }
 
 // Sample comments for initial canvas

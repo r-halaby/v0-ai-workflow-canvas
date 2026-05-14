@@ -9,13 +9,23 @@ interface PresentationViewerProps {
   nodes: Node[];
   presentationEdges: Edge[];
   onClose: () => void;
+  presentationName: string;
+  onPresentationNameChange: (name: string) => void;
+  workspaceName: string;
+  workspaceWordmark?: string;
 }
 
 export function PresentationViewer({
   nodes,
   presentationEdges,
   onClose,
+  presentationName,
+  onPresentationNameChange,
+  workspaceName,
+  workspaceWordmark,
 }: PresentationViewerProps) {
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(presentationName);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Build ordered sequence from presentation edges
@@ -74,6 +84,15 @@ export function PresentationViewer({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger navigation shortcuts while editing the presentation name
+      if (isEditingName) {
+        if (e.key === "Escape") {
+          setIsEditingName(false);
+          setEditedName(presentationName);
+        }
+        return;
+      }
+      
       if (e.key === "ArrowRight" || e.key === " ") {
         e.preventDefault();
         goNext();
@@ -87,7 +106,7 @@ export function PresentationViewer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [goNext, goPrev, onClose]);
+  }, [goNext, goPrev, onClose, isEditingName, presentationName]);
 
   if (!currentNode || orderedNodeIds.length === 0) {
     return (
@@ -227,13 +246,73 @@ export function PresentationViewer({
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex items-center justify-center p-16">
+      <div className="flex-1 flex items-center justify-center p-16 pb-24">
         {renderNodeContent()}
       </div>
 
-      {/* Keyboard hint */}
-      <div className="absolute bottom-6 right-6 text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-        Use arrow keys or space to navigate
+      {/* Footer */}
+      <div className="absolute bottom-0 left-0 right-0 px-6 py-4">
+        <div className="border-t border-white/10 pt-4 flex items-center justify-between">
+          {/* Presentation name (editable) */}
+          <div className="flex items-center">
+            {isEditingName ? (
+              <input
+                type="text"
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onBlur={() => {
+                  setIsEditingName(false);
+                  if (editedName.trim() && editedName !== presentationName) {
+                    onPresentationNameChange(editedName.trim());
+                  } else {
+                    setEditedName(presentationName);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setIsEditingName(false);
+                    if (editedName.trim() && editedName !== presentationName) {
+                      onPresentationNameChange(editedName.trim());
+                    }
+                  } else if (e.key === "Escape") {
+                    setIsEditingName(false);
+                    setEditedName(presentationName);
+                  }
+                }}
+                autoFocus
+                className="bg-transparent text-xs text-gray-400 border-b border-gray-600 outline-none px-0 py-0.5"
+                style={{ fontFamily: "system-ui, Inter, sans-serif", minWidth: "120px" }}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsEditingName(true)}
+                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                {presentationName || "Untitled Presentation"}
+              </button>
+            )}
+          </div>
+
+          {/* Workspace wordmark or name */}
+          <div className="flex items-center">
+            {workspaceWordmark ? (
+              <img 
+                src={workspaceWordmark} 
+                alt={workspaceName} 
+                className="h-4 opacity-40"
+              />
+            ) : (
+              <span 
+                className="text-xs text-gray-600"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                {workspaceName}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
