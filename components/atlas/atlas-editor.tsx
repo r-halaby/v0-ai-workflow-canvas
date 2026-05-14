@@ -171,6 +171,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   // Presentation state
   const [presentationMode, setPresentationMode] = useState(false);
   const [presentationEdges, setPresentationEdges] = useState<Edge[]>([]);
+  const [presentationGroups, setPresentationGroups] = useState<Array<{ id: string; nodeIds: string[] }>>([]);
   const [isPresenting, setIsPresenting] = useState(false);
 
   // Clipboard state for copy/paste
@@ -762,12 +763,28 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     []
   );
 
+  // Create presentation group from selected nodes
+  const handleCreatePresentationGroup = useCallback((nodeIds: string[]) => {
+    if (nodeIds.length < 2) return;
+    
+    const groupId = `group-${Date.now()}`;
+    const newGroup = { id: groupId, nodeIds };
+    
+    setPresentationGroups(groups => [...groups, newGroup]);
+    
+    // Deselect the nodes after grouping
+    setNodes(nds => nds.map(n => ({
+      ...n,
+      selected: nodeIds.includes(n.id) ? false : n.selected,
+    })));
+  }, [setNodes]);
+
   // Start presentation
   const handleStartPresentation = useCallback(() => {
-    if (presentationEdges.length > 0) {
+    if (presentationEdges.length > 0 || presentationGroups.length > 0) {
       setIsPresenting(true);
     }
-  }, [presentationEdges]);
+  }, [presentationEdges, presentationGroups]);
 
   // Clear presentation edges when exiting presentation mode
   const handlePresentationModeChange = useCallback((enabled: boolean) => {
@@ -1138,10 +1155,11 @@ onAddOperationalNode={handleAddOperationalNode}
   }}
   onCreateMoodboard={handleCreateMoodboard}
           onMoodboardClick={handleMoodboardClick}
-          presentationMode={presentationMode}
-          presentationEdges={presentationEdges}
-          onPresentationConnect={handlePresentationConnect}
-        />
+presentationMode={presentationMode}
+  presentationEdges={presentationEdges}
+  onPresentationConnect={handlePresentationConnect}
+  onCreatePresentationGroup={handleCreatePresentationGroup}
+  />
 
 <CanvasSideToolbar
   onAddStatusPill={handleAddStatusPill}
@@ -1281,19 +1299,20 @@ onAddOperationalNode={handleAddOperationalNode}
 
       {/* Presentation Viewer */}
       {isPresenting && (
-        <PresentationViewer
-          nodes={nodes}
-          presentationEdges={presentationEdges}
-          onClose={() => {
-            setIsPresenting(false);
-            setPresentationMode(false);
-          }}
-          presentationName={canvas.presentationName || "Untitled Presentation"}
-          onPresentationNameChange={(name) => {
-            onCanvasChange({ ...canvas, presentationName: name });
-          }}
-          workspaceName={workspaceSettings.name}
-        />
+<PresentationViewer
+  nodes={nodes}
+  presentationEdges={presentationEdges}
+  presentationGroups={presentationGroups}
+  onClose={() => {
+  setIsPresenting(false);
+  setPresentationMode(false);
+  }}
+  presentationName={canvas.presentationName || "Untitled Presentation"}
+  onPresentationNameChange={(name) => {
+  onCanvasChange({ ...canvas, presentationName: name });
+  }}
+  workspaceName={workspaceSettings.name}
+  />
       )}
     </div>
   );
