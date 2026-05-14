@@ -12,7 +12,7 @@ import {
 } from "@xyflow/react";
 
 import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment } from "@/lib/atlas-types";
-import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
+import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
 import { CanvasSideToolbar } from "./canvas-side-toolbar";
@@ -229,6 +229,97 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     [setNodes]
   );
 
+  // Handle files dropped directly onto canvas
+  const handleFileDrop = useCallback(
+    async (files: FileList, position: { x: number; y: number }) => {
+      const uploadedResults: Array<{
+        fileName: string;
+        extension: FileExtension;
+        uploadedFile: UploadedFile;
+        previewUrl?: string;
+      }> = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+
+        // Skip unsupported files
+        if (!SUPPORTED_EXTENSIONS.includes(extension as FileExtension)) {
+          continue;
+        }
+
+        try {
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            console.error("Upload failed for", file.name);
+            continue;
+          }
+
+          const result = await response.json();
+
+          const isImage = result.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
+          const servedUrl = `/api/file?pathname=${encodeURIComponent(result.pathname)}`;
+
+          uploadedResults.push({
+            fileName: result.fileName,
+            extension: result.extension as FileExtension,
+            uploadedFile: {
+              url: servedUrl,
+              pathname: result.pathname,
+              size: result.size,
+              uploadedAt: result.uploadedAt,
+            },
+            previewUrl: isImage ? servedUrl : undefined,
+          });
+        } catch (error) {
+          console.error("Error uploading file:", file.name, error);
+        }
+      }
+
+      // Create nodes for uploaded files, positioned around the drop point
+      if (uploadedResults.length > 0) {
+        const newNodes: AtlasNode[] = uploadedResults.map((file, index) => {
+          const label = file.fileName.replace(file.extension, "");
+          const previewImages = file.previewUrl ? [file.previewUrl] : undefined;
+          
+          // Offset each file slightly from drop position
+          const offsetX = (index % 3) * 260;
+          const offsetY = Math.floor(index / 3) * 220;
+          
+          return {
+            id: `file-${Date.now()}-${index}`,
+            type: "file" as const,
+            position: { 
+              x: position.x + offsetX - 110, 
+              y: position.y + offsetY - 80 
+            },
+            data: {
+              label,
+              fileName: file.fileName,
+              product: "atlas" as const,
+              status: "draft" as const,
+              fileExtension: file.extension,
+              lastModified: "Updated just now",
+              uploadedFile: file.uploadedFile,
+              previewImages,
+              tasks: [],
+            },
+          };
+        });
+
+        setNodes((nds) => [...nds, ...newNodes]);
+      }
+    },
+    [setNodes]
+  );
+
   const handleNodesChangeWrapper = useCallback(
     (changes: NodeChange<AtlasNode>[]) => {
       onNodesChange(changes);
@@ -338,6 +429,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onCommentDelete={handleCommentDelete}
           onCancelNewComment={handleCancelNewComment}
           onNodeDoubleClick={setDetailModalNodeId}
+          onFileDrop={handleFileDrop}
         />
 
         <CanvasSideToolbar

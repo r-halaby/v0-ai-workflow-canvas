@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useMemo } from "react";
+import React, { useCallback, useRef, useMemo, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -50,6 +50,7 @@ interface AtlasCanvasProps {
   onCommentDelete: (commentId: string) => void;
   onCancelNewComment: () => void;
   onNodeDoubleClick?: (nodeId: string) => void;
+  onFileDrop?: (files: FileList, position: { x: number; y: number }) => void;
 }
 
 export function AtlasCanvas({
@@ -73,8 +74,54 @@ export function AtlasCanvas({
   onCommentDelete,
   onCancelNewComment,
   onNodeDoubleClick,
+  onFileDrop,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+
+  // Handle file drag and drop
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDraggingFiles(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set to false if we're actually leaving the container
+    const rect = reactFlowWrapper.current?.getBoundingClientRect();
+    if (rect) {
+      const { clientX, clientY } = e;
+      if (
+        clientX <= rect.left ||
+        clientX >= rect.right ||
+        clientY <= rect.top ||
+        clientY >= rect.bottom
+      ) {
+        setIsDraggingFiles(false);
+      }
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingFiles(false);
+
+    if (e.dataTransfer.files.length > 0 && onFileDrop) {
+      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+      if (bounds) {
+        const position = {
+          x: e.clientX - bounds.left,
+          y: e.clientY - bounds.top,
+        };
+        onFileDrop(e.dataTransfer.files, position);
+      }
+    }
+  }, [onFileDrop]);
 
   // Apply search highlighting to nodes
   const filteredNodes = useMemo(() => {
@@ -123,6 +170,9 @@ export function AtlasCanvas({
       ref={reactFlowWrapper}
       className="flex-1 h-full relative"
       style={{ cursor: commentMode ? "crosshair" : "default" }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <ReactFlow
         nodes={filteredNodes}
@@ -243,6 +293,40 @@ export function AtlasCanvas({
           >
             Click anywhere to add a comment
           </span>
+        </div>
+      )}
+
+      {/* File drop overlay */}
+      {isDraggingFiles && (
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
+          style={{ backgroundColor: "rgba(10, 10, 10, 0.85)" }}
+        >
+          <div
+            className="flex flex-col items-center gap-4 p-8 rounded-2xl"
+            style={{ 
+              backgroundColor: "#141414", 
+              border: "2px dashed #3a3a3a",
+            }}
+          >
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: "#1f1f1f" }}
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#888888" strokeWidth="1.5">
+                <path d="M12 16V4M12 4L8 8M12 4L16 8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-medium text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                Drop files to upload
+              </p>
+              <p className="text-sm text-gray-500 mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                Images, documents, and media files
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>
