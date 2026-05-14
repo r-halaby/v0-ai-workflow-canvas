@@ -327,7 +327,7 @@ export function FileNode({ data, selected }: FileNodeProps) {
         <Popover open={isTaskOpen} onOpenChange={setIsTaskOpen}>
           <PopoverTrigger asChild>
             <button 
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors hover:bg-white/10"
+              className="nodrag flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors hover:bg-white/10"
               style={{ color: "#8E8E93" }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -347,7 +347,7 @@ export function FileNode({ data, selected }: FileNodeProps) {
             </button>
           </PopoverTrigger>
           <PopoverContent 
-            className="w-72 p-0 border-0"
+            className="nodrag w-72 p-0 border-0"
             style={{ 
               background: "#1C1C1E", 
               boxShadow: "0 8px 32px rgba(0,0,0,0.5)",

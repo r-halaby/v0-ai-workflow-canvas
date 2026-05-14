@@ -171,6 +171,9 @@ export function AtlasCanvas({
         onConnect={onConnect}
         onPaneClick={handlePaneClick}
         nodeTypes={nodeTypes}
+        nodesDraggable={!commentMode}
+        nodesConnectable={true}
+        elementsSelectable={true}
         fitView
         fitViewOptions={{
           padding: 0.3,
