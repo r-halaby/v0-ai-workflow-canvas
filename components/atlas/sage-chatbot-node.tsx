@@ -66,20 +66,28 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
   }, [pendingSuggestion, emitSageAction]);
 
   const handleSend = useCallback(() => {
-    if (!inputValue.trim() || isLoading) return;
+    console.log("[v0] handleSend called, inputValue:", inputValue, "isLoading:", isLoading);
+    if (!inputValue.trim() || isLoading) {
+      console.log("[v0] handleSend early return");
+      return;
+    }
+    console.log("[v0] Calling append with:", inputValue);
     append({ role: "user", content: inputValue });
     setInputValue("");
   }, [inputValue, isLoading, append]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    console.log("[v0] handleKeyDown called, key:", e.key);
     e.stopPropagation(); // Prevent React Flow from capturing the event
     if (e.key === "Enter" && !e.shiftKey) {
+      console.log("[v0] Enter pressed, calling handleSend");
       e.preventDefault();
       handleSend();
     }
   }, [handleSend]);
 
   const handleButtonClick = useCallback((e: React.MouseEvent) => {
+    console.log("[v0] handleButtonClick called");
     e.stopPropagation(); // Prevent React Flow from capturing the event
     e.preventDefault();
     handleSend();
