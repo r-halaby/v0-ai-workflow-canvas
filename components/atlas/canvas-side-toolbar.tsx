@@ -5,6 +5,7 @@ import type { FileExtension } from "@/lib/atlas-types";
 
 interface CanvasSideToolbarProps {
   onAddNode: (extension: FileExtension) => void;
+  onAddStatusPill: () => void;
   onSettingsClick: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
@@ -23,6 +24,7 @@ const FILE_TYPE_OPTIONS: { label: string; extension: FileExtension }[] = [
 
 export function CanvasSideToolbar({
   onAddNode,
+  onAddStatusPill,
   onSettingsClick,
   onSearchChange,
   searchQuery,
@@ -153,6 +155,23 @@ export function CanvasSideToolbar({
             className="absolute right-full mr-2 top-0 py-1 rounded-lg shadow-lg"
             style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", minWidth: 160 }}
           >
+            {/* Status Pill Option */}
+            <button
+              type="button"
+              onClick={() => {
+                onAddStatusPill();
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-2.5 rounded-full" style={{ backgroundColor: "#e5e5e5" }} />
+              Status
+            </button>
+            
+            {/* Divider */}
+            <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+            
             {FILE_TYPE_OPTIONS.map((option) => (
               <button
                 key={option.extension}

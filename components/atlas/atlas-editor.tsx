@@ -121,6 +121,19 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     [nodes.length, setNodes]
   );
 
+  const handleAddStatusPill = useCallback(() => {
+    const newNode: AtlasNode = {
+      id: `status-${Date.now()}`,
+      type: "statusPill",
+      position: { x: 150 + nodes.length * 30, y: 80 + nodes.length * 20 },
+      data: {
+        label: "Status",
+        color: "#e5e5e5",
+      },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  }, [nodes.length, setNodes]);
+
   const handleDoubleClickCanvas = useCallback(
     (position: { x: number; y: number }) => {
       const today = new Date();
@@ -294,6 +307,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
         <CanvasSideToolbar
           onAddNode={handleAddNode}
+          onAddStatusPill={handleAddStatusPill}
           onSettingsClick={() => setShowSettingsDialog(true)}
           onSearchChange={setSearchQuery}
           searchQuery={searchQuery}

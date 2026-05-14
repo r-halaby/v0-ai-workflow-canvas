@@ -19,10 +19,12 @@ import "@xyflow/react/dist/style.css";
 
 import type { AtlasNode, CanvasComment, WorkspaceMember } from "@/lib/atlas-types";
 import { FileNode } from "./file-node";
+import { StatusPillNode } from "./status-pill-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 
 const nodeTypes: NodeTypes = {
   file: FileNode,
+  statusPill: StatusPillNode,
 };
 
 interface AtlasCanvasProps {
