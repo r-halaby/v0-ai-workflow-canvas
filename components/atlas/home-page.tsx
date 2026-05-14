@@ -290,6 +290,13 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
     );
   };
 
+  const [canvasToDelete, setCanvasToDelete] = useState<string | null>(null);
+  
+  const deleteCanvas = (canvasId: string) => {
+    onCanvasesChange(canvases.filter((c) => c.id !== canvasId));
+    setCanvasToDelete(null);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -942,46 +949,43 @@ Recent Canvases
                         </svg>
                       </div>
                     )}
-                    {/* Favorite button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(canvas.id);
-                      }}
-                      className="absolute top-2 right-2 p-1.5 rounded-lg transition-opacity opacity-0 group-hover:opacity-100"
-                      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 18 18"
-                        fill={canvas.isFavorite ? "#F0FE00" : "none"}
-                        xmlns="http://www.w3.org/2000/svg"
+                    {/* Action buttons */}
+                    <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(canvas.id);
+                        }}
+                        className="p-1.5 rounded-lg"
+                        style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
                       >
-                        <path
-                          d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z"
-                          stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"}
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
+                        <svg width="16" height="16" viewBox="0 0 18 18" fill={canvas.isFavorite ? "#F0FE00" : "none"} xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCanvasToDelete(canvas.id);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-red-500/20"
+                        style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M2 4H14M5.333 4V2.667C5.333 2.298 5.632 2 6 2H10C10.368 2 10.667 2.298 10.667 2.667V4M12.667 4V13.333C12.667 13.702 12.368 14 12 14H4C3.632 14 3.333 13.702 3.333 13.333V4H12.667Z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Info */}
                   <div className="p-3">
-                    <div
-                      className="text-white font-medium text-sm truncate"
-                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                    >
+                    <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                       {canvas.name}
                     </div>
-                    <div
-                      className="text-gray-500 text-xs mt-0.5"
-                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                    >
+                    <div className="text-gray-500 text-xs mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                       Edited {formatDate(canvas.updatedAt)} by {canvas.createdBy.name.split(" ")[0]} {canvas.createdBy.name.split(" ")[1]?.charAt(0)}
                     </div>
                   </div>
@@ -1022,46 +1026,43 @@ Recent Canvases
                         </svg>
                       </div>
                     )}
-                    {/* Favorite button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(canvas.id);
-                      }}
-                      className="absolute top-2 right-2 p-1.5 rounded-lg transition-opacity opacity-0 group-hover:opacity-100"
-                      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 18 18"
-                        fill={canvas.isFavorite ? "#F0FE00" : "none"}
-                        xmlns="http://www.w3.org/2000/svg"
+                    {/* Action buttons */}
+                    <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(canvas.id);
+                        }}
+                        className="p-1.5 rounded-lg"
+                        style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
                       >
-                        <path
-                          d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z"
-                          stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"}
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
+                        <svg width="16" height="16" viewBox="0 0 18 18" fill={canvas.isFavorite ? "#F0FE00" : "none"} xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z" stroke={canvas.isFavorite ? "#F0FE00" : "#ffffff"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCanvasToDelete(canvas.id);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-red-500/20"
+                        style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M2 4H14M5.333 4V2.667C5.333 2.298 5.632 2 6 2H10C10.368 2 10.667 2.298 10.667 2.667V4M12.667 4V13.333C12.667 13.702 12.368 14 12 14H4C3.632 14 3.333 13.702 3.333 13.333V4H12.667Z" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Info */}
                   <div className="p-3">
-                    <div
-                      className="text-white font-medium text-sm truncate"
-                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                    >
+                    <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                       {canvas.name}
                     </div>
-                    <div
-                      className="text-gray-500 text-xs mt-1"
-                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                    >
+                    <div className="text-gray-500 text-xs mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                       Edited {formatDate(canvas.updatedAt)} by {canvas.createdBy.name.split(" ")[0]} {canvas.createdBy.name.split(" ")[1]?.charAt(0)}
                     </div>
                   </div>
@@ -1222,6 +1223,52 @@ Recent Canvases
                 }}
               >
                 Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {canvasToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setCanvasToDelete(null)}
+          />
+          <div
+            className="relative w-full max-w-sm rounded-xl p-6"
+            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+          >
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 6H21M8 6V4C8 3.448 8.448 3 9 3H15C15.552 3 16 3.448 16 4V6M19 6V20C19 20.552 18.552 21 18 21H6C5.448 21 5 20.552 5 20V6H19Z" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-lg font-semibold text-white text-center mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Delete Canvas
+            </h2>
+            <p className="text-gray-400 text-sm text-center mb-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Are you sure you want to delete &quot;{canvases.find(c => c.id === canvasToDelete)?.name}&quot;? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setCanvasToDelete(null)}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                style={{ backgroundColor: "#252525", fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteCanvas(canvasToDelete)}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors hover:bg-red-600"
+                style={{ backgroundColor: "#ef4444", fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Delete
               </button>
             </div>
           </div>
