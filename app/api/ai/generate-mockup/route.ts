@@ -1,4 +1,5 @@
 import { generateText } from "ai";
+import { gateway } from "@ai-sdk/gateway";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -58,8 +59,13 @@ export async function POST(request: Request) {
       messages.push({ role: "user", content });
 
       const result = await generateText({
-        model: "google/gemini-3.1-flash-image-preview",
+        model: gateway("google/gemini-2.0-flash-exp-image-generation"),
         messages,
+        providerOptions: {
+          google: {
+            responseModalities: ["TEXT", "IMAGE"],
+          },
+        },
       });
 
       // Extract generated images from the result
