@@ -104,9 +104,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
   const onConnect = useCallback(
     (params: Connection) => {
-      console.log("[v0] onConnect called with params:", params);
-      setEdges((eds) => {
-        const newEdges = addEdge(
+      setEdges((eds) =>
+        addEdge(
           {
             ...params,
             type: "default",
@@ -114,10 +113,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5" },
           },
           eds
-        );
-        console.log("[v0] New edges after addEdge:", newEdges);
-        return newEdges;
-      });
+        )
+      );
     },
     [setEdges]
   );

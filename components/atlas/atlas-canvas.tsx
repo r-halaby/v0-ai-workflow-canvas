@@ -95,6 +95,25 @@ export function AtlasCanvas({
   const isDraggingConnectionRef = useRef(false);
   const { screenToFlowPosition } = useReactFlow();
 
+  // Listen for handle click events from nodes
+  useEffect(() => {
+    const handleHandleClick = (e: CustomEvent<{ nodeId: string; handleType: string; position: { x: number; y: number } }>) => {
+      const { nodeId, handleType, position } = e.detail;
+      const flowPosition = screenToFlowPosition(position);
+      setHandleMenu({
+        position,
+        sourceNodeId: nodeId,
+        handlePosition: handleType === "source" ? "right" : "left",
+        canvasPosition: flowPosition,
+      });
+    };
+
+    window.addEventListener("atlas:handle-click", handleHandleClick as EventListener);
+    return () => {
+      window.removeEventListener("atlas:handle-click", handleHandleClick as EventListener);
+    };
+  }, [screenToFlowPosition]);
+
   // Handle connection start - track where we started
   const handleConnectStart = useCallback((event: MouseEvent | TouchEvent, params: { nodeId: string | null; handleType: string | null }) => {
     if (params.nodeId && params.handleType) {

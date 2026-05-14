@@ -171,6 +171,32 @@ export function FileNode({ data, selected }: NodeProps) {
           width: 12,
           height: 12,
         }}
+        onMouseDownCapture={(e) => {
+          (e.currentTarget as HTMLElement).dataset.mouseDownTime = Date.now().toString();
+          (e.currentTarget as HTMLElement).dataset.mouseDownX = e.clientX.toString();
+          (e.currentTarget as HTMLElement).dataset.mouseDownY = e.clientY.toString();
+        }}
+        onMouseUpCapture={(e) => {
+          const downTime = parseInt((e.currentTarget as HTMLElement).dataset.mouseDownTime || "0");
+          const downX = parseInt((e.currentTarget as HTMLElement).dataset.mouseDownX || "0");
+          const downY = parseInt((e.currentTarget as HTMLElement).dataset.mouseDownY || "0");
+          const elapsed = Date.now() - downTime;
+          const distance = Math.sqrt(Math.pow(e.clientX - downX, 2) + Math.pow(e.clientY - downY, 2));
+          
+          // If quick click (< 200ms) and didn't move much (< 5px), show menu
+          if (elapsed < 200 && distance < 5) {
+            e.stopPropagation();
+            e.preventDefault();
+            const rect = e.currentTarget.getBoundingClientRect();
+            window.dispatchEvent(new CustomEvent("atlas:handle-click", {
+              detail: { 
+                nodeId: id,
+                handleType: "target",
+                position: { x: rect.left, y: rect.top + rect.height / 2 }
+              }
+            }));
+          }
+        }}
       />
 
       {/* Header - File icon and name */}
@@ -337,6 +363,32 @@ export function FileNode({ data, selected }: NodeProps) {
           border: "2px solid #525252", 
           width: 12,
           height: 12,
+        }}
+        onMouseDownCapture={(e) => {
+          (e.currentTarget as HTMLElement).dataset.mouseDownTime = Date.now().toString();
+          (e.currentTarget as HTMLElement).dataset.mouseDownX = e.clientX.toString();
+          (e.currentTarget as HTMLElement).dataset.mouseDownY = e.clientY.toString();
+        }}
+        onMouseUpCapture={(e) => {
+          const downTime = parseInt((e.currentTarget as HTMLElement).dataset.mouseDownTime || "0");
+          const downX = parseInt((e.currentTarget as HTMLElement).dataset.mouseDownX || "0");
+          const downY = parseInt((e.currentTarget as HTMLElement).dataset.mouseDownY || "0");
+          const elapsed = Date.now() - downTime;
+          const distance = Math.sqrt(Math.pow(e.clientX - downX, 2) + Math.pow(e.clientY - downY, 2));
+          
+          // If quick click (< 200ms) and didn't move much (< 5px), show menu
+          if (elapsed < 200 && distance < 5) {
+            e.stopPropagation();
+            e.preventDefault();
+            const rect = e.currentTarget.getBoundingClientRect();
+            window.dispatchEvent(new CustomEvent("atlas:handle-click", {
+              detail: { 
+                nodeId: id,
+                handleType: "source",
+                position: { x: rect.right, y: rect.top + rect.height / 2 }
+              }
+            }));
+          }
         }}
       />
     </div>
