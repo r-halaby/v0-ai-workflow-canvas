@@ -72,10 +72,17 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
   }, [inputValue, isLoading, append]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    e.stopPropagation(); // Prevent React Flow from capturing the event
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
+  }, [handleSend]);
+
+  const handleButtonClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent React Flow from capturing the event
+    e.preventDefault();
+    handleSend();
   }, [handleSend]);
 
   return (
@@ -171,20 +178,26 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
       </div>
 
       {/* Input */}
-      <div className="p-2 border-t" style={{ borderColor: "#F0FE0020" }}>
+      <div className="p-2 border-t nodrag" style={{ borderColor: "#F0FE0020" }}>
         <div className="flex items-center gap-2">
           <input
             type="text"
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => {
+              e.stopPropagation();
+              setInputValue(e.target.value);
+            }}
             onKeyDown={handleKeyDown}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             placeholder="Ask Sage..."
-            className="flex-1 bg-white/5 text-xs text-white placeholder-gray-500 px-2 py-1.5 rounded-md outline-none"
+            className="flex-1 bg-white/5 text-xs text-white placeholder-gray-500 px-2 py-1.5 rounded-md outline-none nowheel nopan"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             disabled={isLoading}
           />
           <button
-            onClick={handleSend}
+            type="button"
+            onClick={handleButtonClick}
             disabled={isLoading || !inputValue.trim()}
             className="p-1.5 rounded-md hover:bg-white/10 transition-colors disabled:opacity-50"
             style={{ color: "#F0FE00" }}
