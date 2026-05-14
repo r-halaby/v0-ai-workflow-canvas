@@ -24,6 +24,11 @@ import { TextNode } from "./text-node";
 import { SageChatbotNode } from "./sage-chatbot-node";
 import { SageOverviewNode } from "./sage-overview-node";
 import { StakeholderNode } from "./stakeholder-node";
+import { CapacityNode } from "./capacity-node";
+import { FinancialNode } from "./financial-node";
+import { ProjectHealthNode } from "./project-health-node";
+import { PipelineNode } from "./pipeline-node";
+import { TeamHealthNode } from "./team-health-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 import { AddNodeMenu } from "./add-node-menu";
 
@@ -34,6 +39,11 @@ const nodeTypes: NodeTypes = {
   sageChatbot: SageChatbotNode,
   sageOverview: SageOverviewNode,
   stakeholder: StakeholderNode,
+  capacity: CapacityNode,
+  financial: FinancialNode,
+  projectHealth: ProjectHealthNode,
+  pipeline: PipelineNode,
+  teamHealth: TeamHealthNode,
 };
 
 interface AtlasCanvasProps {
@@ -62,6 +72,7 @@ interface AtlasCanvasProps {
   onAddStatusPill?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddTextNode?: (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddSageNode?: (sageType: "chatbot" | "overview" | "stakeholder", position?: { x: number; y: number }, sourceNodeId?: string) => void;
+  onAddOperationalNode?: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string) => void;
 }
 
 export function AtlasCanvas({
@@ -90,6 +101,7 @@ export function AtlasCanvas({
   onAddStatusPill,
   onAddTextNode,
   onAddSageNode,
+  onAddOperationalNode,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
@@ -212,6 +224,13 @@ export function AtlasCanvas({
     }
     setHandleMenu(null);
   }, [handleMenu, onAddSageNode]);
+
+  const handleMenuAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => {
+    if (handleMenu && onAddOperationalNode) {
+      onAddOperationalNode(opType, handleMenu.canvasPosition, handleMenu.sourceNodeId);
+    }
+    setHandleMenu(null);
+  }, [handleMenu, onAddOperationalNode]);
 
   // Handle file drag and drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -476,6 +495,7 @@ export function AtlasCanvas({
           onAddStatusPill={handleMenuAddStatusPill}
           onAddTextNode={handleMenuAddTextNode}
           onAddSageNode={handleMenuAddSageNode}
+          onAddOperationalNode={handleMenuAddOperationalNode}
           onUploadFile={handleMenuUploadFile}
           onClose={() => setHandleMenu(null)}
           position={handleMenu.position}

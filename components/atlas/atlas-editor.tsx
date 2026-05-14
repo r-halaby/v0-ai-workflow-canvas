@@ -313,6 +313,114 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     [nodes.length, setNodes, setEdges]
   );
 
+  const handleAddOperationalNode = useCallback(
+    (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string) => {
+      const nodeId = `op-${Date.now()}`;
+      const nodePosition = position || { x: 150 + nodes.length * 30, y: 100 + nodes.length * 20 };
+
+      let newNode: AtlasNode;
+
+      if (opType === "capacity") {
+        newNode = {
+          id: nodeId,
+          type: "capacity",
+          position: nodePosition,
+          data: {
+            label: "Capacity & Resourcing",
+            teamMembers: WORKSPACE_MEMBERS.slice(0, 3).map((m, idx) => ({
+              member: m,
+              utilizationRate: 75 + idx * 8,
+              currentAllocation: 80 + idx * 5,
+              plannedAllocation: 85,
+              benchTime: idx === 0 ? 12 : 0,
+              skills: ["UI Design", "Branding"],
+            })),
+            lastUpdated: "just now",
+          },
+        };
+      } else if (opType === "financial") {
+        newNode = {
+          id: nodeId,
+          type: "financial",
+          position: nodePosition,
+          data: {
+            label: "Financial Performance",
+            projectMargin: 28,
+            budgetConsumed: 65,
+            revenueRealized: 72,
+            blendedRateEfficiency: 94,
+            utilizationAdjustedMargin: 24,
+            status: "healthy",
+            lastUpdated: "just now",
+          },
+        };
+      } else if (opType === "projectHealth") {
+        newNode = {
+          id: nodeId,
+          type: "projectHealth",
+          position: nodePosition,
+          data: {
+            label: "Project Health",
+            daysSinceClientTouchpoint: 3,
+            openFeedbackCycles: 2,
+            revisionCount: 4,
+            projectPhase: "design",
+            healthStatus: "on-track",
+            lastUpdated: "just now",
+          },
+        };
+      } else if (opType === "pipeline") {
+        newNode = {
+          id: nodeId,
+          type: "pipeline",
+          position: nodePosition,
+          data: {
+            label: "Pipeline Forecast",
+            forecast30Days: [
+              { projectName: "Acme Rebrand", probability: 85, estimatedHours: 120 },
+              { projectName: "TechCorp Website", probability: 60, estimatedHours: 80 },
+            ],
+            forecast60Days: [
+              { projectName: "StartupX Identity", probability: 40, estimatedHours: 60 },
+            ],
+            forecast90Days: [],
+            currentCapacity: 320,
+            projectedLoad: 260,
+            capacityStatus: "balanced",
+            lastUpdated: "just now",
+          },
+        };
+      } else {
+        // teamHealth
+        newNode = {
+          id: nodeId,
+          type: "teamHealth",
+          position: nodePosition,
+          data: {
+            label: "Team Health",
+            feedbackLoopVelocity: 18,
+            revisionToApprovalRatio: 2.3,
+            timeSavedHours: 42,
+            trendDirection: "improving",
+            lastUpdated: "just now",
+          },
+        };
+      }
+
+      setNodes((nds) => [...nds, newNode]);
+
+      // If source node provided, create an edge
+      if (sourceNodeId) {
+        setEdges((eds) => [...eds, {
+          id: `edge-${sourceNodeId}-${nodeId}`,
+          source: sourceNodeId,
+          target: nodeId,
+        }]);
+      }
+    },
+    [nodes.length, setNodes, setEdges]
+  );
+
   const handleDoubleClickCanvas = useCallback(
     (position: { x: number; y: number }) => {
       const today = new Date();
@@ -583,12 +691,14 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onAddStatusPill={handleAddStatusPill}
           onAddTextNode={handleAddTextNode}
           onAddSageNode={handleAddSageNode}
+          onAddOperationalNode={handleAddOperationalNode}
         />
 
         <CanvasSideToolbar
           onAddStatusPill={handleAddStatusPill}
           onAddTextNode={handleAddTextNode}
           onAddSageNode={handleAddSageNode}
+          onAddOperationalNode={handleAddOperationalNode}
           onSettingsClick={() => setShowSettingsDialog(true)}
           onSearchChange={setSearchQuery}
           searchQuery={searchQuery}

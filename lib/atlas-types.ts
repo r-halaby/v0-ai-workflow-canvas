@@ -294,11 +294,70 @@ export interface StakeholderNodeData {
   keyInsights: string[];
 }
 
+// Capacity & Resourcing node data interface
+export interface CapacityNodeData {
+  label: string;
+  teamMembers: {
+    member: WorkspaceMember;
+    utilizationRate: number; // 0-100
+    currentAllocation: number; // 0-100
+    plannedAllocation: number; // 0-100
+    benchTime: number; // hours available
+    skills: string[];
+  }[];
+  lastUpdated: string;
+}
+
+// Financial Performance node data interface
+export interface FinancialNodeData {
+  label: string;
+  projectMargin: number; // percentage
+  budgetConsumed: number; // percentage
+  revenueRealized: number; // percentage
+  blendedRateEfficiency: number; // percentage
+  utilizationAdjustedMargin: number; // percentage
+  status: "healthy" | "at-risk" | "underperforming";
+  lastUpdated: string;
+}
+
+// Project Health node data interface
+export interface ProjectHealthNodeData {
+  label: string;
+  daysSinceClientTouchpoint: number;
+  openFeedbackCycles: number;
+  revisionCount: number;
+  projectPhase: "discovery" | "design" | "development" | "review" | "delivery";
+  healthStatus: "on-track" | "needs-attention" | "at-risk";
+  lastUpdated: string;
+}
+
+// Pipeline & Workload Forecast node data interface
+export interface PipelineNodeData {
+  label: string;
+  forecast30Days: { projectName: string; probability: number; estimatedHours: number }[];
+  forecast60Days: { projectName: string; probability: number; estimatedHours: number }[];
+  forecast90Days: { projectName: string; probability: number; estimatedHours: number }[];
+  currentCapacity: number; // hours available
+  projectedLoad: number; // hours needed
+  capacityStatus: "available" | "balanced" | "overloaded";
+  lastUpdated: string;
+}
+
+// Team & Operational Health node data interface
+export interface TeamHealthNodeData {
+  label: string;
+  feedbackLoopVelocity: number; // hours average
+  revisionToApprovalRatio: number; // e.g., 2.5 revisions per approval
+  timeSavedHours: number; // hours saved by Ideate
+  trendDirection: "improving" | "stable" | "declining";
+  lastUpdated: string;
+}
+
 // Atlas node type
-export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder";
+export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth";
 
 // Atlas workflow node - using generic data for multiple node types
-export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | Record<string, unknown>, AtlasNodeType>;
+export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | Record<string, unknown>, AtlasNodeType>;
 
 // Filter state
 export interface FilterState {

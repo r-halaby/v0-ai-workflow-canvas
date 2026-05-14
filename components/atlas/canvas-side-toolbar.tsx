@@ -6,6 +6,7 @@ interface CanvasSideToolbarProps {
   onAddStatusPill: () => void;
   onAddTextNode: (textType: "brief" | "note" | "description") => void;
   onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
+  onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => void;
   onSettingsClick: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
@@ -18,6 +19,7 @@ export function CanvasSideToolbar({
   onAddStatusPill,
   onAddTextNode,
   onAddSageNode,
+  onAddOperationalNode,
   onSettingsClick,
   onSearchChange,
   searchQuery,
@@ -277,6 +279,98 @@ export function CanvasSideToolbar({
                 </svg>
               </div>
               Stakeholder
+            </button>
+            
+            {/* Divider */}
+            <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+            
+            {/* Operations Section */}
+            <div className="px-3 py-1 text-xs text-gray-500 uppercase tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Operations
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onAddOperationalNode("capacity");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#3b82f620", color: "#3b82f6" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                </svg>
+              </div>
+              Capacity
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onAddOperationalNode("financial");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#10b98120", color: "#10b981" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
+              Financial
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onAddOperationalNode("projectHealth");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#8b5cf620", color: "#8b5cf6" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+              </div>
+              Project Health
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onAddOperationalNode("pipeline");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#f59e0b20", color: "#f59e0b" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 3v18h18" />
+                  <path d="M7 16l4-8 4 4 6-6" />
+                </svg>
+              </div>
+              Pipeline
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onAddOperationalNode("teamHealth");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#ec489920", color: "#ec4899" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                </svg>
+              </div>
+              Team Health
             </button>
           </div>
         )}
