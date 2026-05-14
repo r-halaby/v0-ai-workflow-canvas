@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
             "application/x-zip-compressed",
           ],
           maximumSizeInBytes: 100 * 1024 * 1024, // 100MB
+          addRandomSuffix: true, // Allow duplicate filenames by adding random suffix
           tokenPayload: JSON.stringify({
             userId: user?.id || "anonymous",
           }),
