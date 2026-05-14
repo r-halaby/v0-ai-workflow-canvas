@@ -11,7 +11,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -20,6 +20,7 @@ import { FileDetailModal } from "./file-detail-modal";
 import { UploadDialog } from "./upload-dialog";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { MockupGeneratorDialog } from "./mockup-generator-dialog";
+import { MoodboardExpanded } from "./moodboard-expanded";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -48,6 +49,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
   // Mockup generator state
   const [mockupSourceFile, setMockupSourceFile] = useState<FileNodeData | null>(null);
+
+  // Moodboard state
+  const [expandedMoodboardId, setExpandedMoodboardId] = useState<string | null>(null);
 
   // Listen for mockup generation events from file nodes
   useEffect(() => {
@@ -421,6 +425,107 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     [nodes.length, setNodes, setEdges]
   );
 
+  // Handle creating a moodboard from selected nodes
+  const handleCreateMoodboard = useCallback(
+    (nodeIds: string[]) => {
+      // Get the selected file nodes
+      const selectedNodes = nodes.filter(n => nodeIds.includes(n.id) && n.type === "file");
+      if (selectedNodes.length < 2) return;
+
+      // Calculate center position of selected nodes
+      const avgX = selectedNodes.reduce((sum, n) => sum + n.position.x, 0) / selectedNodes.length;
+      const avgY = selectedNodes.reduce((sum, n) => sum + n.position.y, 0) / selectedNodes.length;
+
+      // Extract images from selected nodes
+      const images = selectedNodes.map(node => {
+        const fileData = node.data as FileNodeData;
+        return {
+          id: node.id,
+          url: fileData.uploadedFile?.url || fileData.thumbnail || "",
+          fileName: fileData.fileName || fileData.label || "Image",
+          thumbnail: fileData.thumbnail,
+        };
+      }).filter(img => img.url);
+
+      // Create moodboard node
+      const moodboardNode: AtlasNode = {
+        id: `moodboard-${Date.now()}`,
+        type: "moodboard",
+        position: { x: avgX, y: avgY },
+        data: {
+          label: `Moodboard (${images.length})`,
+          images,
+          isExpanded: false,
+          createdAt: new Date().toISOString(),
+        } as MoodboardNodeData,
+      };
+
+      // Remove the original nodes and add the moodboard
+      setNodes(nds => [
+        ...nds.filter(n => !nodeIds.includes(n.id)),
+        moodboardNode,
+      ]);
+
+      // Remove edges connected to the grouped nodes
+      setEdges(eds => eds.filter(e => !nodeIds.includes(e.source) && !nodeIds.includes(e.target)));
+    },
+    [nodes, setNodes, setEdges]
+  );
+
+  // Handle clicking a moodboard to expand it
+  const handleMoodboardClick = useCallback(
+    (nodeId: string) => {
+      setExpandedMoodboardId(nodeId);
+    },
+    []
+  );
+
+  // Handle ungrouping a moodboard back into individual nodes
+  const handleUngroupMoodboard = useCallback(
+    () => {
+      if (!expandedMoodboardId) return;
+      
+      const moodboardNode = nodes.find(n => n.id === expandedMoodboardId);
+      if (!moodboardNode || moodboardNode.type !== "moodboard") return;
+
+      const moodboardData = moodboardNode.data as MoodboardNodeData;
+      const basePosition = moodboardNode.position;
+
+      // Create individual file nodes from the moodboard images
+      const newNodes: AtlasNode[] = moodboardData.images.map((img, index) => ({
+        id: `file-${Date.now()}-${index}`,
+        type: "file" as const,
+        position: {
+          x: basePosition.x + (index % 3) * 250,
+          y: basePosition.y + Math.floor(index / 3) * 200,
+        },
+        data: {
+          label: img.fileName,
+          fileName: img.fileName,
+          fileType: "image",
+          fileExtension: "png",
+          fileCategory: "image",
+          status: "approved",
+          product: "brand",
+          thumbnail: img.thumbnail || img.url,
+          lastModified: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+          connectedNodes: 0,
+          tasks: { total: 0, completed: 0 },
+          uploadedFile: { url: img.url, name: img.fileName },
+        } as FileNodeData,
+      }));
+
+      // Remove moodboard and add individual nodes
+      setNodes(nds => [
+        ...nds.filter(n => n.id !== expandedMoodboardId),
+        ...newNodes,
+      ]);
+
+      setExpandedMoodboardId(null);
+    },
+    [expandedMoodboardId, nodes, setNodes]
+  );
+
   const handleDoubleClickCanvas = useCallback(
     (position: { x: number; y: number }) => {
       const today = new Date();
@@ -692,6 +797,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onAddTextNode={handleAddTextNode}
           onAddSageNode={handleAddSageNode}
           onAddOperationalNode={handleAddOperationalNode}
+          onCreateMoodboard={handleCreateMoodboard}
+          onMoodboardClick={handleMoodboardClick}
         />
 
         <CanvasSideToolbar
@@ -755,6 +862,19 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onCreateNodes={handleCreateMockupNodes}
         />
       )}
+
+      {/* Moodboard Expanded View */}
+      {expandedMoodboardId && (() => {
+        const moodboardNode = nodes.find(n => n.id === expandedMoodboardId);
+        if (!moodboardNode || moodboardNode.type !== "moodboard") return null;
+        return (
+          <MoodboardExpanded
+            data={moodboardNode.data as MoodboardNodeData}
+            onClose={() => setExpandedMoodboardId(null)}
+            onUngroup={handleUngroupMoodboard}
+          />
+        );
+      })()}
     </div>
   );
 }

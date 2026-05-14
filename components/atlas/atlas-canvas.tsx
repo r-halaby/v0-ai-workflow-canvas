@@ -29,8 +29,10 @@ import { FinancialNode } from "./financial-node";
 import { ProjectHealthNode } from "./project-health-node";
 import { PipelineNode } from "./pipeline-node";
 import { TeamHealthNode } from "./team-health-node";
+import { MoodboardNode } from "./moodboard-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 import { AddNodeMenu } from "./add-node-menu";
+import { SelectionBox } from "./selection-box";
 
 const nodeTypes: NodeTypes = {
   file: FileNode,
@@ -44,6 +46,7 @@ const nodeTypes: NodeTypes = {
   projectHealth: ProjectHealthNode,
   pipeline: PipelineNode,
   teamHealth: TeamHealthNode,
+  moodboard: MoodboardNode,
 };
 
 interface AtlasCanvasProps {
@@ -73,6 +76,8 @@ interface AtlasCanvasProps {
   onAddTextNode?: (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddSageNode?: (sageType: "chatbot" | "overview" | "stakeholder", position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddOperationalNode?: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string) => void;
+  onCreateMoodboard?: (nodeIds: string[]) => void;
+  onMoodboardClick?: (nodeId: string) => void;
 }
 
 export function AtlasCanvas({
@@ -102,9 +107,14 @@ export function AtlasCanvas({
   onAddTextNode,
   onAddSageNode,
   onAddOperationalNode,
+  onCreateMoodboard,
+  onMoodboardClick,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
+  const [selectionCurrent, setSelectionCurrent] = useState<{ x: number; y: number } | null>(null);
   const [handleMenu, setHandleMenu] = useState<{
     position: { x: number; y: number };
     sourceNodeId: string;
@@ -276,6 +286,81 @@ export function AtlasCanvas({
     }
   }, [onFileDrop]);
 
+  // Selection box for grouping nodes
+  const handleSelectionStart = useCallback((e: React.MouseEvent) => {
+    // Only start selection if shift key is held and clicking on the canvas background
+    if (e.shiftKey && (e.target as HTMLElement).classList.contains("react-flow__pane")) {
+      setIsSelecting(true);
+      setSelectionStart({ x: e.clientX, y: e.clientY });
+      setSelectionCurrent({ x: e.clientX, y: e.clientY });
+    }
+  }, []);
+
+  const handleSelectionMove = useCallback((e: React.MouseEvent) => {
+    if (isSelecting) {
+      setSelectionCurrent({ x: e.clientX, y: e.clientY });
+    }
+  }, [isSelecting]);
+
+  const handleSelectionEnd = useCallback(() => {
+    if (isSelecting && selectionStart && selectionCurrent) {
+      // Calculate selection box bounds
+      const left = Math.min(selectionStart.x, selectionCurrent.x);
+      const right = Math.max(selectionStart.x, selectionCurrent.x);
+      const top = Math.min(selectionStart.y, selectionCurrent.y);
+      const bottom = Math.max(selectionStart.y, selectionCurrent.y);
+
+      // Find nodes within selection box
+      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+      if (bounds) {
+        const selectedNodeIds = nodes.filter(node => {
+          // Get node position in screen coordinates
+          const nodePos = reactFlowInstance.flowToScreenPosition(node.position);
+          return (
+            nodePos.x >= left - bounds.left &&
+            nodePos.x <= right - bounds.left &&
+            nodePos.y >= top - bounds.top &&
+            nodePos.y <= bottom - bounds.top
+          );
+        }).map(n => n.id);
+
+        // Select the nodes in ReactFlow
+        if (selectedNodeIds.length > 0) {
+          const updatedNodes = nodes.map(node => ({
+            ...node,
+            selected: selectedNodeIds.includes(node.id),
+          }));
+          onNodesUpdate(updatedNodes);
+        }
+      }
+    }
+    setIsSelecting(false);
+    setSelectionStart(null);
+    setSelectionCurrent(null);
+  }, [isSelecting, selectionStart, selectionCurrent, nodes, reactFlowInstance, onNodesUpdate]);
+
+  // Get currently selected nodes for moodboard creation
+  const selectedNodes = useMemo(() => {
+    return nodes.filter(node => node.selected);
+  }, [nodes]);
+
+  // Check if selected nodes can be grouped into a moodboard (must be file nodes with images)
+  const canCreateMoodboard = useMemo(() => {
+    if (selectedNodes.length < 2) return false;
+    return selectedNodes.every(node => {
+      if (node.type !== "file") return false;
+      const fileData = node.data as { fileType?: string; uploadedFile?: { url?: string } };
+      return fileData.fileType === "image" || fileData.uploadedFile?.url;
+    });
+  }, [selectedNodes]);
+
+  // Handle node click for moodboard expansion
+  const handleNodeClick = useCallback((_: React.MouseEvent, node: AtlasNode) => {
+    if (node.type === "moodboard" && onMoodboardClick) {
+      onMoodboardClick(node.id);
+    }
+  }, [onMoodboardClick]);
+
   // Apply search highlighting to nodes
   const filteredNodes = useMemo(() => {
     return nodes.map((node) => {
@@ -322,10 +407,13 @@ export function AtlasCanvas({
     <div
       ref={reactFlowWrapper}
       className="flex-1 h-full relative"
-      style={{ cursor: commentMode ? "crosshair" : "default" }}
+      style={{ cursor: commentMode ? "crosshair" : isSelecting ? "crosshair" : "default" }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onMouseDown={handleSelectionStart}
+      onMouseMove={handleSelectionMove}
+      onMouseUp={handleSelectionEnd}
     >
       <ReactFlow
         nodes={filteredNodes}
@@ -336,6 +424,7 @@ export function AtlasCanvas({
         onConnectStart={handleConnectStart}
         onConnectEnd={handleConnectEnd}
         onPaneClick={handlePaneClick}
+        onNodeClick={handleNodeClick}
         onNodeDoubleClick={(event, node) => {
           // Don't open modal if clicking on a handle
           const target = event.target as HTMLElement;
@@ -501,6 +590,41 @@ export function AtlasCanvas({
           position={handleMenu.position}
           sourceHandlePosition={handleMenu.handlePosition}
         />
+      )}
+
+      {/* Selection Box */}
+      {isSelecting && selectionStart && selectionCurrent && (
+        <SelectionBox startPoint={selectionStart} currentPoint={selectionCurrent} />
+      )}
+
+      {/* Create Moodboard floating button */}
+      {canCreateMoodboard && onCreateMoodboard && (
+        <div 
+          className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              onCreateMoodboard(selectedNodes.map(n => n.id));
+            }}
+            className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
+            style={{
+              backgroundColor: "#a855f7",
+              color: "#ffffff",
+              fontFamily: "system-ui, Inter, sans-serif",
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            <span className="text-sm font-medium">
+              Create Moodboard ({selectedNodes.length} images)
+            </span>
+          </button>
+        </div>
       )}
     </div>
   );

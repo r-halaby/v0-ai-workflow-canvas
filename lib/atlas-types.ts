@@ -353,11 +353,24 @@ export interface TeamHealthNodeData {
   lastUpdated: string;
 }
 
+// Moodboard node data interface - groups multiple images together
+export interface MoodboardNodeData {
+  label: string;
+  images: {
+    id: string;
+    url: string;
+    fileName: string;
+    thumbnail?: string;
+  }[];
+  isExpanded: boolean;
+  createdAt: string;
+}
+
 // Atlas node type
-export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth";
+export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard";
 
 // Atlas workflow node - using generic data for multiple node types
-export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | Record<string, unknown>, AtlasNodeType>;
+export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | Record<string, unknown>, AtlasNodeType>;
 
 // Filter state
 export interface FilterState {
