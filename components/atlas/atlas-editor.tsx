@@ -285,7 +285,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         onBack={onBack}
       />
 
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
         <AtlasCanvas
           nodes={nodes}
           edges={edges}
