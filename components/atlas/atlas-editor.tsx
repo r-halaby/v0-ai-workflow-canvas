@@ -11,17 +11,19 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FilterState, FileExtension, FileNodeData } from "@/lib/atlas-types";
-import { INITIAL_FILE_NODES, INITIAL_EDGES } from "@/lib/atlas-types";
+import type { AtlasNode, FilterState, FileExtension, FileNodeData, UploadedFile } from "@/lib/atlas-types";
+import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
 import { FileDetailPanel } from "./file-detail-panel";
+import { UploadDialog } from "./upload-dialog";
 
 function AtlasEditorInner() {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(INITIAL_FILE_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
   const [filters, setFilters] = useState<FilterState>({ product: "all", status: "all" });
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -115,6 +117,43 @@ function AtlasEditorInner() {
     [setNodes]
   );
 
+  const handleFilesUploaded = useCallback(
+    (files: Array<{
+      fileName: string;
+      extension: FileExtension;
+      uploadedFile: UploadedFile;
+      previewUrl?: string;
+    }>) => {
+      const newNodes: AtlasNode[] = files.map((file, index) => {
+        // Get file name without extension for label
+        const label = file.fileName.replace(file.extension, "");
+        
+        // Generate preview images array if we have a preview
+        const previewImages = file.previewUrl ? [file.previewUrl] : undefined;
+        
+        return {
+          id: `file-${Date.now()}-${index}`,
+          type: "file" as const,
+          position: { x: 150 + (index % 3) * 300, y: 150 + Math.floor(index / 3) * 250 },
+          data: {
+            label,
+            fileName: file.fileName,
+            product: "atlas" as const,
+            status: "draft" as const,
+            fileExtension: file.extension,
+            lastModified: "Updated just now",
+            uploadedFile: file.uploadedFile,
+            previewImages,
+            tasks: [],
+          },
+        };
+      });
+
+      setNodes((nds) => [...nds, ...newNodes]);
+    },
+    [setNodes]
+  );
+
   const handleNodesChangeWrapper = useCallback(
     (changes: NodeChange<AtlasNode>[]) => {
       onNodesChange(changes);
@@ -141,6 +180,7 @@ function AtlasEditorInner() {
         filters={filters}
         onFiltersChange={setFilters}
         onAddNode={handleAddNode}
+        onUploadClick={() => setShowUploadDialog(true)}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -163,6 +203,13 @@ function AtlasEditorInner() {
           />
         )}
       </div>
+
+      {/* Upload Dialog */}
+      <UploadDialog
+        open={showUploadDialog}
+        onClose={() => setShowUploadDialog(false)}
+        onFilesUploaded={handleFilesUploaded}
+      />
     </div>
   );
 }

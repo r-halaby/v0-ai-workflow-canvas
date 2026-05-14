@@ -6,8 +6,51 @@ export type ProductType = "atlas" | "synthesis" | "sage";
 // Status types
 export type FileStatus = "draft" | "in-review" | "approved";
 
-// File extension types
-export type FileExtension = ".fig" | ".psd" | ".pdf" | ".mp4" | ".ai" | ".indd" | ".pptx";
+// File extension types - Design source files
+export type DesignFileExtension = ".fig" | ".ai" | ".psd" | ".indd" | ".xd" | ".sketch" | ".afdesign" | ".afphoto" | ".afpub" | ".glyphs" | ".procreate" | ".studio";
+
+// File extension types - Image/raster
+export type ImageFileExtension = ".png" | ".jpg" | ".jpeg" | ".webp" | ".tiff" | ".tif" | ".raw" | ".cr2" | ".arw" | ".heic" | ".gif" | ".bmp" | ".avif";
+
+// File extension types - Vector/print-ready
+export type VectorFileExtension = ".svg" | ".eps" | ".pdf" | ".pdfx" | ".wmf" | ".emf" | ".dxf";
+
+// File extension types - Video
+export type VideoFileExtension = ".mp4" | ".mov" | ".avi" | ".webm" | ".mkv";
+
+// File extension types - Documents
+export type DocumentFileExtension = ".pptx" | ".doc" | ".docx" | ".txt" | ".md";
+
+// All file extensions
+export type FileExtension = DesignFileExtension | ImageFileExtension | VectorFileExtension | VideoFileExtension | DocumentFileExtension;
+
+// Supported file extensions for upload validation
+export const SUPPORTED_EXTENSIONS: FileExtension[] = [
+  // Design source files
+  ".fig", ".ai", ".psd", ".indd", ".xd", ".sketch", ".afdesign", ".afphoto", ".afpub", ".glyphs", ".procreate", ".studio",
+  // Image/raster
+  ".png", ".jpg", ".jpeg", ".webp", ".tiff", ".tif", ".raw", ".cr2", ".arw", ".heic", ".gif", ".bmp", ".avif",
+  // Vector/print-ready
+  ".svg", ".eps", ".pdf", ".pdfx", ".wmf", ".emf", ".dxf",
+  // Video
+  ".mp4", ".mov", ".avi", ".webm", ".mkv",
+  // Documents
+  ".pptx", ".doc", ".docx", ".txt", ".md",
+];
+
+// File category from extension
+export function getFileCategoryFromExtension(ext: string): "design" | "image" | "vector" | "video" | "document" {
+  const designExts = [".fig", ".ai", ".psd", ".indd", ".xd", ".sketch", ".afdesign", ".afphoto", ".afpub", ".glyphs", ".procreate", ".studio"];
+  const imageExts = [".png", ".jpg", ".jpeg", ".webp", ".tiff", ".tif", ".raw", ".cr2", ".arw", ".heic", ".gif", ".bmp", ".avif"];
+  const vectorExts = [".svg", ".eps", ".pdf", ".pdfx", ".wmf", ".emf", ".dxf"];
+  const videoExts = [".mp4", ".mov", ".avi", ".webm", ".mkv"];
+  
+  if (designExts.includes(ext)) return "design";
+  if (imageExts.includes(ext)) return "image";
+  if (vectorExts.includes(ext)) return "vector";
+  if (videoExts.includes(ext)) return "video";
+  return "document";
+}
 
 // File type categories
 export type FileTypeCategory = "design" | "document" | "video" | "image" | "brand";
@@ -65,6 +108,14 @@ export const WORKSPACE_MEMBERS: WorkspaceMember[] = [
   { id: "m5", name: "Michael Brown", initials: "MB" },
 ];
 
+// Uploaded file info
+export interface UploadedFile {
+  url: string; // Blob URL for the file
+  pathname: string; // Blob pathname
+  size: number; // File size in bytes
+  uploadedAt: string; // ISO date string
+}
+
 // File node data interface
 export interface FileNodeData {
   label: string;
@@ -75,6 +126,7 @@ export interface FileNodeData {
   lastModified: string;
   previewImages?: string[]; // Array of up to 4 preview image URLs
   tasks?: TaskItem[]; // Task items for this file
+  uploadedFile?: UploadedFile; // Uploaded file data from Vercel Blob
 }
 
 // Atlas node type

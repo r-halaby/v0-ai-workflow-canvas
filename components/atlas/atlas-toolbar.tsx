@@ -7,6 +7,7 @@ interface AtlasToolbarProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   onAddNode: (extension: FileExtension) => void;
+  onUploadClick: () => void;
 }
 
 const FILE_TYPE_OPTIONS: { label: string; extension: FileExtension }[] = [
@@ -17,7 +18,7 @@ const FILE_TYPE_OPTIONS: { label: string; extension: FileExtension }[] = [
   { label: "Brand Asset", extension: ".ai" },
 ];
 
-export function AtlasToolbar({ filters, onFiltersChange, onAddNode }: AtlasToolbarProps) {
+export function AtlasToolbar({ filters, onFiltersChange, onAddNode, onUploadClick }: AtlasToolbarProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
 
@@ -133,8 +134,25 @@ export function AtlasToolbar({ filters, onFiltersChange, onAddNode }: AtlasToolb
         </div>
       </div>
 
-      {/* Right: Spacer for balance */}
-      <div className="w-28" />
+      {/* Right: Upload button */}
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={onUploadClick}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          style={{ 
+            backgroundColor: "#534AB7", 
+            color: "white",
+            fontFamily: "system-ui, Inter, sans-serif",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 12V3M8 3L4 7M8 3L12 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2 13H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          Upload
+        </button>
+      </div>
     </div>
   );
 }
