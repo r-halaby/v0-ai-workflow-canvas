@@ -141,7 +141,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   );
 
   const handleAddNode = useCallback(
-    (extension: FileExtension) => {
+    (extension: FileExtension, position?: { x: number; y: number }, sourceNodeId?: string) => {
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-US", {
         month: "short",
@@ -149,10 +149,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         year: "numeric",
       });
 
+      const nodeId = `file-${Date.now()}`;
+      const nodePosition = position || { x: 100 + nodes.length * 50, y: 100 + nodes.length * 30 };
+
       const newNode: AtlasNode = {
-        id: `file-${Date.now()}`,
+        id: nodeId,
         type: "file",
-        position: { x: 100 + nodes.length * 50, y: 100 + nodes.length * 30 },
+        position: nodePosition,
         data: {
           label: "Untitled File",
           fileName: `Untitled File${extension}`,
@@ -163,25 +166,46 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         },
       };
       setNodes((nds) => [...nds, newNode]);
+
+      // If source node provided, create an edge
+      if (sourceNodeId) {
+        setEdges((eds) => [...eds, {
+          id: `edge-${sourceNodeId}-${nodeId}`,
+          source: sourceNodeId,
+          target: nodeId,
+        }]);
+      }
     },
-    [nodes.length, setNodes]
+    [nodes.length, setNodes, setEdges]
   );
 
-  const handleAddStatusPill = useCallback(() => {
+  const handleAddStatusPill = useCallback((position?: { x: number; y: number }, sourceNodeId?: string) => {
+    const nodeId = `status-${Date.now()}`;
+    const nodePosition = position || { x: 150 + nodes.length * 30, y: 80 + nodes.length * 20 };
+
     const newNode: AtlasNode = {
-      id: `status-${Date.now()}`,
+      id: nodeId,
       type: "statusPill",
-      position: { x: 150 + nodes.length * 30, y: 80 + nodes.length * 20 },
+      position: nodePosition,
       data: {
         label: "Status",
         color: "#e5e5e5",
       },
     };
     setNodes((nds) => [...nds, newNode]);
-  }, [nodes.length, setNodes]);
+
+    // If source node provided, create an edge
+    if (sourceNodeId) {
+      setEdges((eds) => [...eds, {
+        id: `edge-${sourceNodeId}-${nodeId}`,
+        source: sourceNodeId,
+        target: nodeId,
+      }]);
+    }
+  }, [nodes.length, setNodes, setEdges]);
 
   const handleAddTextNode = useCallback(
-    (textType: "brief" | "note" | "description") => {
+    (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => {
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-US", {
         month: "short",
@@ -195,10 +219,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         description: "Description",
       };
 
+      const nodeId = `text-${Date.now()}`;
+      const nodePosition = position || { x: 150 + nodes.length * 30, y: 100 + nodes.length * 20 };
+
       const newNode: AtlasNode = {
-        id: `text-${Date.now()}`,
+        id: nodeId,
         type: "text",
-        position: { x: 150 + nodes.length * 30, y: 100 + nodes.length * 20 },
+        position: nodePosition,
         data: {
           label: typeLabels[textType],
           content: "",
@@ -207,8 +234,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         },
       };
       setNodes((nds) => [...nds, newNode]);
+
+      // If source node provided, create an edge
+      if (sourceNodeId) {
+        setEdges((eds) => [...eds, {
+          id: `edge-${sourceNodeId}-${nodeId}`,
+          source: sourceNodeId,
+          target: nodeId,
+        }]);
+      }
     },
-    [nodes.length, setNodes]
+    [nodes.length, setNodes, setEdges]
   );
 
   const handleDoubleClickCanvas = useCallback(
@@ -473,6 +509,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onCancelNewComment={handleCancelNewComment}
           onNodeDoubleClick={setDetailModalNodeId}
           onFileDrop={handleFileDrop}
+          onAddNode={handleAddNode}
+          onAddStatusPill={handleAddStatusPill}
+          onAddTextNode={handleAddTextNode}
         />
 
         <CanvasSideToolbar

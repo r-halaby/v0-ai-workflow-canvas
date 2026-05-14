@@ -17,11 +17,12 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import type { AtlasNode, CanvasComment, WorkspaceMember } from "@/lib/atlas-types";
+import type { AtlasNode, CanvasComment, WorkspaceMember, FileExtension } from "@/lib/atlas-types";
 import { FileNode } from "./file-node";
 import { StatusPillNode } from "./status-pill-node";
 import { TextNode } from "./text-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
+import { AddNodeMenu } from "./add-node-menu";
 
 const nodeTypes: NodeTypes = {
   file: FileNode,
@@ -51,6 +52,9 @@ interface AtlasCanvasProps {
   onCancelNewComment: () => void;
   onNodeDoubleClick?: (nodeId: string) => void;
   onFileDrop?: (files: FileList, position: { x: number; y: number }) => void;
+  onAddNode?: (extension: FileExtension, position?: { x: number; y: number }, sourceNodeId?: string) => void;
+  onAddStatusPill?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
+  onAddTextNode?: (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => void;
 }
 
 export function AtlasCanvas({
@@ -75,9 +79,97 @@ export function AtlasCanvas({
   onCancelNewComment,
   onNodeDoubleClick,
   onFileDrop,
+  onAddNode,
+  onAddStatusPill,
+  onAddTextNode,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [handleMenu, setHandleMenu] = useState<{
+    position: { x: number; y: number };
+    sourceNodeId: string;
+    handlePosition: "left" | "right";
+    canvasPosition: { x: number; y: number };
+  } | null>(null);
+  const connectionStartRef = useRef<{ nodeId: string; handleType: string; position: { x: number; y: number } } | null>(null);
+  const isDraggingConnectionRef = useRef(false);
+  const { screenToFlowPosition } = useReactFlow();
+
+  // Handle connection start - track where we started
+  const handleConnectStart = useCallback((event: MouseEvent | TouchEvent, params: { nodeId: string | null; handleType: string | null }) => {
+    if (params.nodeId && params.handleType) {
+      const clientX = 'clientX' in event ? event.clientX : event.touches[0].clientX;
+      const clientY = 'clientY' in event ? event.clientY : event.touches[0].clientY;
+      connectionStartRef.current = {
+        nodeId: params.nodeId,
+        handleType: params.handleType,
+        position: { x: clientX, y: clientY },
+      };
+      isDraggingConnectionRef.current = false;
+    }
+  }, []);
+
+  // Handle connection end - check if it was a click or drag
+  const handleConnectEnd = useCallback((event: MouseEvent | TouchEvent) => {
+    const start = connectionStartRef.current;
+    if (!start) return;
+
+    const clientX = 'clientX' in event ? event.clientX : event.changedTouches[0].clientX;
+    const clientY = 'clientY' in event ? event.clientY : event.changedTouches[0].clientY;
+
+    // Calculate distance moved
+    const dx = clientX - start.position.x;
+    const dy = clientY - start.position.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // If moved less than 10px and no connection was made, treat as click
+    if (distance < 10 && !isDraggingConnectionRef.current) {
+      const flowPosition = screenToFlowPosition({ x: clientX, y: clientY });
+      setHandleMenu({
+        position: { x: clientX, y: clientY },
+        sourceNodeId: start.nodeId,
+        handlePosition: start.handleType === "source" ? "right" : "left",
+        canvasPosition: flowPosition,
+      });
+    }
+
+    connectionStartRef.current = null;
+    isDraggingConnectionRef.current = false;
+  }, [screenToFlowPosition]);
+
+  // Track if we're actually dragging a connection (moved enough to be considered a drag)
+  const handleMouseMove = useCallback((event: React.MouseEvent) => {
+    if (connectionStartRef.current) {
+      const dx = event.clientX - connectionStartRef.current.position.x;
+      const dy = event.clientY - connectionStartRef.current.position.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance > 10) {
+        isDraggingConnectionRef.current = true;
+      }
+    }
+  }, []);
+
+  // Handle menu callbacks
+  const handleMenuAddNode = useCallback((extension: FileExtension) => {
+    if (handleMenu && onAddNode) {
+      onAddNode(extension, handleMenu.canvasPosition, handleMenu.sourceNodeId);
+    }
+    setHandleMenu(null);
+  }, [handleMenu, onAddNode]);
+
+  const handleMenuAddStatusPill = useCallback(() => {
+    if (handleMenu && onAddStatusPill) {
+      onAddStatusPill(handleMenu.canvasPosition, handleMenu.sourceNodeId);
+    }
+    setHandleMenu(null);
+  }, [handleMenu, onAddStatusPill]);
+
+  const handleMenuAddTextNode = useCallback((textType: "brief" | "note" | "description") => {
+    if (handleMenu && onAddTextNode) {
+      onAddTextNode(textType, handleMenu.canvasPosition, handleMenu.sourceNodeId);
+    }
+    setHandleMenu(null);
+  }, [handleMenu, onAddTextNode]);
 
   // Handle file drag and drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -173,13 +265,19 @@ export function AtlasCanvas({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onMouseMove={handleMouseMove}
     >
       <ReactFlow
         nodes={filteredNodes}
         edges={styledEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={(connection) => {
+          isDraggingConnectionRef.current = true;
+          onConnect(connection);
+        }}
+        onConnectStart={handleConnectStart}
+        onConnectEnd={handleConnectEnd}
         onPaneClick={handlePaneClick}
         onNodeDoubleClick={(event, node) => {
           if (node.type === "file" && onNodeDoubleClick) {
@@ -328,6 +426,19 @@ export function AtlasCanvas({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Handle click menu */}
+      {handleMenu && (
+        <AddNodeMenu
+          onAddNode={handleMenuAddNode}
+          onAddStatusPill={handleMenuAddStatusPill}
+          onAddTextNode={handleMenuAddTextNode}
+          onClose={() => setHandleMenu(null)}
+          position={handleMenu.position}
+          sourceNodeId={handleMenu.sourceNodeId}
+          sourceHandlePosition={handleMenu.handlePosition}
+        />
       )}
     </div>
   );
