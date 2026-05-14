@@ -6,6 +6,7 @@ import type { FileExtension } from "@/lib/atlas-types";
 interface CanvasSideToolbarProps {
   onAddNode: (extension: FileExtension) => void;
   onAddStatusPill: () => void;
+  onAddTextNode: (textType: "brief" | "note" | "description") => void;
   onSettingsClick: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
@@ -25,6 +26,7 @@ const FILE_TYPE_OPTIONS: { label: string; extension: FileExtension }[] = [
 export function CanvasSideToolbar({
   onAddNode,
   onAddStatusPill,
+  onAddTextNode,
   onSettingsClick,
   onSearchChange,
   searchQuery,
@@ -153,9 +155,68 @@ export function CanvasSideToolbar({
         {showAddMenu && (
           <div
             className="absolute right-full mr-2 top-0 py-1 rounded-lg shadow-lg"
-            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", minWidth: 160 }}
+            style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", minWidth: 180 }}
           >
+            {/* Text Nodes Section */}
+            <div className="px-3 py-1 text-xs text-gray-500 uppercase tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Text
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onAddTextNode("brief");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#3B82F620", color: "#3B82F6" }}>
+                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                  <rect x="2" y="2" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                </svg>
+              </div>
+              Creative Brief
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onAddTextNode("note");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F59E0B20", color: "#F59E0B" }}>
+                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 4H12M2 7H10M2 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              Note
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onAddTextNode("description");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#8B5CF620", color: "#8B5CF6" }}>
+                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 4H12M2 7H10M2 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              Description
+            </button>
+            
+            {/* Divider */}
+            <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+            
             {/* Status Pill Option */}
+            <div className="px-3 py-1 text-xs text-gray-500 uppercase tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Elements
+            </div>
             <button
               type="button"
               onClick={() => {
@@ -166,12 +227,16 @@ export function CanvasSideToolbar({
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               <div className="w-4 h-2.5 rounded-full" style={{ backgroundColor: "#e5e5e5" }} />
-              Status
+              Status Pill
             </button>
             
             {/* Divider */}
             <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
             
+            {/* File Types Section */}
+            <div className="px-3 py-1 text-xs text-gray-500 uppercase tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Files
+            </div>
             {FILE_TYPE_OPTIONS.map((option) => (
               <button
                 key={option.extension}

@@ -250,11 +250,20 @@ export interface FileNodeData {
   blockers?: number; // Number of blockers
 }
 
+// Text node data interface (for briefs, notes, etc.)
+export interface TextNodeData {
+  label: string;
+  content: string;
+  textType: "brief" | "note" | "description";
+  lastModified: string;
+  author?: WorkspaceMember;
+}
+
 // Atlas node type
-export type AtlasNodeType = "file" | "statusPill";
+export type AtlasNodeType = "file" | "statusPill" | "text";
 
 // Atlas workflow node - using generic data for multiple node types
-export type AtlasNode = Node<FileNodeData | Record<string, unknown>, AtlasNodeType>;
+export type AtlasNode = Node<FileNodeData | TextNodeData | Record<string, unknown>, AtlasNodeType>;
 
 // Filter state
 export interface FilterState {

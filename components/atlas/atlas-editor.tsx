@@ -137,6 +137,37 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     setNodes((nds) => [...nds, newNode]);
   }, [nodes.length, setNodes]);
 
+  const handleAddTextNode = useCallback(
+    (textType: "brief" | "note" | "description") => {
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+
+      const typeLabels = {
+        brief: "Creative Brief",
+        note: "Note",
+        description: "Description",
+      };
+
+      const newNode: AtlasNode = {
+        id: `text-${Date.now()}`,
+        type: "text",
+        position: { x: 150 + nodes.length * 30, y: 100 + nodes.length * 20 },
+        data: {
+          label: typeLabels[textType],
+          content: "",
+          textType,
+          lastModified: formattedDate,
+        },
+      };
+      setNodes((nds) => [...nds, newNode]);
+    },
+    [nodes.length, setNodes]
+  );
+
   const handleDoubleClickCanvas = useCallback(
     (position: { x: number; y: number }) => {
       const today = new Date();
@@ -312,6 +343,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         <CanvasSideToolbar
           onAddNode={handleAddNode}
           onAddStatusPill={handleAddStatusPill}
+          onAddTextNode={handleAddTextNode}
           onSettingsClick={() => setShowSettingsDialog(true)}
           onSearchChange={setSearchQuery}
           searchQuery={searchQuery}
