@@ -93,13 +93,19 @@ export function AtlasCanvas({
   } | null>(null);
   const connectionStartRef = useRef<{ nodeId: string; handleType: string; position: { x: number; y: number } } | null>(null);
   const isDraggingConnectionRef = useRef(false);
-  const { screenToFlowPosition } = useReactFlow();
+  const reactFlowInstance = useReactFlow();
 
   // Listen for handle click events from nodes
   useEffect(() => {
     const handleHandleClick = (e: CustomEvent<{ nodeId: string; handleType: string; position: { x: number; y: number } }>) => {
       const { nodeId, handleType, position } = e.detail;
-      const flowPosition = screenToFlowPosition(position);
+      // Use try-catch since screenToFlowPosition may not be available immediately
+      let flowPosition = { x: position.x, y: position.y };
+      try {
+        flowPosition = reactFlowInstance.screenToFlowPosition(position);
+      } catch {
+        // Use screen position as fallback
+      }
       setHandleMenu({
         position,
         sourceNodeId: nodeId,
@@ -112,7 +118,7 @@ export function AtlasCanvas({
     return () => {
       window.removeEventListener("atlas:handle-click", handleHandleClick as EventListener);
     };
-  }, [screenToFlowPosition]);
+  }, [reactFlowInstance]);
 
   // Handle connection start - track where we started
   const handleConnectStart = useCallback((event: MouseEvent | TouchEvent, params: { nodeId: string | null; handleType: string | null }) => {
@@ -150,7 +156,12 @@ export function AtlasCanvas({
 
     // If moved less than 20px and no connection was made, treat as click - show add menu
     if (distance < 20) {
-      const flowPosition = screenToFlowPosition({ x: clientX, y: clientY });
+      let flowPosition = { x: clientX, y: clientY };
+      try {
+        flowPosition = reactFlowInstance.screenToFlowPosition({ x: clientX, y: clientY });
+      } catch {
+        // Use screen position as fallback
+      }
       setHandleMenu({
         position: { x: clientX, y: clientY },
         sourceNodeId: start.nodeId,
@@ -161,7 +172,7 @@ export function AtlasCanvas({
 
     connectionStartRef.current = null;
     isDraggingConnectionRef.current = false;
-  }, [screenToFlowPosition]);
+  }, [reactFlowInstance]);
 
   
 
