@@ -21,6 +21,9 @@ import type { AtlasNode, CanvasComment, WorkspaceMember } from "@/lib/atlas-type
 import { FileNode } from "./file-node";
 import { StatusPillNode } from "./status-pill-node";
 import { TextNode } from "./text-node";
+import { SageChatbotNode } from "./sage-chatbot-node";
+import { SageOverviewNode } from "./sage-overview-node";
+import { StakeholderNode } from "./stakeholder-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 import { AddNodeMenu } from "./add-node-menu";
 
@@ -28,6 +31,9 @@ const nodeTypes: NodeTypes = {
   file: FileNode,
   statusPill: StatusPillNode,
   text: TextNode,
+  sageChatbot: SageChatbotNode,
+  sageOverview: SageOverviewNode,
+  stakeholder: StakeholderNode,
 };
 
 interface AtlasCanvasProps {
@@ -55,6 +61,7 @@ interface AtlasCanvasProps {
   onUploadFile?: (files: FileList, position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddStatusPill?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddTextNode?: (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => void;
+  onAddSageNode?: (sageType: "chatbot" | "overview" | "stakeholder", position?: { x: number; y: number }, sourceNodeId?: string) => void;
 }
 
 export function AtlasCanvas({
@@ -82,6 +89,7 @@ export function AtlasCanvas({
   onUploadFile,
   onAddStatusPill,
   onAddTextNode,
+  onAddSageNode,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
@@ -197,6 +205,13 @@ export function AtlasCanvas({
     }
     setHandleMenu(null);
   }, [handleMenu, onUploadFile]);
+
+  const handleMenuAddSageNode = useCallback((sageType: "chatbot" | "overview" | "stakeholder") => {
+    if (handleMenu && onAddSageNode) {
+      onAddSageNode(sageType, handleMenu.canvasPosition, handleMenu.sourceNodeId);
+    }
+    setHandleMenu(null);
+  }, [handleMenu, onAddSageNode]);
 
   // Handle file drag and drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -460,6 +475,7 @@ export function AtlasCanvas({
         <AddNodeMenu
           onAddStatusPill={handleMenuAddStatusPill}
           onAddTextNode={handleMenuAddTextNode}
+          onAddSageNode={handleMenuAddSageNode}
           onUploadFile={handleMenuUploadFile}
           onClose={() => setHandleMenu(null)}
           position={handleMenu.position}

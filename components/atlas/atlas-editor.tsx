@@ -247,6 +247,72 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     [nodes.length, setNodes, setEdges]
   );
 
+  const handleAddSageNode = useCallback(
+    (sageType: "chatbot" | "overview" | "stakeholder", position?: { x: number; y: number }, sourceNodeId?: string) => {
+      const nodeId = `sage-${Date.now()}`;
+      const nodePosition = position || { x: 150 + nodes.length * 30, y: 100 + nodes.length * 20 };
+
+      let newNode: AtlasNode;
+
+      if (sageType === "chatbot") {
+        newNode = {
+          id: nodeId,
+          type: "sageChatbot",
+          position: nodePosition,
+          data: {
+            label: "Sage Chat",
+            messages: [],
+            lastModified: new Date().toISOString(),
+          },
+        };
+      } else if (sageType === "overview") {
+        newNode = {
+          id: nodeId,
+          type: "sageOverview",
+          position: nodePosition,
+          data: {
+            label: "Project Overview",
+            projectProgress: 65,
+            alignmentScore: 78,
+            summary: "Project is progressing well with most stakeholders aligned. Focus on completing the remaining design reviews.",
+            lastUpdated: "just now",
+          },
+        };
+      } else {
+        // stakeholder
+        newNode = {
+          id: nodeId,
+          type: "stakeholder",
+          position: nodePosition,
+          data: {
+            label: "Stakeholder",
+            stakeholder: WORKSPACE_MEMBERS[0],
+            comprehensionLevel: "medium",
+            alignmentStatus: "aligned",
+            notes: "Key decision maker for brand direction",
+            lastInteraction: "2 days ago",
+            keyInsights: [
+              "Prefers modern, minimal aesthetics",
+              "Values consistency across touchpoints",
+            ],
+          },
+        };
+      }
+
+      setNodes((nds) => [...nds, newNode]);
+
+      // If source node provided, create an edge
+      if (sourceNodeId) {
+        setEdges((eds) => [...eds, {
+          id: `edge-${sourceNodeId}-${nodeId}`,
+          source: sourceNodeId,
+          target: nodeId,
+        }]);
+      }
+    },
+    [nodes.length, setNodes, setEdges]
+  );
+
   const handleDoubleClickCanvas = useCallback(
     (position: { x: number; y: number }) => {
       const today = new Date();
@@ -516,11 +582,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           }}
           onAddStatusPill={handleAddStatusPill}
           onAddTextNode={handleAddTextNode}
+          onAddSageNode={handleAddSageNode}
         />
 
         <CanvasSideToolbar
           onAddStatusPill={handleAddStatusPill}
           onAddTextNode={handleAddTextNode}
+          onAddSageNode={handleAddSageNode}
           onSettingsClick={() => setShowSettingsDialog(true)}
           onSearchChange={setSearchQuery}
           searchQuery={searchQuery}

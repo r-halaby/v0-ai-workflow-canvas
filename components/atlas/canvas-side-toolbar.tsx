@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect } from "react";
 interface CanvasSideToolbarProps {
   onAddStatusPill: () => void;
   onAddTextNode: (textType: "brief" | "note" | "description") => void;
+  onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
   onSettingsClick: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
@@ -16,6 +17,7 @@ interface CanvasSideToolbarProps {
 export function CanvasSideToolbar({
   onAddStatusPill,
   onAddTextNode,
+  onAddSageNode,
   onSettingsClick,
   onSearchChange,
   searchQuery,
@@ -217,6 +219,64 @@ export function CanvasSideToolbar({
             >
               <div className="w-4 h-2.5 rounded-full" style={{ backgroundColor: "#e5e5e5" }} />
               Status Pill
+            </button>
+            
+            {/* Divider */}
+            <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+            
+            {/* Sage Section */}
+            <div className="px-3 py-1 text-xs text-gray-500 uppercase tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Sage
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onAddSageNode("chatbot");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#BA751720", color: "#BA7517" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              Sage Chat
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onAddSageNode("overview");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#BA751720", color: "#BA7517" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 3v18h18" />
+                  <path d="M18 17l-5-5-4 4-3-3" />
+                </svg>
+              </div>
+              Overview
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onAddSageNode("stakeholder");
+                setShowAddMenu(false);
+              }}
+              className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#BA751720", color: "#BA7517" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="7" r="4" />
+                  <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+                </svg>
+              </div>
+              Stakeholder
             </button>
           </div>
         )}

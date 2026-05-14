@@ -259,11 +259,46 @@ export interface TextNodeData {
   author?: WorkspaceMember;
 }
 
+// Sage chatbot node data interface
+export interface SageChatbotNodeData {
+  label: string;
+  messages: SageChatMessage[];
+  lastModified: string;
+}
+
+// Sage chat message
+export interface SageChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+// Sage overview node data interface
+export interface SageOverviewNodeData {
+  label: string;
+  projectProgress: number; // 0-100
+  alignmentScore: number; // 0-100
+  summary: string;
+  lastUpdated: string;
+}
+
+// Stakeholder node data interface
+export interface StakeholderNodeData {
+  label: string;
+  stakeholder: WorkspaceMember;
+  comprehensionLevel: "low" | "medium" | "high";
+  alignmentStatus: "aligned" | "needs-attention" | "misaligned";
+  notes: string;
+  lastInteraction: string;
+  keyInsights: string[];
+}
+
 // Atlas node type
-export type AtlasNodeType = "file" | "statusPill" | "text";
+export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder";
 
 // Atlas workflow node - using generic data for multiple node types
-export type AtlasNode = Node<FileNodeData | TextNodeData | Record<string, unknown>, AtlasNodeType>;
+export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | Record<string, unknown>, AtlasNodeType>;
 
 // Filter state
 export interface FilterState {
