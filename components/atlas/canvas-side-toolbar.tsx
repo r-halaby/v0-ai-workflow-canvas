@@ -60,11 +60,15 @@ export function CanvasSideToolbar({
   }, [searchQuery]);
 
   const handleOpenAddMenu = () => {
+    console.log("[v0] handleOpenAddMenu called");
+    console.log("[v0] addButtonRef.current:", addButtonRef.current);
     if (addButtonRef.current) {
       const rect = addButtonRef.current.getBoundingClientRect();
+      console.log("[v0] Button rect:", rect);
       setAddMenuPosition({ x: rect.left - 190, y: rect.top });
     }
     setShowAddMenu(true);
+    console.log("[v0] showAddMenu set to true");
   };
 
   return (

@@ -59,7 +59,7 @@ export function AddNodeMenu({
     <>
       {/* Backdrop to close menu */}
       <div 
-        style={{ position: "fixed", inset: 0, zIndex: 40 }}
+        style={{ position: "fixed", inset: 0, zIndex: 45 }}
         onClick={onClose}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -146,7 +146,7 @@ export function AddNodeMenu({
           {/* Status Pill */}
           <button
             type="button"
-            onClick={() => { onAddStatusPill(); onClose(); }}
+            onClick={() => { console.log("[v0] Status pill clicked"); onAddStatusPill(); onClose(); }}
             style={{
               width: "100%",
               padding: "8px 12px",
@@ -332,7 +332,7 @@ Generate
             <>
               <button
                 type="button"
-                onClick={() => { onAddTextNode("brief"); onClose(); }}
+                onClick={() => { console.log("[v0] Brief text node clicked"); onAddTextNode("brief"); onClose(); }}
                 style={{
                   width: "100%",
                   padding: "8px 12px",
