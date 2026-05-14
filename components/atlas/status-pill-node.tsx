@@ -75,18 +75,18 @@ export function StatusPillNode({ data, selected }: NodeProps) {
 
   return (
     <div className="relative group">
-      {/* Connection handles */}
+      {/* Connection handles - positioned outside the node */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-4 !h-4 !border-2 opacity-0 group-hover:opacity-100 transition-opacity !cursor-pointer"
-        style={{ background: "#52525b", borderColor: "#71717a", transform: "translate(-50%, -50%)", top: "50%" }}
+        className="!w-3 !h-3 !border-2 opacity-0 group-hover:opacity-100 transition-all !cursor-pointer"
+        style={{ background: "#1a1a1a", borderColor: "#525252", left: -12, top: "50%", transform: "translateY(-50%)" }}
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-4 !h-4 !border-2 opacity-0 group-hover:opacity-100 transition-opacity !cursor-pointer"
-        style={{ background: "#52525b", borderColor: "#71717a", transform: "translate(50%, -50%)", top: "50%" }}
+        className="!w-3 !h-3 !border-2 opacity-0 group-hover:opacity-100 transition-all !cursor-pointer"
+        style={{ background: "#1a1a1a", borderColor: "#525252", right: -12, top: "50%", transform: "translateY(-50%)" }}
       />
 
       {/* Main Pill */}

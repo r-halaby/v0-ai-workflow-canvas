@@ -160,12 +160,18 @@ export function FileNode({ data, selected }: NodeProps) {
         outlineOffset: 2,
       }}
     >
-      {/* Connection Handles - larger hit area for better interaction */}
+      {/* Connection Handles - positioned outside the node */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-4 !h-4 !border-2 !opacity-0 group-hover:!opacity-100 transition-opacity !cursor-pointer"
-        style={{ background: "#52525b", borderColor: "#71717a", top: "50%", transform: "translate(-50%, -50%)" }}
+        className="!w-3 !h-3 !border-2 !opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
+        style={{ 
+          background: "#1a1a1a", 
+          borderColor: "#525252", 
+          top: "50%", 
+          left: -12,
+          transform: "translateY(-50%)",
+        }}
       />
 
       {/* Header - File icon and name */}
@@ -326,8 +332,14 @@ export function FileNode({ data, selected }: NodeProps) {
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-4 !h-4 !border-2 !opacity-0 group-hover:!opacity-100 transition-opacity !cursor-pointer"
-        style={{ background: "#52525b", borderColor: "#71717a", top: "50%", transform: "translate(50%, -50%)" }}
+        className="!w-3 !h-3 !border-2 !opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
+        style={{ 
+          background: "#1a1a1a", 
+          borderColor: "#525252", 
+          top: "50%", 
+          right: -12,
+          transform: "translateY(-50%)",
+        }}
       />
     </div>
   );

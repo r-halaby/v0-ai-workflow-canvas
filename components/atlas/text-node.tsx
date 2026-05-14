@@ -101,29 +101,31 @@ export function TextNode({ data, selected }: NodeProps) {
       onMouseLeave={() => setIsHovered(false)}
       onDoubleClick={() => setIsEditing(true)}
     >
-      {/* Connection Handles */}
+      {/* Connection Handles - positioned outside the node */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-4 !h-4 !border-2 transition-opacity !cursor-pointer"
+        className="!w-3 !h-3 !border-2 transition-all !cursor-pointer"
         style={{
-          background: "#52525b",
-          borderColor: "#71717a",
+          background: "#1a1a1a",
+          borderColor: "#525252",
           top: "50%",
+          left: -12,
           opacity: isHovered ? 1 : 0,
-          transform: "translate(-50%, -50%)",
+          transform: "translateY(-50%)",
         }}
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-4 !h-4 !border-2 transition-opacity !cursor-pointer"
+        className="!w-3 !h-3 !border-2 transition-all !cursor-pointer"
         style={{
-          background: "#52525b",
-          borderColor: "#71717a",
+          background: "#1a1a1a",
+          borderColor: "#525252",
           top: "50%",
+          right: -12,
           opacity: isHovered ? 1 : 0,
-          transform: "translate(50%, -50%)",
+          transform: "translateY(-50%)",
         }}
       />
 
