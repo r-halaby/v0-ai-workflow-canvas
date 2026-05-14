@@ -141,9 +141,13 @@ export function FileNode({ id, data, selected }: NodeProps) {
   const taskCount = fileData.tasks?.length || 0;
   const completedTasks = fileData.tasks?.filter(t => t.completed).length || 0;
 
-  // Get preview image - use first preview image, uploaded file, or default
+  // File extensions that browsers cannot render as images
+  const NON_RENDERABLE_EXTENSIONS = [".ai", ".psd", ".fig", ".sketch", ".xd", ".indd", ".pdf"];
+  const isNonRenderable = NON_RENDERABLE_EXTENSIONS.includes(fileData.fileExtension);
+  
+  // Get preview image - use first preview image, uploaded file (only if renderable), or default
   const previewImage = fileData.previewImages?.[0] 
-    || fileData.uploadedFile?.url 
+    || (isNonRenderable ? null : fileData.uploadedFile?.url)
     || DEFAULT_PREVIEWS[fileData.fileExtension] 
     || DEFAULT_PREVIEWS.default;
 

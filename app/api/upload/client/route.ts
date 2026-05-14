@@ -17,15 +17,27 @@ export async function POST(request: NextRequest) {
         // Generate a client token for the browser to upload the file
         return {
           allowedContentTypes: [
+            // Images
             "image/jpeg",
             "image/png", 
             "image/gif",
             "image/webp",
             "image/avif",
+            "image/svg+xml",
+            // Documents
             "application/pdf",
+            // Design files
             "application/vnd.figma",
+            "application/postscript", // .ai files
+            "image/vnd.adobe.photoshop", // .psd files
+            "application/x-photoshop", // .psd alternate
+            "application/illustrator", // .ai alternate
+            "application/octet-stream", // generic binary (for .sketch, .xd, etc.)
+            // Video
             "video/mp4",
             "video/quicktime",
+            "video/webm",
+            // Archives
             "application/zip",
             "application/x-zip-compressed",
           ],
