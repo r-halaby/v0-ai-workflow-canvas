@@ -39,6 +39,10 @@ interface FileDetailModalProps {
 export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: FileDetailModalProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "todos" | "history">("overview");
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [newTodoTitle, setNewTodoTitle] = useState("");
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState<string | null>(null);
+  const [isAddingTodo, setIsAddingTodo] = useState(false);
+  const [newTodoAssignee, setNewTodoAssignee] = useState<WorkspaceMember | null>(null);
 
   if (!isOpen) return null;
 
@@ -131,12 +135,41 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
   };
 
   const handleTaskToggle = (taskId: string) => {
-    if (onUpdateFile && fileData.tasks) {
-      const updatedTasks = fileData.tasks.map((task) =>
+    if (onUpdateFile) {
+      const currentTasks = fileData.tasks || [];
+      const updatedTasks = currentTasks.map((task) =>
         task.id === taskId ? { ...task, completed: !task.completed } : task
       );
       onUpdateFile({ tasks: updatedTasks });
     }
+  };
+
+  const handleAddTodo = () => {
+    if (!newTodoTitle.trim() || !onUpdateFile) return;
+    
+    const newTask: TaskItem = {
+      id: `task-${Date.now()}`,
+      title: newTodoTitle.trim(),
+      completed: false,
+      assignee: newTodoAssignee || undefined,
+    };
+    
+    const currentTasks = fileData.tasks || [];
+    onUpdateFile({ tasks: [...currentTasks, newTask] });
+    setNewTodoTitle("");
+    setNewTodoAssignee(null);
+    setIsAddingTodo(false);
+  };
+
+  const handleAssignTask = (taskId: string, member: WorkspaceMember | null) => {
+    if (onUpdateFile) {
+      const currentTasks = fileData.tasks || [];
+      const updatedTasks = currentTasks.map((task) =>
+        task.id === taskId ? { ...task, assignee: member || undefined } : task
+      );
+      onUpdateFile({ tasks: updatedTasks });
+    }
+    setShowAssigneeDropdown(null);
   };
 
   const getActivityIcon = (type: FileActivity["type"]) => {
@@ -420,40 +453,213 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
 
           {activeTab === "todos" && (
             <div className="space-y-3">
-              {tasks.length > 0 ? (
-                tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-center gap-3 p-3 rounded-lg transition-colors"
-                    style={{ 
-                      backgroundColor: task.completed ? "#1a1a1a" : "#1f1f1f", 
-                      border: "1px solid #2a2a2a" 
-                    }}
+              {/* Existing Tasks */}
+              {tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="flex items-center gap-3 p-3 rounded-lg transition-colors"
+                  style={{ 
+                    backgroundColor: task.completed ? "#1a1a1a" : "#1f1f1f", 
+                    border: "1px solid #2a2a2a" 
+                  }}
+                >
+                  <Checkbox
+                    checked={task.completed}
+                    onCheckedChange={() => handleTaskToggle(task.id)}
+                    className="data-[state=checked]:bg-[#F0FE00] data-[state=checked]:border-[#F0FE00] data-[state=checked]:text-black border-gray-600"
+                  />
+                  <span
+                    className={`flex-1 text-sm ${task.completed ? "text-gray-500 line-through" : "text-gray-200"}`}
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    <Checkbox
-                      checked={task.completed}
-                      onCheckedChange={() => handleTaskToggle(task.id)}
-                      className="data-[state=checked]:bg-[#F0FE00] data-[state=checked]:border-[#F0FE00] data-[state=checked]:text-black border-gray-600"
-                    />
-                    <span
-                      className={`flex-1 text-sm ${task.completed ? "text-gray-500 line-through" : "text-gray-200"}`}
-                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    {task.title}
+                  </span>
+                  
+                  {/* Assignee Button with Dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowAssigneeDropdown(showAssigneeDropdown === task.id ? null : task.id)}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors"
+                      style={{ 
+                        backgroundColor: task.assignee?.avatarColor || "#2a2a2a",
+                        color: task.assignee ? "white" : "#666666",
+                        border: task.assignee ? "none" : "1px dashed #444444"
+                      }}
+                      title={task.assignee ? task.assignee.name : "Assign"}
                     >
-                      {task.title}
-                    </span>
-                    {task.assignee && (
+                      {task.assignee ? (
+                        task.assignee.name.split(" ").map(n => n[0]).join("")
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <circle cx="7" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+                          <path d="M2.5 12C2.5 9.5 4.5 8 7 8C9.5 8 11.5 9.5 11.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      )}
+                    </button>
+                    
+                    {/* Assignee Dropdown */}
+                    {showAssigneeDropdown === task.id && (
                       <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white"
-                        style={{ backgroundColor: task.assignee.avatarColor || "#666666" }}
-                        title={task.assignee.name}
+                        className="absolute right-0 top-full mt-1 py-1 rounded-lg shadow-lg z-50 min-w-[160px]"
+                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
                       >
-                        {task.assignee.name.split(" ").map(n => n[0]).join("")}
+                        {task.assignee && (
+                          <button
+                            type="button"
+                            onClick={() => handleAssignTask(task.id, null)}
+                            className="w-full px-3 py-2 text-left text-sm text-gray-400 hover:bg-white/5 transition-colors"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            Unassign
+                          </button>
+                        )}
+                        {WORKSPACE_MEMBERS.map((member) => (
+                          <button
+                            key={member.id}
+                            type="button"
+                            onClick={() => handleAssignTask(task.id, member)}
+                            className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/5 transition-colors flex items-center gap-2"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium text-white"
+                              style={{ backgroundColor: member.avatarColor || "#666666" }}
+                            >
+                              {member.name.split(" ").map(n => n[0]).join("")}
+                            </div>
+                            {member.name}
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
-                ))
+                </div>
+              ))}
+              
+              {/* Add Todo Form */}
+              {isAddingTodo ? (
+                <div
+                  className="flex items-center gap-3 p-3 rounded-lg"
+                  style={{ backgroundColor: "#1f1f1f", border: "1px solid #2a2a2a" }}
+                >
+                  <Checkbox disabled className="border-gray-600 opacity-50" />
+                  <input
+                    type="text"
+                    value={newTodoTitle}
+                    onChange={(e) => setNewTodoTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddTodo();
+                      if (e.key === "Escape") {
+                        setIsAddingTodo(false);
+                        setNewTodoTitle("");
+                        setNewTodoAssignee(null);
+                      }
+                    }}
+                    placeholder="What needs to be done?"
+                    autoFocus
+                    className="flex-1 text-sm text-gray-200 bg-transparent border-none focus:outline-none placeholder-gray-500"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  />
+                  
+                  {/* New Todo Assignee */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowAssigneeDropdown(showAssigneeDropdown === "new" ? null : "new")}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors"
+                      style={{ 
+                        backgroundColor: newTodoAssignee?.avatarColor || "#2a2a2a",
+                        color: newTodoAssignee ? "white" : "#666666",
+                        border: newTodoAssignee ? "none" : "1px dashed #444444"
+                      }}
+                      title={newTodoAssignee ? newTodoAssignee.name : "Assign"}
+                    >
+                      {newTodoAssignee ? (
+                        newTodoAssignee.name.split(" ").map(n => n[0]).join("")
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <circle cx="7" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+                          <path d="M2.5 12C2.5 9.5 4.5 8 7 8C9.5 8 11.5 9.5 11.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      )}
+                    </button>
+                    
+                    {showAssigneeDropdown === "new" && (
+                      <div
+                        className="absolute right-0 top-full mt-1 py-1 rounded-lg shadow-lg z-50 min-w-[160px]"
+                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                      >
+                        {WORKSPACE_MEMBERS.map((member) => (
+                          <button
+                            key={member.id}
+                            type="button"
+                            onClick={() => {
+                              setNewTodoAssignee(member);
+                              setShowAssigneeDropdown(null);
+                            }}
+                            className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/5 transition-colors flex items-center gap-2"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium text-white"
+                              style={{ backgroundColor: member.avatarColor || "#666666" }}
+                            >
+                              {member.name.split(" ").map(n => n[0]).join("")}
+                            </div>
+                            {member.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={handleAddTodo}
+                    disabled={!newTodoTitle.trim()}
+                    className="px-3 py-1 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                    style={{ 
+                      backgroundColor: newTodoTitle.trim() ? "#F0FE00" : "#2a2a2a",
+                      color: newTodoTitle.trim() ? "#000000" : "#666666",
+                      fontFamily: "system-ui, Inter, sans-serif"
+                    }}
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingTodo(false);
+                      setNewTodoTitle("");
+                      setNewTodoAssignee(null);
+                    }}
+                    className="p-1 text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                </div>
               ) : (
-                <div className="text-center py-8 text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingTodo(true)}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-white/5 text-gray-500 hover:text-gray-300"
+                  style={{ border: "1px dashed #2a2a2a" }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M9 3V15M3 9H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    Add a to-do
+                  </span>
+                </button>
+              )}
+              
+              {/* Empty state only when no tasks and not adding */}
+              {tasks.length === 0 && !isAddingTodo && (
+                <div className="text-center py-4 text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   No tasks added yet
                 </div>
               )}
