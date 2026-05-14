@@ -172,6 +172,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [presentationEdges, setPresentationEdges] = useState<Edge[]>([]);
   const [isPresenting, setIsPresenting] = useState(false);
 
+  // Clipboard state for copy/paste
+  const [copiedNodes, setCopiedNodes] = useState<AtlasNode[]>([]);
+
   // Listen for mockup generation events from file nodes
   useEffect(() => {
     const handleMockupEvent = (e: CustomEvent<{ nodeId: string; fileData: FileNodeData }>) => {
@@ -259,6 +262,79 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     },
     [setEdges]
   );
+
+  // Copy selected nodes to clipboard
+  const handleCopyNodes = useCallback(() => {
+    const selectedNodes = nodes.filter(node => node.selected);
+    if (selectedNodes.length > 0) {
+      setCopiedNodes(selectedNodes);
+    }
+  }, [nodes]);
+
+  // Paste copied nodes with offset
+  const handlePasteNodes = useCallback(() => {
+    if (copiedNodes.length === 0) return;
+
+    const PASTE_OFFSET = 50;
+    
+    // Find positions that don't overlap with existing nodes
+    const pastePositions = findFreePositions(
+      nodes,
+      copiedNodes.length,
+      {
+        x: copiedNodes[0].position.x + PASTE_OFFSET,
+        y: copiedNodes[0].position.y + PASTE_OFFSET,
+      }
+    );
+
+    const newNodes: AtlasNode[] = copiedNodes.map((node, index) => ({
+      ...node,
+      id: `${node.type}-${Date.now()}-${index}`,
+      position: pastePositions[index] || {
+        x: node.position.x + PASTE_OFFSET * (index + 1),
+        y: node.position.y + PASTE_OFFSET * (index + 1),
+      },
+      selected: true,
+      data: {
+        ...node.data,
+        label: node.data.label ? `${node.data.label} (copy)` : node.data.label,
+      },
+    }));
+
+    // Deselect existing nodes and add new ones selected
+    setNodes(nds => [
+      ...nds.map(n => ({ ...n, selected: false })),
+      ...newNodes,
+    ]);
+  }, [copiedNodes, nodes, setNodes]);
+
+  // Keyboard shortcuts for copy/paste
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input/textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+
+      if (modifierKey && e.key === 'c') {
+        e.preventDefault();
+        handleCopyNodes();
+      } else if (modifierKey && e.key === 'v') {
+        e.preventDefault();
+        handlePasteNodes();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleCopyNodes, handlePasteNodes]);
 
   const handleNodesUpdate = useCallback(
     (newNodes: AtlasNode[]) => {
