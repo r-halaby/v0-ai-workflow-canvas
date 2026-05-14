@@ -44,14 +44,8 @@ export default function SignUpPage() {
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="flex gap-0.5">
-            <div className="w-2 h-2 rounded-full bg-[#F0FE00]" />
-            <div className="w-2 h-2 rounded-full bg-[#F0FE00]" />
-            <div className="w-2 h-2 rounded-full bg-[#F0FE00]" />
-            <div className="w-2 h-2 rounded-full bg-[#F0FE00]" />
-          </div>
-          <span className="text-white text-2xl font-semibold tracking-tight">Atlas</span>
+        <div className="flex items-center justify-center mb-8">
+          <img src="/atlas-full-logo.svg" alt="Atlas" className="h-10" />
         </div>
 
         {/* Card */}
