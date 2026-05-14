@@ -899,8 +899,23 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onAddStatusPill={handleAddStatusPill}
           onAddTextNode={handleAddTextNode}
           onAddSageNode={handleAddSageNode}
-          onAddOperationalNode={handleAddOperationalNode}
-          onCreateMoodboard={handleCreateMoodboard}
+onAddOperationalNode={handleAddOperationalNode}
+  onOpenAIGenerate={(type) => {
+    if (type === "mockup") {
+      // Find first file node with an image to use as source
+      const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
+      if (fileNode) {
+        setMockupSourceFile(fileNode.data as FileNodeData);
+      } else {
+        // No file found - show alert
+        alert("Please upload an image first to generate mockups from.");
+      }
+    } else if (type === "collateral") {
+      // TODO: Implement collateral generation
+      alert("Collateral generation coming soon!");
+    }
+  }}
+  onCreateMoodboard={handleCreateMoodboard}
           onMoodboardClick={handleMoodboardClick}
           presentationMode={presentationMode}
           presentationEdges={presentationEdges}

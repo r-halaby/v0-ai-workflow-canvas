@@ -8,6 +8,7 @@ interface AddNodeMenuProps {
   onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
   onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => void;
   onUploadFile: (files: FileList) => void;
+  onOpenAIGenerate: (type: "mockup" | "collateral") => void;
   onClose: () => void;
   position?: { x: number; y: number };
   sourceNodeId?: string;
@@ -20,6 +21,7 @@ export function AddNodeMenu({
   onAddSageNode,
   onAddOperationalNode,
   onUploadFile,
+  onOpenAIGenerate,
   onClose,
   position,
   sourceHandlePosition,
@@ -227,6 +229,41 @@ export function AddNodeMenu({
               Ops Data
             </span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "ops" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
+              <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          
+          {/* Divider */}
+          <div style={{ height: 1, margin: "4px 8px", backgroundColor: "#333333" }} />
+          
+          {/* AI Generate */}
+          <button
+            type="button"
+            onClick={() => setActiveSubmenu(activeSubmenu === "ai" ? null : "ai")}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              textAlign: "left",
+              fontSize: 14,
+              color: "#d1d5db",
+              backgroundColor: activeSubmenu === "ai" ? "rgba(255,255,255,0.1)" : "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              ...fontStyle,
+            }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#F0FE0020", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z" stroke="#F0FE00" strokeWidth="1.2" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              AI Generate
+            </span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "ai" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
               <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
@@ -489,6 +526,45 @@ export function AddNodeMenu({
                 }}
               >
                 Team Health
+              </button>
+            </>
+          )}
+
+          {activeSubmenu === "ai" && (
+            <>
+              <button
+                type="button"
+                onClick={() => { onOpenAIGenerate("mockup"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Generate Mockups
+              </button>
+              <button
+                type="button"
+                onClick={() => { onOpenAIGenerate("collateral"); onClose(); }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  fontSize: 13,
+                  color: "#d1d5db",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  ...fontStyle,
+                }}
+              >
+                Generate Collateral
               </button>
             </>
           )}

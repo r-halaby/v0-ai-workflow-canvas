@@ -76,6 +76,7 @@ interface AtlasCanvasProps {
   onAddTextNode?: (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddSageNode?: (sageType: "chatbot" | "overview" | "stakeholder", position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddOperationalNode?: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string) => void;
+  onOpenAIGenerate?: (type: "mockup" | "collateral") => void;
   onCreateMoodboard?: (nodeIds: string[]) => void;
   onMoodboardClick?: (nodeId: string) => void;
   presentationMode?: boolean;
@@ -110,6 +111,7 @@ export function AtlasCanvas({
   onAddTextNode,
   onAddSageNode,
   onAddOperationalNode,
+  onOpenAIGenerate,
   onCreateMoodboard,
   onMoodboardClick,
   presentationMode = false,
@@ -287,8 +289,15 @@ export function AtlasCanvas({
       onAddOperationalNode(opType, handleMenu.canvasPosition, handleMenu.sourceNodeId);
     }
     setHandleMenu(null);
-  }, [handleMenu, onAddOperationalNode]);
+}, [handleMenu, onAddOperationalNode]);
 
+  const handleMenuOpenAIGenerate = useCallback((type: "mockup" | "collateral") => {
+    if (onOpenAIGenerate) {
+      onOpenAIGenerate(type);
+    }
+    setHandleMenu(null);
+  }, [onOpenAIGenerate]);
+  
   // Handle file drag and drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -672,9 +681,10 @@ export function AtlasCanvas({
           onAddStatusPill={handleMenuAddStatusPill}
           onAddTextNode={handleMenuAddTextNode}
           onAddSageNode={handleMenuAddSageNode}
-          onAddOperationalNode={handleMenuAddOperationalNode}
-          onUploadFile={handleMenuUploadFile}
-          onClose={() => setHandleMenu(null)}
+onAddOperationalNode={handleMenuAddOperationalNode}
+  onUploadFile={handleMenuUploadFile}
+  onOpenAIGenerate={handleMenuOpenAIGenerate}
+  onClose={() => setHandleMenu(null)}
           position={handleMenu.position}
           sourceHandlePosition={handleMenu.handlePosition}
         />
