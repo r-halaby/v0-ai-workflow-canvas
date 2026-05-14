@@ -367,7 +367,6 @@ export function SaveTemplateDialog({
               >
                 Add
               </button>
-</div>
             </div>
           </div>
           )}
