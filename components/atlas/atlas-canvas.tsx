@@ -16,7 +16,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import type { AtlasNode, FilterState, FileExtension } from "@/lib/atlas-types";
+import type { AtlasNode } from "@/lib/atlas-types";
 import { FileNode } from "./file-node";
 
 const nodeTypes: NodeTypes = {
@@ -26,7 +26,7 @@ const nodeTypes: NodeTypes = {
 interface AtlasCanvasProps {
   nodes: AtlasNode[];
   edges: Edge[];
-  filters: FilterState;
+  searchQuery?: string;
   onNodesChange: OnNodesChange<AtlasNode>;
   onEdgesChange: ReturnType<typeof useEdgesState>[1];
   onConnect: (connection: Connection) => void;
@@ -37,7 +37,7 @@ interface AtlasCanvasProps {
 export function AtlasCanvas({
   nodes,
   edges,
-  filters,
+  searchQuery = "",
   onNodesChange,
   onEdgesChange,
   onConnect,
@@ -46,23 +46,23 @@ export function AtlasCanvas({
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-  // Apply filter opacity to nodes
+  // Apply search highlighting to nodes
   const filteredNodes = useMemo(() => {
     return nodes.map((node) => {
-      const matchesProduct = filters.product === "all" || node.data.product === filters.product;
-      const matchesStatus = filters.status === "all" || node.data.status === filters.status;
-      const isVisible = matchesProduct && matchesStatus;
+      const matchesSearch = !searchQuery || 
+        node.data.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        node.data.fileName.toLowerCase().includes(searchQuery.toLowerCase());
 
       return {
         ...node,
         style: {
           ...node.style,
-          opacity: isVisible ? 1 : 0.2,
+          opacity: matchesSearch ? 1 : 0.2,
           transition: "opacity 0.2s ease",
         },
       };
     });
-  }, [nodes, filters]);
+  }, [nodes, searchQuery]);
 
   // Style edges with dashed animation
   const styledEdges = useMemo(() => {

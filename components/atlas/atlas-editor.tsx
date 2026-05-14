@@ -11,10 +11,11 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FilterState, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
+import { CanvasSideToolbar } from "./canvas-side-toolbar";
 import { FileDetailPanel } from "./file-detail-panel";
 import { UploadDialog } from "./upload-dialog";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
@@ -30,10 +31,10 @@ interface AtlasEditorProps {
 function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange }: AtlasEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
-  const [filters, setFilters] = useState<FilterState>({ product: "all", status: "all" });
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Sync canvas changes back to parent
   const syncCanvas = useCallback(() => {
@@ -197,25 +198,28 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: "#0a0a0a" }}>
       <AtlasToolbar
-        filters={filters}
-        onFiltersChange={setFilters}
-        onAddNode={handleAddNode}
         onUploadClick={() => setShowUploadDialog(true)}
-        onSettingsClick={() => setShowSettingsDialog(true)}
         canvasName={canvas.name}
         onBack={onBack}
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         <AtlasCanvas
           nodes={nodes}
           edges={edges}
-          filters={filters}
+          searchQuery={searchQuery}
           onNodesChange={handleNodesChangeWrapper}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodesUpdate={handleNodesUpdate}
           onDoubleClick={handleDoubleClickCanvas}
+        />
+
+        <CanvasSideToolbar
+          onAddNode={handleAddNode}
+          onSettingsClick={() => setShowSettingsDialog(true)}
+          onSearchChange={setSearchQuery}
+          searchQuery={searchQuery}
         />
 
         {selectedNode && (
