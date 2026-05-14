@@ -1,11 +1,16 @@
 import { put, del } from "@vercel/blob";
 import { type NextRequest, NextResponse } from "next/server";
 import { SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const canvasId = formData.get("canvasId") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -24,19 +29,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Vercel Blob with private access (store is configured as private)
-    const blob = await put(`atlas/${Date.now()}-${fileName}`, file, {
-      access: "private",
+    // Upload to Vercel Blob
+    const userPrefix = user?.id || "anonymous";
+    const blob = await put(`atlas/${userPrefix}/${Date.now()}-${fileName}`, file, {
+      access: "public",
     });
 
-    // Return pathname for private blob access (use /api/file route to serve)
+    // Save file metadata to Supabase if user is authenticated
+    let fileRecord = null;
+    if (user) {
+      const { data, error: dbError } = await supabase
+        .from("files")
+        .insert({
+          user_id: user.id,
+          canvas_id: canvasId || null,
+          file_name: fileName,
+          file_type: file.type,
+          file_size: file.size,
+          blob_url: blob.url,
+          metadata: {
+            contentType: blob.contentType,
+            pathname: blob.pathname,
+            extension: extension,
+          },
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error("Database error:", dbError);
+      } else {
+        fileRecord = data;
+      }
+    }
+
     return NextResponse.json({
-      url: blob.url, // Not directly accessible, use /api/file?pathname=...
+      url: blob.url,
       pathname: blob.pathname,
       size: file.size,
       uploadedAt: new Date().toISOString(),
       fileName: fileName,
       extension: extension,
+      fileId: fileRecord?.id || null,
     });
   } catch (error) {
     console.error("Upload error:", error);

@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
 import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode } from "@/lib/atlas-types";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS } from "@/lib/atlas-types";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
@@ -95,6 +97,69 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function UserSection() {
+  const { user, loading, signOut } = useAuth();
+  const router = useRouter();
+
+  if (loading) {
+    return (
+      <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
+        <div className="animate-pulse h-10 bg-white/5 rounded-lg" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
+        <Link
+          href="/auth/login"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+          style={{ backgroundColor: "#F0FE00", color: "#121212", fontFamily: "system-ui, Inter, sans-serif" }}
+        >
+          Sign in
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
+      <div className="flex items-center gap-3">
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
+          style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+        >
+          {user.email?.charAt(0).toUpperCase() || "U"}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+            {user.user_metadata?.display_name || user.email?.split("@")[0]}
+          </div>
+          <div className="text-xs text-gray-500 truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+            {user.email}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={async () => {
+            await signOut();
+            router.push("/auth/login");
+          }}
+          className="p-1.5 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+          title="Sign out"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
@@ -438,6 +503,9 @@ Recent Canvases
           </div>
         </div>
 
+        {/* User Section */}
+        <UserSection />
+        
         {/* Bottom actions */}
         <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
           <div className="flex items-center justify-between">
@@ -454,8 +522,21 @@ Recent Canvases
               className="p-2 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 11.25C10.2426 11.25 11.25 10.2426 11.25 9C11.25 7.75736 10.2426 6.75 9 6.75C7.75736 6.75 6.75 7.75736 6.75 9C6.75 10.2426 7.75736 11.25 9 11.25Z" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M14.55 11.25C14.4333 11.5166 14.3979 11.8123 14.4482 12.0992C14.4985 12.3861 14.6323 12.6517 14.8333 12.8625L14.8875 12.9167C15.0489 13.078 15.1768 13.2696 15.2641 13.4804C15.3514 13.6912 15.3964 13.917 15.3964 14.1451C15.3964 14.3731 15.3514 14.5989 15.2641 14.8097C15.1768 15.0205 15.0489 15.2122 14.8875 15.3735C14.7262 15.5349 14.5345 15.6628 14.3237 15.7501C14.1129 15.8374 13.8871 15.8824 13.6591 15.8824C13.431 15.8824 13.2052 15.8374 12.9944 15.7501C12.7836 15.6628 12.5919 15.5349 12.4306 15.3735L12.3764 15.3193C12.1656 15.1183 11.9 14.9846 11.6131 14.9343C11.3262 14.884 11.0305 14.9194 10.764 15.036L10.5 15.1477V16.5C10.5 16.9142 10.1642 17.25 9.75 17.25H8.25C7.83579 17.25 7.5 16.9142 7.5 16.5V15.1477L7.236 15.036C6.96949 14.9194 6.6738 14.884 6.3869 14.9343C6.1 14.9846 5.83436 15.1183 5.62355 15.3193L5.5694 15.3735C5.24609 15.6968 4.80647 15.8787 4.34695 15.8787C3.88744 15.8787 3.44782 15.6968 3.12451 15.3735C2.8012 15.0502 2.61926 14.6106 2.61926 14.1511C2.61926 13.6916 2.8012 13.252 3.12451 12.9287L3.17867 12.8745C3.37964 12.6637 3.5134 12.3981 3.56369 12.1112C3.61397 11.8243 3.57853 11.5286 3.46194 11.262L3.35024 11H2C1.58579 11 1.25 10.6642 1.25 10.25V8.75C1.25 8.33579 1.58579 8 2 8H3.35024L3.46194 7.738C3.57853 7.47149 3.61397 7.1758 3.56369 6.8889C3.5134 6.60201 3.37964 6.33636 3.17867 6.12555L3.12451 6.0714C2.8012 5.74809 2.61926 5.30847 2.61926 4.84895C2.61926 4.38944 2.8012 3.94982 3.12451 3.62651C3.44782 3.3032 3.88744 3.12126 4.34695 3.12126C4.80647 3.12126 5.24609 3.3032 5.5694 3.62651L5.62355 3.68067C5.83436 3.88164 6.1 4.0154 6.3869 4.06569C6.6738 4.11597 6.96949 4.08053 7.236 3.96394L7.5 3.85024V2.5C7.5 2.08579 7.83579 1.75 8.25 1.75H9.75C10.1642 1.75 10.5 2.08579 10.5 2.5V3.85024L10.764 3.96194C11.0305 4.07853 11.3262 4.11397 11.6131 4.06369C11.9 4.0134 12.1656 3.87964 12.3764 3.67867L12.4306 3.62451C12.7539 3.3012 13.1935 3.11926 13.653 3.11926C14.1125 3.11926 14.5522 3.3012 14.8755 3.62451C15.1988 3.94782 15.3807 4.38744 15.3807 4.84695C15.3807 5.30647 15.1988 5.74609 14.8755 6.0694L14.8213 6.12355C14.6203 6.33436 14.4866 6.6 14.4363 6.8869C14.386 7.1738 14.4215 7.46949 14.538 7.736L14.6498 8H16C16.4142 8 16.75 8.33579 16.75 8.75V10.25C16.75 10.6642 16.4142 11 16 11H14.6498L14.538 11.262C14.4215 11.5286 14.386 11.8243 14.4363 12.1112C14.4866 12.3981 14.6203 12.6637 14.8213 12.8745L14.8755 12.9287C15.1988 13.252 15.3807 13.6916 15.3807 14.1511C15.3807 14.6106 15.1988 15.0502 14.8755 15.3735C14.5522 15.6968 14.1125 15.8787 13.653 15.8787C13.1935 15.8787 12.7539 15.6968 12.4306 15.3735L12.3764 15.3193C12.1656 15.1183 11.9 14.9846 11.6131 14.9343C11.3262 14.884 11.0305 14.9194 10.764 15.036L10.5 15.1477V16.5C10.5 16.9142 10.1642 17.25 9.75 17.25H8.25C7.83579 17.25 7.5 16.9142 7.5 16.5V15.1477L7.236 15.036C6.96949 14.9194 6.6738 14.884 6.3869 14.9343C6.1 14.9846 5.83436 15.1183 5.62355 15.3193L5.5694 15.3735C5.24609 15.6968 4.80647 15.8787 4.34695 15.8787C3.88744 15.8787 3.44782 15.6968 3.12451 15.3735C2.8012 15.0502 2.61926 14.6106 2.61926 14.1511C2.61926 13.6916 2.8012 13.252 3.12451 12.9287L3.17867 12.8745C3.37964 12.6637 3.5134 12.3981 3.56369 12.1112C3.61397 11.8243 3.57853 11.5286 3.46194 11.262L14.55 11.25Z" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="9" cy="9" r="3" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="p-2 text-gray-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9" cy="9" r="7.25" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M9 6V9.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="9" cy="12" r="0.75" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
+        </div>744 15.3807 4.84695C15.3807 5.30647 15.1988 5.74609 14.8755 6.0694L14.8213 6.12355C14.6203 6.33436 14.4866 6.6 14.4363 6.8869C14.386 7.1738 14.4215 7.46949 14.538 7.736L14.6498 8H16C16.4142 8 16.75 8.33579 16.75 8.75V10.25C16.75 10.6642 16.4142 11 16 11H14.6498L14.538 11.262C14.4215 11.5286 14.386 11.8243 14.4363 12.1112C14.4866 12.3981 14.6203 12.6637 14.8213 12.8745L14.8755 12.9287C15.1988 13.252 15.3807 13.6916 15.3807 14.1511C15.3807 14.6106 15.1988 15.0502 14.8755 15.3735C14.5522 15.6968 14.1125 15.8787 13.653 15.8787C13.1935 15.8787 12.7539 15.6968 12.4306 15.3735L12.3764 15.3193C12.1656 15.1183 11.9 14.9846 11.6131 14.9343C11.3262 14.884 11.0305 14.9194 10.764 15.036L10.5 15.1477V16.5C10.5 16.9142 10.1642 17.25 9.75 17.25H8.25C7.83579 17.25 7.5 16.9142 7.5 16.5V15.1477L7.236 15.036C6.96949 14.9194 6.6738 14.884 6.3869 14.9343C6.1 14.9846 5.83436 15.1183 5.62355 15.3193L5.5694 15.3735C5.24609 15.6968 4.80647 15.8787 4.34695 15.8787C3.88744 15.8787 3.44782 15.6968 3.12451 15.3735C2.8012 15.0502 2.61926 14.6106 2.61926 14.1511C2.61926 13.6916 2.8012 13.252 3.12451 12.9287L3.17867 12.8745C3.37964 12.6637 3.5134 12.3981 3.56369 12.1112C3.61397 11.8243 3.57853 11.5286 3.46194 11.262L14.55 11.25Z" stroke="currentColor" strokeWidth="1.5"/>
               </svg>
             </button>
             <button

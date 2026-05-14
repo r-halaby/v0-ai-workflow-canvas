@@ -1,12 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { useChat } from "@ai-sdk/react";
 import type { SageChatbotNodeData } from "@/lib/atlas-types";
 
 export function SageChatbotNode({ id, data, selected }: NodeProps) {
   const nodeData = data as SageChatbotNodeData;
   const [inputValue, setInputValue] = useState("");
+  
+  const { messages, append, isLoading } = useChat({
+    api: "/api/sage",
+    id: `sage-${id}`,
+    initialMessages: nodeData.messages?.map(m => ({
+      id: m.id,
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    })) || [],
+  });
+
+  const handleSend = useCallback(() => {
+    if (!inputValue.trim() || isLoading) return;
+    append({ role: "user", content: inputValue });
+    setInputValue("");
+  }, [inputValue, isLoading, append]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }, [handleSend]);
 
   return (
     <div
@@ -40,8 +64,8 @@ export function SageChatbotNode({ id, data, selected }: NodeProps) {
 
       {/* Messages */}
       <div className="p-2 space-y-2 max-h-[120px] overflow-y-auto">
-        {nodeData.messages && nodeData.messages.length > 0 ? (
-          nodeData.messages.slice(-3).map((msg) => (
+        {messages.length > 0 ? (
+          messages.slice(-3).map((msg) => (
             <div
               key={msg.id}
               className={`text-xs px-2 py-1.5 rounded-lg ${
@@ -62,6 +86,11 @@ export function SageChatbotNode({ id, data, selected }: NodeProps) {
             Ask Sage anything about your project
           </div>
         )}
+        {isLoading && (
+          <div className="text-xs text-[#F0FE00] px-2 py-1.5 mr-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+            Sage is thinking...
+          </div>
+        )}
       </div>
 
       {/* Input */}
@@ -71,12 +100,16 @@ export function SageChatbotNode({ id, data, selected }: NodeProps) {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Ask Sage..."
             className="flex-1 bg-white/5 text-xs text-white placeholder-gray-500 px-2 py-1.5 rounded-md outline-none"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            disabled={isLoading}
           />
           <button
-            className="p-1.5 rounded-md hover:bg-white/10 transition-colors"
+            onClick={handleSend}
+            disabled={isLoading || !inputValue.trim()}
+            className="p-1.5 rounded-md hover:bg-white/10 transition-colors disabled:opacity-50"
             style={{ color: "#F0FE00" }}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
