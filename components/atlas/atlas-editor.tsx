@@ -35,6 +35,107 @@ interface AtlasEditorProps {
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
 }
 
+// Constants for node positioning
+const NODE_WIDTH = 220;
+const NODE_HEIGHT = 180;
+const NODE_GAP = 40;
+const GRID_COLS = 4;
+
+// Helper function to find free positions for new nodes that don't overlap with existing ones
+function findFreePositions(
+  existingNodes: AtlasNode[],
+  count: number,
+  startPosition?: { x: number; y: number }
+): Array<{ x: number; y: number }> {
+  const positions: Array<{ x: number; y: number }> = [];
+  
+  // Get bounding boxes of existing nodes
+  const existingBounds = existingNodes.map(node => ({
+    left: node.position.x,
+    right: node.position.x + NODE_WIDTH,
+    top: node.position.y,
+    bottom: node.position.y + NODE_HEIGHT,
+  }));
+
+  // Check if a position overlaps with any existing node
+  const isOverlapping = (x: number, y: number) => {
+    const newBounds = {
+      left: x,
+      right: x + NODE_WIDTH,
+      top: y,
+      bottom: y + NODE_HEIGHT,
+    };
+    
+    // Check against existing nodes and already placed new nodes
+    const allBounds = [
+      ...existingBounds,
+      ...positions.map(p => ({
+        left: p.x,
+        right: p.x + NODE_WIDTH,
+        top: p.y,
+        bottom: p.y + NODE_HEIGHT,
+      }))
+    ];
+    
+    return allBounds.some(bounds => 
+      !(newBounds.right < bounds.left || 
+        newBounds.left > bounds.right || 
+        newBounds.bottom < bounds.top || 
+        newBounds.top > bounds.bottom)
+    );
+  };
+
+  // Find the bottom-most and right-most positions of existing nodes
+  let maxY = 100;
+  let maxX = 100;
+  for (const node of existingNodes) {
+    maxY = Math.max(maxY, node.position.y + NODE_HEIGHT);
+    maxX = Math.max(maxX, node.position.x + NODE_WIDTH);
+  }
+
+  // Start position: either provided, or below existing content
+  const baseX = startPosition?.x ?? 100;
+  const baseY = startPosition?.y ?? (existingNodes.length > 0 ? maxY + NODE_GAP : 100);
+
+  // Place nodes in a grid pattern, finding non-overlapping positions
+  for (let i = 0; i < count; i++) {
+    let placed = false;
+    
+    // First try to place in grid pattern from base position
+    const gridX = baseX + (i % GRID_COLS) * (NODE_WIDTH + NODE_GAP);
+    const gridY = baseY + Math.floor(i / GRID_COLS) * (NODE_HEIGHT + NODE_GAP);
+    
+    if (!isOverlapping(gridX, gridY)) {
+      positions.push({ x: gridX, y: gridY });
+      placed = true;
+    }
+    
+    // If grid position overlaps, search for a free spot
+    if (!placed) {
+      // Search in expanding rows below existing content
+      for (let row = 0; row < 20 && !placed; row++) {
+        for (let col = 0; col < GRID_COLS && !placed; col++) {
+          const x = 100 + col * (NODE_WIDTH + NODE_GAP);
+          const y = maxY + NODE_GAP + row * (NODE_HEIGHT + NODE_GAP);
+          
+          if (!isOverlapping(x, y)) {
+            positions.push({ x, y });
+            placed = true;
+          }
+        }
+      }
+    }
+    
+    // Fallback: place at the very bottom
+    if (!placed) {
+      const fallbackY = maxY + NODE_GAP + positions.length * (NODE_HEIGHT + NODE_GAP);
+      positions.push({ x: 100, y: fallbackY });
+    }
+  }
+
+  return positions;
+}
+
 function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveTemplate }: AtlasEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
@@ -629,6 +730,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       uploadedFile: UploadedFile;
       previewUrl?: string;
     }>) => {
+      // Find free positions that don't overlap with existing nodes
+      const freePositions = findFreePositions(nodes, files.length);
+      
       const newNodes: AtlasNode[] = files.map((file, index) => {
         const label = file.fileName.replace(file.extension, "");
         const previewImages = file.previewUrl ? [file.previewUrl] : undefined;
@@ -637,7 +741,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         return {
           id: `file-${Date.now()}-${index}`,
           type: "file" as const,
-          position: { x: 150 + (index % 3) * 300, y: 150 + Math.floor(index / 3) * 250 },
+          position: freePositions[index] || { x: 100 + index * 260, y: 100 },
           data: {
             label,
             fileName: file.fileName,
@@ -656,7 +760,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
       setNodes((nds) => [...nds, ...newNodes]);
     },
-    [setNodes]
+    [setNodes, nodes]
   );
 
   // Handle files dropped directly onto canvas
@@ -740,24 +844,20 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         }
       }
 
-      // Create nodes for uploaded files, positioned around the drop point
+      // Create nodes for uploaded files, positioned to avoid overlapping
       if (uploadedResults.length > 0) {
+        // Find free positions starting from the drop point
+        const freePositions = findFreePositions(nodes, uploadedResults.length, position);
+        
         const newNodes: AtlasNode[] = uploadedResults.map((file, index) => {
           const label = file.fileName.replace(file.extension, "");
           const previewImages = file.previewUrl ? [file.previewUrl] : undefined;
           const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
           
-          // Offset each file slightly from drop position
-          const offsetX = (index % 3) * 260;
-          const offsetY = Math.floor(index / 3) * 220;
-          
           return {
             id: `file-${Date.now()}-${index}`,
             type: "file" as const,
-            position: { 
-              x: position.x + offsetX - 110, 
-              y: position.y + offsetY - 80 
-            },
+            position: freePositions[index] || { x: position.x + index * 260, y: position.y },
             data: {
               label,
               fileName: file.fileName,
@@ -777,7 +877,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         setNodes((nds) => [...nds, ...newNodes]);
       }
     },
-    [setNodes]
+    [setNodes, nodes]
   );
 
   const handleNodesChangeWrapper = useCallback(
