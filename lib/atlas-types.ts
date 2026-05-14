@@ -40,6 +40,31 @@ export const STATUS_LABELS: Record<FileStatus, string> = {
   approved: "Approved",
 };
 
+// Task item interface
+export interface TaskItem {
+  id: string;
+  title: string;
+  completed: boolean;
+  assignee?: WorkspaceMember;
+}
+
+// Workspace member interface
+export interface WorkspaceMember {
+  id: string;
+  name: string;
+  avatar?: string;
+  initials: string;
+}
+
+// Default workspace members
+export const WORKSPACE_MEMBERS: WorkspaceMember[] = [
+  { id: "m1", name: "Alex Chen", initials: "AC" },
+  { id: "m2", name: "Sarah Miller", initials: "SM" },
+  { id: "m3", name: "James Wilson", initials: "JW" },
+  { id: "m4", name: "Emily Davis", initials: "ED" },
+  { id: "m5", name: "Michael Brown", initials: "MB" },
+];
+
 // File node data interface
 export interface FileNodeData {
   label: string;
@@ -49,7 +74,7 @@ export interface FileNodeData {
   fileExtension: FileExtension;
   lastModified: string;
   previewImages?: string[]; // Array of up to 4 preview image URLs
-  fileCount?: number; // Number of files in this asset
+  tasks?: TaskItem[]; // Task items for this file
 }
 
 // Atlas node type
@@ -77,7 +102,11 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       status: "approved",
       fileExtension: ".pdf",
       lastModified: "Updated 2 days ago",
-      fileCount: 12,
+      tasks: [
+        { id: "t1", title: "Review color palette", completed: true, assignee: WORKSPACE_MEMBERS[0] },
+        { id: "t2", title: "Update typography section", completed: false, assignee: WORKSPACE_MEMBERS[1] },
+        { id: "t3", title: "Add logo usage examples", completed: false },
+      ],
       previewImages: [
         "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&h=200&fit=crop",
         "https://images.unsplash.com/photo-1557683316-973673baf926?w=200&h=200&fit=crop",
@@ -97,7 +126,10 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       status: "approved",
       fileExtension: ".ai",
       lastModified: "Updated 4 days ago",
-      fileCount: 8,
+      tasks: [
+        { id: "t4", title: "Export SVG versions", completed: true, assignee: WORKSPACE_MEMBERS[2] },
+        { id: "t5", title: "Create favicon set", completed: true, assignee: WORKSPACE_MEMBERS[0] },
+      ],
       previewImages: [
         "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=200&h=200&fit=crop",
         "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=200&h=200&fit=crop",
@@ -117,7 +149,12 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       status: "in-review",
       fileExtension: ".fig",
       lastModified: "Updated yesterday",
-      fileCount: 4,
+      tasks: [
+        { id: "t6", title: "Add summer vibes section", completed: false, assignee: WORKSPACE_MEMBERS[3] },
+        { id: "t7", title: "Review with client", completed: false, assignee: WORKSPACE_MEMBERS[1] },
+        { id: "t8", title: "Collect reference images", completed: true },
+        { id: "t9", title: "Create mood categories", completed: false, assignee: WORKSPACE_MEMBERS[4] },
+      ],
       previewImages: [
         "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop",
         "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&fit=crop",
@@ -137,7 +174,10 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       status: "in-review",
       fileExtension: ".pptx",
       lastModified: "Updated 1 day ago",
-      fileCount: 24,
+      tasks: [
+        { id: "t10", title: "Add case studies", completed: false, assignee: WORKSPACE_MEMBERS[0] },
+        { id: "t11", title: "Include pricing slide", completed: false },
+      ],
       previewImages: [
         "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=200&h=200&fit=crop",
         "https://images.unsplash.com/photo-1551434678-e076c223a692?w=200&h=200&fit=crop",
@@ -157,7 +197,7 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       status: "draft",
       fileExtension: ".psd",
       lastModified: "Updated today",
-      fileCount: 6,
+      tasks: [],
       previewImages: [
         "https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=200&h=200&fit=crop",
         "https://images.unsplash.com/photo-1516796181074-bf453fbfa3e6?w=200&h=200&fit=crop",
@@ -177,7 +217,11 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       status: "in-review",
       fileExtension: ".pdf",
       lastModified: "Updated 3 days ago",
-      fileCount: 3,
+      tasks: [
+        { id: "t12", title: "Incorporate client notes", completed: false, assignee: WORKSPACE_MEMBERS[2] },
+        { id: "t13", title: "Archive resolved items", completed: true, assignee: WORKSPACE_MEMBERS[3] },
+        { id: "t14", title: "Schedule review meeting", completed: false },
+      ],
       previewImages: [
         "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=200&h=200&fit=crop",
         "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=200&h=200&fit=crop",
@@ -197,7 +241,9 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       status: "approved",
       fileExtension: ".fig",
       lastModified: "Updated 5 days ago",
-      fileCount: 16,
+      tasks: [
+        { id: "t15", title: "Add Instagram stories", completed: true, assignee: WORKSPACE_MEMBERS[4] },
+      ],
       previewImages: [
         "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=200&h=200&fit=crop",
         "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=200&h=200&fit=crop",
@@ -217,7 +263,10 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       status: "draft",
       fileExtension: ".mp4",
       lastModified: "Updated 6 days ago",
-      fileCount: 1,
+      tasks: [
+        { id: "t16", title: "Color grade footage", completed: false, assignee: WORKSPACE_MEMBERS[1] },
+        { id: "t17", title: "Add background music", completed: false },
+      ],
       previewImages: [
         "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=200&h=200&fit=crop",
         "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=200&h=200&fit=crop",

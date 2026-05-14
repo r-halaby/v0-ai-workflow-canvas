@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import type { FileNodeData, FileExtension } from "@/lib/atlas-types";
-import { PRODUCT_COLORS } from "@/lib/atlas-types";
+import type { FileNodeData, FileExtension, TaskItem, WorkspaceMember } from "@/lib/atlas-types";
+import { PRODUCT_COLORS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Inline SVG icons for file types
 const FileIcons: Record<FileExtension | "default", React.ReactNode> = {
@@ -66,7 +68,7 @@ const FileIcons: Record<FileExtension | "default", React.ReactNode> = {
   ),
 };
 
-// Status badge colors - using warmer tones like the reference
+// Status badge colors
 const STATUS_BADGE_STYLES: Record<string, { bg: string; text: string }> = {
   draft: { bg: "#374151", text: "#9CA3AF" },
   "in-review": { bg: "#FEF3C7", text: "#92400E" },
@@ -84,15 +86,47 @@ interface FileNodeProps extends NodeProps<FileNodeData> {
   selected?: boolean;
 }
 
-export function FileNode({ data, selected, id }: FileNodeProps) {
+export function FileNode({ data, selected }: FileNodeProps) {
+  const [isTaskOpen, setIsTaskOpen] = useState(false);
+  const [tasks, setTasks] = useState<TaskItem[]>(data.tasks || []);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
+
   const productColor = PRODUCT_COLORS[data.product];
   const fileIcon = FileIcons[data.fileExtension] || FileIcons.default;
   const statusStyle = STATUS_BADGE_STYLES[data.status] || STATUS_BADGE_STYLES.draft;
   const statusLabel = STATUS_LABELS[data.status] || "Draft";
-  
-  // Use preview images or fallback to placeholder grid
   const previewImages = data.previewImages || [];
   const hasImages = previewImages.length > 0;
+  const taskCount = tasks.length;
+
+  const handleToggleTask = useCallback((taskId: string) => {
+    setTasks(prev => prev.map(t => 
+      t.id === taskId ? { ...t, completed: !t.completed } : t
+    ));
+  }, []);
+
+  const handleAddTask = useCallback(() => {
+    if (!newTaskTitle.trim()) return;
+    const newTask: TaskItem = {
+      id: `task-${Date.now()}`,
+      title: newTaskTitle.trim(),
+      completed: false,
+    };
+    setTasks(prev => [...prev, newTask]);
+    setNewTaskTitle("");
+  }, [newTaskTitle]);
+
+  const handleAssignTask = useCallback((taskId: string, member: WorkspaceMember) => {
+    setTasks(prev => prev.map(t => 
+      t.id === taskId ? { ...t, assignee: member } : t
+    ));
+    setAssigningTaskId(null);
+  }, []);
+
+  const handleDeleteTask = useCallback((taskId: string) => {
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+  }, []);
 
   return (
     <div
@@ -101,7 +135,7 @@ export function FileNode({ data, selected, id }: FileNodeProps) {
         width: 220,
         background: "#1C1C1E",
         borderRadius: 16,
-        overflow: "hidden",
+        overflow: "visible",
         boxShadow: selected 
           ? `0 0 0 2px ${productColor}, 0 8px 32px rgba(0,0,0,0.4)` 
           : "0 4px 20px rgba(0,0,0,0.3)",
@@ -115,10 +149,10 @@ export function FileNode({ data, selected, id }: FileNodeProps) {
         style={{ background: "#52525b", borderColor: "#71717a" }}
       />
 
-      {/* Image Preview Grid - 2x2 */}
+      {/* Image Preview Grid */}
       <div 
         className="grid grid-cols-2 gap-0.5 p-1"
-        style={{ background: "#2C2C2E" }}
+        style={{ background: "#2C2C2E", borderRadius: "16px 16px 0 0" }}
       >
         {hasImages ? (
           previewImages.slice(0, 4).map((img, i) => (
@@ -136,7 +170,6 @@ export function FileNode({ data, selected, id }: FileNodeProps) {
             </div>
           ))
         ) : (
-          // Placeholder grid with gradient backgrounds
           [0, 1, 2, 3].map((i) => (
             <div 
               key={i} 
@@ -173,19 +206,160 @@ export function FileNode({ data, selected, id }: FileNodeProps) {
 
       {/* Footer Row */}
       <div className="px-3 pb-3 flex items-center justify-between">
-        {/* File Count */}
-        <div className="flex items-center gap-1.5" style={{ color: "#8E8E93" }}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3.5 1.75C2.67157 1.75 2 2.42157 2 3.25V10.75C2 11.5784 2.67157 12.25 3.5 12.25H10.5C11.3284 12.25 12 11.5784 12 10.75V4.75L9.5 1.75H3.5Z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M9 1.75V4.25C9 4.66421 9.33579 5 9.75 5H12" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span 
-            className="text-xs font-medium"
-            style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+        {/* Task Button with Popover */}
+        <Popover open={isTaskOpen} onOpenChange={setIsTaskOpen}>
+          <PopoverTrigger asChild>
+            <button 
+              className="flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors hover:bg-white/10"
+              style={{ color: "#8E8E93" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsTaskOpen(true);
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.25"/>
+                <path d="M5 7L6.5 8.5L9 5.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span 
+                className="text-xs font-medium"
+                style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+              >
+                {taskCount}
+              </span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent 
+            className="w-72 p-0 border-0"
+            style={{ 
+              background: "#1C1C1E", 
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+              borderRadius: 12,
+            }}
+            side="bottom"
+            align="start"
+            sideOffset={8}
           >
-            {data.fileCount || 1}
-          </span>
-        </div>
+            {/* Task List Header */}
+            <div className="px-3 py-2.5 border-b" style={{ borderColor: "#333" }}>
+              <h4 className="text-sm font-semibold text-white" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+                Tasks
+              </h4>
+            </div>
+
+            {/* Task Items */}
+            <div className="max-h-64 overflow-y-auto">
+              {tasks.length === 0 ? (
+                <div className="px-3 py-4 text-center" style={{ color: "#8E8E93" }}>
+                  <p className="text-xs">No tasks yet</p>
+                </div>
+              ) : (
+                tasks.map((task) => (
+                  <div 
+                    key={task.id} 
+                    className="px-3 py-2 flex items-start gap-2 hover:bg-white/5 group/task"
+                    style={{ borderBottom: "1px solid #2C2C2E" }}
+                  >
+                    <Checkbox
+                      checked={task.completed}
+                      onCheckedChange={() => handleToggleTask(task.id)}
+                      className="mt-0.5 border-gray-500 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p 
+                        className={`text-sm ${task.completed ? "line-through text-gray-500" : "text-white"}`}
+                        style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+                      >
+                        {task.title}
+                      </p>
+                      
+                      {/* Assignee Row */}
+                      <div className="mt-1 relative">
+                        {assigningTaskId === task.id ? (
+                          <div className="flex flex-wrap gap-1">
+                            {WORKSPACE_MEMBERS.map((member) => (
+                              <button
+                                key={member.id}
+                                onClick={() => handleAssignTask(task.id, member)}
+                                className="px-2 py-0.5 text-xs rounded-full hover:bg-white/10 transition-colors"
+                                style={{ 
+                                  background: "#2C2C2E", 
+                                  color: "#8E8E93",
+                                  fontFamily: "system-ui, -apple-system, sans-serif",
+                                }}
+                              >
+                                {member.initials}
+                              </button>
+                            ))}
+                          </div>
+                        ) : task.assignee ? (
+                          <button
+                            onClick={() => setAssigningTaskId(task.id)}
+                            className="flex items-center gap-1.5 text-xs rounded-full px-2 py-0.5 hover:bg-white/10"
+                            style={{ 
+                              background: "#2C2C2E", 
+                              color: "#8E8E93",
+                              fontFamily: "system-ui, -apple-system, sans-serif",
+                            }}
+                          >
+                            <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] text-white font-medium">
+                              {task.assignee.initials}
+                            </span>
+                            {task.assignee.name}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setAssigningTaskId(task.id)}
+                            className="text-xs hover:text-white transition-colors"
+                            style={{ color: "#6B7280", fontFamily: "system-ui, -apple-system, sans-serif" }}
+                          >
+                            + Assign
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Delete Button */}
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="opacity-0 group-hover/task:opacity-100 p-1 rounded hover:bg-red-500/20 transition-all"
+                      style={{ color: "#EF4444" }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Add Task Input */}
+            <div className="px-3 py-2 border-t" style={{ borderColor: "#333" }}>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
+                  placeholder="Add a task..."
+                  className="flex-1 text-sm bg-transparent text-white placeholder-gray-500 outline-none"
+                  style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+                />
+                <button
+                  onClick={handleAddTask}
+                  disabled={!newTaskTitle.trim()}
+                  className="p-1 rounded hover:bg-white/10 disabled:opacity-30 transition-colors"
+                  style={{ color: "#8E8E93" }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* Status Badge */}
         <div

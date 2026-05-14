@@ -152,25 +152,6 @@ export function FileDetailPanel({ node, onUpdate, onClose }: FileDetailPanelProp
           />
         </div>
 
-        {/* File Count */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-            File Count
-          </label>
-          <input
-            type="number"
-            min="1"
-            value={node.data.fileCount || 1}
-            onChange={(e) => onUpdate(node.id, { fileCount: parseInt(e.target.value) || 1 })}
-            className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
-            style={{
-              backgroundColor: "#1a1a1a",
-              border: "1px solid #333333",
-              fontFamily: "system-ui, Inter, sans-serif",
-            }}
-          />
-        </div>
-
         {/* Last Modified */}
         <div>
           <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
