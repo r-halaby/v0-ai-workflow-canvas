@@ -212,6 +212,26 @@ export interface UploadedFile {
   uploadedAt: string; // ISO date string
 }
 
+// File version for version history
+export interface FileVersion {
+  id: string;
+  versionName: string;
+  previewImages: string[];
+  uploadedAt: string;
+  uploadedBy: WorkspaceMember;
+  notes?: string;
+}
+
+// File activity/history entry
+export interface FileActivity {
+  id: string;
+  type: "upload" | "comment" | "status-change" | "task-complete" | "version-add";
+  description: string;
+  user: WorkspaceMember;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}
+
 // File node data interface
 export interface FileNodeData {
   label: string;
@@ -223,6 +243,11 @@ export interface FileNodeData {
   previewImages?: string[]; // Array of up to 4 preview image URLs
   tasks?: TaskItem[]; // Task items for this file
   uploadedFile?: UploadedFile; // Uploaded file data from Vercel Blob
+  versions?: FileVersion[]; // Version history
+  activities?: FileActivity[]; // Activity/update history
+  dueDate?: string; // Due date for the file
+  assignees?: WorkspaceMember[]; // Team members assigned to this file
+  blockers?: number; // Number of blockers
 }
 
 // Atlas node type

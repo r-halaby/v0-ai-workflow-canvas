@@ -17,6 +17,7 @@ import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
 import { CanvasSideToolbar } from "./canvas-side-toolbar";
 import { FileDetailPanel } from "./file-detail-panel";
+import { FileDetailModal } from "./file-detail-modal";
 import { UploadDialog } from "./upload-dialog";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
 
@@ -41,6 +42,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [commentMode, setCommentMode] = useState(false);
   const [newCommentPosition, setNewCommentPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
+  
+  // File detail modal state
+  const [detailModalNodeId, setDetailModalNodeId] = useState<string | null>(null);
 
   // Current user (first member for demo)
   const currentUser = workspaceSettings.members[0] || WORKSPACE_MEMBERS[0];
@@ -303,6 +307,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onCommentUpdate={handleCommentUpdate}
           onCommentDelete={handleCommentDelete}
           onCancelNewComment={handleCancelNewComment}
+          onNodeDoubleClick={setDetailModalNodeId}
         />
 
         <CanvasSideToolbar
@@ -339,6 +344,27 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         settings={workspaceSettings}
         onSettingsChange={onWorkspaceSettingsChange}
       />
+
+      {/* File Detail Modal */}
+      {detailModalNodeId && (() => {
+        const node = nodes.find(n => n.id === detailModalNodeId && n.type === "file");
+        if (!node) return null;
+        const fileData = node.data as FileNodeData;
+        return (
+          <FileDetailModal
+            isOpen={true}
+            onClose={() => setDetailModalNodeId(null)}
+            fileData={fileData}
+            onUpdateFile={(updates) => {
+              setNodes(nds => nds.map(n => 
+                n.id === detailModalNodeId 
+                  ? { ...n, data: { ...n.data, ...updates } }
+                  : n
+              ));
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }

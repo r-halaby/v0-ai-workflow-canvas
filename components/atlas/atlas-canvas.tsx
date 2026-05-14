@@ -47,6 +47,7 @@ interface AtlasCanvasProps {
   onCommentUpdate: (comment: CanvasComment) => void;
   onCommentDelete: (commentId: string) => void;
   onCancelNewComment: () => void;
+  onNodeDoubleClick?: (nodeId: string) => void;
 }
 
 export function AtlasCanvas({
@@ -69,6 +70,7 @@ export function AtlasCanvas({
   onCommentUpdate,
   onCommentDelete,
   onCancelNewComment,
+  onNodeDoubleClick,
 }: AtlasCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
@@ -128,7 +130,9 @@ export function AtlasCanvas({
         onConnect={onConnect}
         onPaneClick={handlePaneClick}
         onNodeDoubleClick={(event, node) => {
-          // Allow node-specific double click handling
+          if (node.type === "file" && onNodeDoubleClick) {
+            onNodeDoubleClick(node.id);
+          }
         }}
         onDoubleClick={(event) => {
           if (commentMode) return;
