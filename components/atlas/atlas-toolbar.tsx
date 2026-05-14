@@ -42,15 +42,13 @@ export function AtlasToolbar({ filters, onFiltersChange, onAddNode, onUploadClic
       }}
     >
       {/* Left: Logo */}
-      <div className="flex items-center gap-3">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="28" height="28" rx="6" fill="#534AB7"/>
-          <path d="M14 6L22 22H6L14 6Z" fill="white" fillOpacity="0.9"/>
-          <circle cx="14" cy="16" r="3" fill="#534AB7"/>
-        </svg>
-        <span className="font-semibold text-white tracking-tight text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-          Atlas
-        </span>
+      <div className="flex items-center">
+        <img 
+          src="/atlas-logo.svg" 
+          alt="Atlas" 
+          className="h-6"
+          style={{ width: "auto" }}
+        />
       </div>
 
       {/* Center: Controls */}
