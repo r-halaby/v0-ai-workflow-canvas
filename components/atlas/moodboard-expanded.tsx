@@ -236,7 +236,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
                   onClick={handleLabelClick}
                   title="Click to edit"
                 >
-                  {data.label || "Moodboard"} ({data.images?.length || 0})
+                  {data.label || "Moodboard"}
                 </h2>
               )}
               <p className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
