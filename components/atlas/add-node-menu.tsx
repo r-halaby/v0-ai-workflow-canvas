@@ -261,7 +261,7 @@ export function AddNodeMenu({
                   <path d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z" stroke="#F0FE00" strokeWidth="1.2" strokeLinejoin="round"/>
                 </svg>
               </div>
-              AI Generate
+Generate
             </span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "ai" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
               <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
