@@ -237,7 +237,7 @@ export function CanvasSideToolbar({
               className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#BA751720", color: "#BA7517" }}>
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
@@ -253,7 +253,7 @@ export function CanvasSideToolbar({
               className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#BA751720", color: "#BA7517" }}>
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 3v18h18" />
                   <path d="M18 17l-5-5-4 4-3-3" />
@@ -270,7 +270,7 @@ export function CanvasSideToolbar({
               className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#BA751720", color: "#BA7517" }}>
+              <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="7" r="4" />
                   <path d="M5 21v-2a7 7 0 0 1 14 0v2" />

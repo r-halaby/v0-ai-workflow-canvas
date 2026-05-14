@@ -28,18 +28,18 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
       }`}
       style={{
         backgroundColor: "#1a1a1a",
-        border: "1px solid #BA751730",
+        border: "1px solid #F0FE0030",
         width: 240,
       }}
     >
       {/* Header with Avatar */}
       <div
         className="px-3 py-3 flex items-center gap-3 border-b"
-        style={{ borderColor: "#BA751720" }}
+        style={{ borderColor: "#F0FE0020" }}
       >
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium"
-          style={{ backgroundColor: "#BA751730", color: "#BA7517", fontFamily: "system-ui, Inter, sans-serif" }}
+          style={{ backgroundColor: "#F0FE0030", color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
         >
           {nodeData.stakeholder?.initials || "?"}
         </div>
@@ -87,7 +87,7 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
           <div className="space-y-1">
             {nodeData.keyInsights.slice(0, 2).map((insight, i) => (
               <div key={i} className="flex items-start gap-1.5">
-                <div className="w-1 h-1 rounded-full mt-1.5" style={{ backgroundColor: "#BA7517" }} />
+                <div className="w-1 h-1 rounded-full mt-1.5" style={{ backgroundColor: "#F0FE00" }} />
                 <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                   {insight.length > 50 ? insight.slice(0, 50) + "..." : insight}
                 </span>
@@ -98,7 +98,7 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
       )}
 
       {/* Last Interaction */}
-      <div className="px-3 py-2 border-t" style={{ borderColor: "#BA751720" }}>
+      <div className="px-3 py-2 border-t" style={{ borderColor: "#F0FE0020" }}>
         <div className="text-[10px] text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
           Last interaction: {nodeData.lastInteraction || "Not yet"}
         </div>
@@ -109,13 +109,13 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
         type="target"
         position={Position.Left}
         className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #BA7517", width: 12, height: 12 }}
+        style={{ background: "#1a1a1a", border: "2px solid #F0FE00", width: 12, height: 12 }}
       />
       <Handle
         type="source"
         position={Position.Right}
         className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
-        style={{ background: "#1a1a1a", border: "2px solid #BA7517", width: 12, height: 12 }}
+        style={{ background: "#1a1a1a", border: "2px solid #F0FE00", width: 12, height: 12 }}
       />
     </div>
   );
