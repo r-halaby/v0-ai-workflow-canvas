@@ -154,7 +154,10 @@ export function FileNode({ data, selected }: NodeProps) {
       onMouseLeave={() => setIsHovered(false)}
       style={{
         width: 220,
-        transition: "box-shadow 0.2s ease",
+        transition: "all 0.2s ease",
+        borderRadius: 12,
+        outline: selected ? "2px solid white" : "none",
+        outlineOffset: 2,
       }}
     >
       {/* Connection Handles */}

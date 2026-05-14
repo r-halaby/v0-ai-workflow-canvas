@@ -89,12 +89,12 @@ export function StatusPillNode({ data, selected }: NodeProps) {
 
       {/* Main Pill */}
       <div
-        className={`relative px-8 py-4 rounded-full cursor-move transition-all ${
-          selected ? "ring-2 ring-[#F0FE00] ring-offset-2 ring-offset-[#0a0a0a]" : ""
-        }`}
+        className="relative px-8 py-4 rounded-full cursor-move transition-all"
         style={{
           backgroundColor: pillData.color || "#e5e5e5",
           minWidth: 180,
+          outline: selected ? "2px solid white" : "none",
+          outlineOffset: 2,
         }}
         onDoubleClick={handleDoubleClick}
       >

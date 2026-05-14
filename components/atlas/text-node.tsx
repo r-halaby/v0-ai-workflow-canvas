@@ -128,8 +128,9 @@ export function TextNode({ data, selected }: NodeProps) {
         className="rounded-xl overflow-hidden transition-all duration-200"
         style={{
           backgroundColor: "#141414",
-          border: `1px solid ${selected ? config.accentColor : "#2a2a2a"}`,
-          boxShadow: selected ? `0 0 0 1px ${config.accentColor}` : "none",
+          border: "1px solid #2a2a2a",
+          outline: selected ? "2px solid white" : "none",
+          outlineOffset: 2,
           width: 280,
           minHeight: isEditing ? 200 : isHovered ? 160 : 100,
         }}
