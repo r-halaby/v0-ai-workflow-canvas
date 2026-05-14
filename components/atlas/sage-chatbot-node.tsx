@@ -10,16 +10,14 @@ export function SageChatbotNode({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className={`group rounded-xl transition-all duration-200 ${
-        selected ? "ring-2 ring-amber-500/50" : ""
-      }`}
+      className="group rounded-xl transition-all duration-200"
       style={{
         backgroundColor: "#1a1a1a",
-        border: "1px solid #F0FE0030",
+        border: selected ? "2px solid #F0FE00" : "1px solid #F0FE0030",
         width: 280,
         minHeight: 200,
       }}
-    >
+>
       {/* Header */}
       <div
         className="px-3 py-2 flex items-center gap-2 border-b"
@@ -74,7 +72,7 @@ export function SageChatbotNode({ id, data, selected }: NodeProps) {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Ask Sage..."
-            className="flex-1 bg-white/5 text-xs text-white placeholder-gray-500 px-2 py-1.5 rounded-md outline-none focus:ring-1 focus:ring-amber-500/30"
+            className="flex-1 bg-white/5 text-xs text-white placeholder-gray-500 px-2 py-1.5 rounded-md outline-none"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           />
           <button

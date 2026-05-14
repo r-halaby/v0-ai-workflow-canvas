@@ -23,12 +23,10 @@ export function StakeholderNode({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className={`group rounded-xl transition-all duration-200 ${
-        selected ? "ring-2 ring-amber-500/50" : ""
-      }`}
+      className="group rounded-xl transition-all duration-200"
       style={{
         backgroundColor: "#1a1a1a",
-        border: "1px solid #F0FE0030",
+        border: selected ? "2px solid #F0FE00" : "1px solid #F0FE0030",
         width: 240,
       }}
     >
