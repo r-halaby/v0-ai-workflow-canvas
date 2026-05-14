@@ -60,10 +60,15 @@ export function CanvasSideToolbar({
   }, [searchQuery]);
 
   const handleOpenAddMenu = () => {
-    alert("[v0] Add button clicked!");
     if (addButtonRef.current) {
       const rect = addButtonRef.current.getBoundingClientRect();
-      setAddMenuPosition({ x: rect.left - 190, y: rect.top });
+      // Position menu to the left of the button, ensure it stays on screen
+      const menuWidth = 180;
+      const x = Math.max(10, rect.left - menuWidth - 20);
+      const y = Math.max(10, rect.top);
+      const newPos = { x, y };
+      console.log("[v0] Menu position:", newPos, "button rect:", rect);
+      setAddMenuPosition(newPos);
     }
     setShowAddMenu(true);
   };

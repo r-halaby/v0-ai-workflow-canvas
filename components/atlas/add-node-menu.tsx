@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 
 interface AddNodeMenuProps {
   onAddStatusPill: () => void;
@@ -52,6 +52,13 @@ export function AddNodeMenu({
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
   }, []);
+
+  // Sync menuPosition when position prop changes
+  useEffect(() => {
+    if (position) {
+      setMenuPosition(position);
+    }
+  }, [position]);
 
   const fontStyle = { fontFamily: "system-ui, Inter, sans-serif" };
 
