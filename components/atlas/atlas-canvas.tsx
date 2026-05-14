@@ -110,7 +110,7 @@ export function AtlasCanvas({
   }, []);
 
   // Handle connection end - check if it was a click or drag
-  const handleConnectEnd = useCallback((event: MouseEvent | TouchEvent) => {
+  const handleConnectEnd = useCallback((event: MouseEvent | TouchEvent, connectionState: { isValid: boolean }) => {
     const start = connectionStartRef.current;
     if (!start) return;
 
@@ -122,8 +122,15 @@ export function AtlasCanvas({
     const dy = clientY - start.position.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // If moved less than 10px and no connection was made, treat as click
-    if (distance < 10 && !isDraggingConnectionRef.current) {
+    // If connection was made successfully, don't show menu
+    if (connectionState?.isValid) {
+      connectionStartRef.current = null;
+      isDraggingConnectionRef.current = false;
+      return;
+    }
+
+    // If moved less than 20px and no connection was made, treat as click - show add menu
+    if (distance < 20) {
       const flowPosition = screenToFlowPosition({ x: clientX, y: clientY });
       setHandleMenu({
         position: { x: clientX, y: clientY },
@@ -137,17 +144,7 @@ export function AtlasCanvas({
     isDraggingConnectionRef.current = false;
   }, [screenToFlowPosition]);
 
-  // Track if we're actually dragging a connection (moved enough to be considered a drag)
-  const handleMouseMove = useCallback((event: React.MouseEvent) => {
-    if (connectionStartRef.current) {
-      const dx = event.clientX - connectionStartRef.current.position.x;
-      const dy = event.clientY - connectionStartRef.current.position.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      if (distance > 10) {
-        isDraggingConnectionRef.current = true;
-      }
-    }
-  }, []);
+  
 
   // Handle menu callbacks
   const handleMenuAddNode = useCallback((extension: FileExtension) => {
@@ -265,17 +262,13 @@ export function AtlasCanvas({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      onMouseMove={handleMouseMove}
     >
       <ReactFlow
         nodes={filteredNodes}
         edges={styledEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={(connection) => {
-          isDraggingConnectionRef.current = true;
-          onConnect(connection);
-        }}
+        onConnect={onConnect}
         onConnectStart={handleConnectStart}
         onConnectEnd={handleConnectEnd}
         onPaneClick={handlePaneClick}

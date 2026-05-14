@@ -105,21 +105,25 @@ export function TextNode({ data, selected }: NodeProps) {
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3 !h-3 !border-2 transition-opacity"
+        className="!w-4 !h-4 !border-2 transition-opacity !cursor-pointer"
         style={{
-          backgroundColor: "#0a0a0a",
-          borderColor: config.accentColor,
+          background: "#52525b",
+          borderColor: "#71717a",
+          top: "50%",
           opacity: isHovered ? 1 : 0,
+          transform: "translate(-50%, -50%)",
         }}
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3 !h-3 !border-2 transition-opacity"
+        className="!w-4 !h-4 !border-2 transition-opacity !cursor-pointer"
         style={{
-          backgroundColor: "#0a0a0a",
-          borderColor: config.accentColor,
+          background: "#52525b",
+          borderColor: "#71717a",
+          top: "50%",
           opacity: isHovered ? 1 : 0,
+          transform: "translate(50%, -50%)",
         }}
       />
 
