@@ -130,7 +130,7 @@ const DEFAULT_PREVIEWS: Record<string, string> = {
   default: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=300&fit=crop",
 };
 
-export function FileNode({ data, selected }: NodeProps) {
+export function FileNode({ id, data, selected }: NodeProps) {
   const [isHovered, setIsHovered] = useState(false);
   const fileData = data as FileNodeData;
   

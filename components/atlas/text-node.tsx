@@ -36,7 +36,7 @@ const TEXT_TYPE_CONFIG = {
   },
 };
 
-export function TextNode({ data, selected }: NodeProps) {
+export function TextNode({ id, data, selected }: NodeProps) {
   const textData = data as TextNodeData;
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);

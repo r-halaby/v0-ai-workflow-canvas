@@ -19,7 +19,7 @@ const PRESET_COLORS = [
   { name: "Pink", value: "#f9a8d4" },
 ];
 
-export function StatusPillNode({ data, selected }: NodeProps) {
+export function StatusPillNode({ id, data, selected }: NodeProps) {
   const pillData = data as StatusPillData;
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(pillData.label);
