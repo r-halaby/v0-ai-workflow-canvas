@@ -160,20 +160,26 @@ export const DEFAULT_NAMING_CONVENTIONS: NamingConventions = {
 };
 
 // Workspace settings interface
-export interface WorkspaceSettings {
+  export interface WorkspaceSettings {
   id: string;
   name: string;
   description?: string;
   members: WorkspaceMember[];
   products: ProductConfig[];
   preferences: {
-    defaultProduct: ProductType;
-    defaultStatus: FileStatus;
-    autoSave: boolean;
-    showGrid: boolean;
+  defaultProduct: ProductType;
+  defaultStatus: FileStatus;
+  autoSave: boolean;
+  showGrid: boolean;
   };
   namingConventions?: NamingConventions;
-}
+  // Branding assets
+  branding?: {
+    workspaceIcon?: string; // URL to workspace icon
+    wordmark?: string; // URL to wordmark/logo
+    profilePicture?: string; // URL to user profile picture
+  };
+  }
 
 // Default workspace members
 export const WORKSPACE_MEMBERS: WorkspaceMember[] = [
