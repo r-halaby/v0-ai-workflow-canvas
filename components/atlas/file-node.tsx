@@ -295,6 +295,30 @@ export function FileNode({ data, selected }: NodeProps) {
                 {fileData.lastModified}
               </span>
             </div>
+
+            {/* Generate Mockups Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Dispatch custom event to trigger mockup generator
+                window.dispatchEvent(new CustomEvent("atlas:generate-mockup", {
+                  detail: { nodeId: data.label, fileData }
+                }));
+              }}
+              className="nodrag w-full mt-2 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors hover:bg-white/10"
+              style={{
+                backgroundColor: "#1f1f1f",
+                color: "#cccccc",
+                border: "1px solid #333333",
+                fontFamily: "system-ui, Inter, sans-serif",
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2L10 6L14 6.5L11 9.5L12 14L8 11.5L4 14L5 9.5L2 6.5L6 6L8 2Z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Generate Mockups
+            </button>
           </div>
         </div>
       </div>

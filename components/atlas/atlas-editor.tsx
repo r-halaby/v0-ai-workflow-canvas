@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   ReactFlowProvider,
   useNodesState,
@@ -19,6 +19,7 @@ import { CanvasSideToolbar } from "./canvas-side-toolbar";
 import { FileDetailModal } from "./file-detail-modal";
 import { UploadDialog } from "./upload-dialog";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
+import { MockupGeneratorDialog } from "./mockup-generator-dialog";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -44,6 +45,48 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   
   // File detail modal state
   const [detailModalNodeId, setDetailModalNodeId] = useState<string | null>(null);
+
+  // Mockup generator state
+  const [mockupSourceFile, setMockupSourceFile] = useState<FileNodeData | null>(null);
+
+  // Listen for mockup generation events from file nodes
+  useEffect(() => {
+    const handleMockupEvent = (e: CustomEvent<{ nodeId: string; fileData: FileNodeData }>) => {
+      setMockupSourceFile(e.detail.fileData);
+    };
+
+    window.addEventListener("atlas:generate-mockup", handleMockupEvent as EventListener);
+    return () => {
+      window.removeEventListener("atlas:generate-mockup", handleMockupEvent as EventListener);
+    };
+  }, []);
+
+  // Handle creating nodes from generated mockups
+  const handleCreateMockupNodes = useCallback(
+    (mockups: Array<{ imageUrl: string; name: string }>) => {
+      const newNodes: AtlasNode[] = mockups.map((mockup, index) => ({
+        id: `mockup-${Date.now()}-${index}`,
+        type: "file" as const,
+        position: { 
+          x: 300 + (nodes.length + index) * 30, 
+          y: 200 + (nodes.length + index) * 20 
+        },
+        data: {
+          label: mockup.name,
+          fileName: `${mockup.name}.png`,
+          product: "atlas" as const,
+          status: "draft" as const,
+          fileExtension: ".png" as const,
+          lastModified: "Generated just now",
+          previewImages: [mockup.imageUrl],
+          tasks: [],
+        },
+      }));
+
+      setNodes((nds) => [...nds, ...newNodes]);
+    },
+    [nodes.length, setNodes]
+  );
 
   // Current user (first member for demo)
   const currentUser = workspaceSettings.members[0] || WORKSPACE_MEMBERS[0];
@@ -482,6 +525,16 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           />
         );
       })()}
+
+      {/* Mockup Generator Dialog */}
+      {mockupSourceFile && (
+        <MockupGeneratorDialog
+          isOpen={true}
+          onClose={() => setMockupSourceFile(null)}
+          sourceFile={mockupSourceFile}
+          onCreateNodes={handleCreateMockupNodes}
+        />
+      )}
     </div>
   );
 }
