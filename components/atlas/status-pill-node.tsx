@@ -44,8 +44,7 @@ export function StatusPillNode({ data, selected }: NodeProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDoubleClick = useCallback(() => {
     setIsEditing(true);
   }, []);
 
@@ -120,7 +119,7 @@ export function StatusPillNode({ data, selected }: NodeProps) {
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            className="w-full bg-transparent text-center text-lg font-semibold text-black focus:outline-none"
+            className="nodrag w-full bg-transparent text-center text-lg font-semibold text-black focus:outline-none"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           />
         ) : (
@@ -134,7 +133,7 @@ export function StatusPillNode({ data, selected }: NodeProps) {
       </div>
 
       {/* Color picker dot */}
-      <div className="relative" ref={colorPickerRef}>
+      <div className="nodrag relative" ref={colorPickerRef}>
         <button
           type="button"
           onClick={() => setShowColorPicker(!showColorPicker)}
