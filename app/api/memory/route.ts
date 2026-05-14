@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.DATABASE_URL!);
+function getSQL() {
+  const databaseUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL or NEON_DATABASE_URL is not configured");
+  }
+  return neon(databaseUrl);
+}
 
 export async function GET(request: Request) {
   try {
+    const sql = getSQL();
     const { searchParams } = new URL(request.url);
     const workflowId = searchParams.get("workflowId");
     const key = searchParams.get("key");
@@ -31,6 +38,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const sql = getSQL();
     const { workflowId, key, value, dataType } = await request.json();
 
     if (!workflowId || !key) {
