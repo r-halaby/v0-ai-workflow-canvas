@@ -253,10 +253,24 @@ export function FileNode({ data, selected }: FileNodeProps) {
 
       {/* Image Preview Grid */}
       <div 
-        className="grid grid-cols-2 gap-0.5 p-1"
+        className={previewImages.length === 1 ? "p-1" : "grid grid-cols-2 gap-0.5 p-1"}
         style={{ background: "#2C2C2E", borderRadius: "16px 16px 0 0" }}
       >
-        {hasImages ? (
+        {previewImages.length === 1 ? (
+          // Single image fills the entire preview area
+          <div 
+            className="overflow-hidden"
+            style={{ borderRadius: "12px", aspectRatio: "1.6/1" }}
+          >
+            <img 
+              src={previewImages[0]} 
+              alt="" 
+              className="w-full h-full object-cover"
+              crossOrigin="anonymous"
+            />
+          </div>
+        ) : hasImages ? (
+          // Multiple images in 2x2 grid
           previewImages.slice(0, 4).map((img, i) => (
             <div 
               key={i} 
@@ -272,6 +286,7 @@ export function FileNode({ data, selected }: FileNodeProps) {
             </div>
           ))
         ) : (
+          // Placeholder gradient squares
           [0, 1, 2, 3].map((i) => (
             <div 
               key={i} 
