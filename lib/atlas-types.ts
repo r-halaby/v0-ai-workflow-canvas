@@ -226,10 +226,10 @@ export interface FileNodeData {
 }
 
 // Atlas node type
-export type AtlasNodeType = "file";
+export type AtlasNodeType = "file" | "statusPill";
 
-// Atlas workflow node
-export type AtlasNode = Node<FileNodeData, AtlasNodeType>;
+// Atlas workflow node - using generic data for multiple node types
+export type AtlasNode = Node<FileNodeData | Record<string, unknown>, AtlasNodeType>;
 
 // Filter state
 export interface FilterState {

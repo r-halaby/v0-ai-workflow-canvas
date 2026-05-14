@@ -75,12 +75,15 @@ export function AtlasCanvas({
   // Apply search highlighting to nodes
   const filteredNodes = useMemo(() => {
     return nodes.map((node) => {
+      const label = node.data.label || "";
+      const fileName = node.data.fileName || "";
       const matchesSearch = !searchQuery || 
-        node.data.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        node.data.fileName.toLowerCase().includes(searchQuery.toLowerCase());
+        label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        fileName.toLowerCase().includes(searchQuery.toLowerCase());
 
       return {
         ...node,
+        draggable: true,
         style: {
           ...node.style,
           opacity: matchesSearch ? 1 : 0.2,
@@ -104,50 +107,6 @@ export function AtlasCanvas({
     }));
   }, [edges]);
 
-  const handleCanvasClick = useCallback(
-    (event: React.MouseEvent) => {
-      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-      if (!bounds) return;
-
-      // Check if we clicked on a node or existing comment
-      const target = event.target as HTMLElement;
-      if (target.closest(".react-flow__node") || target.closest("[data-comment-id]")) {
-        return;
-      }
-
-      const position = {
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
-      };
-
-      if (commentMode) {
-        onCanvasClick(position);
-      }
-    },
-    [commentMode, onCanvasClick]
-  );
-
-  const handleDoubleClick = useCallback(
-    (event: React.MouseEvent) => {
-      if (commentMode) return; // Don't add nodes in comment mode
-
-      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-      if (!bounds) return;
-
-      // Check if we clicked on the background (not a node)
-      const target = event.target as HTMLElement;
-      if (target.closest(".react-flow__node")) return;
-
-      const position = {
-        x: event.clientX - bounds.left - 110,
-        y: event.clientY - bounds.top - 80,
-      };
-
-      onDoubleClick(position);
-    },
-    [onDoubleClick, commentMode]
-  );
-
   const handlePaneClick = useCallback(() => {
     // Deselect comment when clicking on empty canvas
     if (selectedCommentId && !commentMode) {
@@ -159,21 +118,51 @@ export function AtlasCanvas({
     <div
       ref={reactFlowWrapper}
       className="flex-1 h-full relative"
-      onClick={handleCanvasClick}
-      onDoubleClick={handleDoubleClick}
       style={{ cursor: commentMode ? "crosshair" : "default" }}
     >
       <ReactFlow
         nodes={filteredNodes}
         edges={styledEdges}
-        onNodesChange={onNodesChange}
+        onNodesChange={(changes) => {
+          console.log("[v0] onNodesChange:", changes);
+          onNodesChange(changes);
+        }}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onPaneClick={handlePaneClick}
+        onNodeDoubleClick={(event, node) => {
+          // Allow node-specific double click handling
+        }}
+        onDoubleClick={(event) => {
+          if (commentMode) return;
+          const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+          if (!bounds) return;
+          const target = event.target as HTMLElement;
+          if (target.closest(".react-flow__node")) return;
+          const position = {
+            x: event.clientX - bounds.left - 110,
+            y: event.clientY - bounds.top - 80,
+          };
+          onDoubleClick(position);
+        }}
+        onClick={(event) => {
+          if (!commentMode) return;
+          const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+          if (!bounds) return;
+          const target = event.target as HTMLElement;
+          if (target.closest(".react-flow__node") || target.closest("[data-comment-id]")) return;
+          const position = {
+            x: event.clientX - bounds.left,
+            y: event.clientY - bounds.top,
+          };
+          onCanvasClick(position);
+        }}
         nodeTypes={nodeTypes}
-        nodesDraggable={!commentMode}
-        nodesConnectable={true}
-        elementsSelectable={true}
+        nodesDraggable
+        nodesConnectable
+        elementsSelectable
+        selectionOnDrag={false}
+        panOnScroll={false}
         fitView
         fitViewOptions={{
           padding: 0.3,
@@ -188,8 +177,8 @@ export function AtlasCanvas({
         }}
         style={{ backgroundColor: "#0a0a0a" }}
         panOnDrag={!commentMode}
-        zoomOnScroll={!commentMode}
-        zoomOnPinch={!commentMode}
+        zoomOnScroll={true}
+        zoomOnPinch={true}
         zoomOnDoubleClick={false}
       >
         <Background
