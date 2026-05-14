@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.DATABASE_URL!);
+function getSQL() {
+  const databaseUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL or NEON_DATABASE_URL is not configured");
+  }
+  return neon(databaseUrl);
+}
 
 export async function GET() {
   try {
+    const sql = getSQL();
     const workflows = await sql`
       SELECT id, name, description, created_at, updated_at
       FROM workflows
@@ -19,6 +26,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const sql = getSQL();
     const { name, description, nodes, edges } = await request.json();
 
     if (!name) {
