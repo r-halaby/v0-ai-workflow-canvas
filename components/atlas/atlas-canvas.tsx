@@ -62,7 +62,7 @@ interface AtlasCanvasProps {
   onEdgesChange: ReturnType<typeof useEdgesState>[1];
   onConnect: (connection: Connection) => void;
   onNodesUpdate: (nodes: AtlasNode[]) => void;
-  onDoubleClick: (position: { x: number; y: number }) => void;
+  onDoubleClick: (position: { x: number; y: number }, screenPosition: { x: number; y: number }) => void;
   onCanvasClick: (position: { x: number; y: number }) => void;
   onCommentSelect: (commentId: string | null) => void;
   onCommentAdd: (content: string, position: { x: number; y: number }) => void;
@@ -532,11 +532,17 @@ export function AtlasCanvas({
           if (!bounds) return;
           const target = event.target as HTMLElement;
           if (target.closest(".react-flow__node")) return;
-          const position = {
+          // Calculate canvas position for node placement
+          const canvasPosition = {
             x: event.clientX - bounds.left - 110,
             y: event.clientY - bounds.top - 80,
           };
-          onDoubleClick(position);
+          // Pass screen position for menu placement
+          const screenPosition = {
+            x: event.clientX,
+            y: event.clientY,
+          };
+          onDoubleClick(canvasPosition, screenPosition);
         }}
         onClick={(event) => {
           if (!commentMode) return;
