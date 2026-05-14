@@ -191,7 +191,7 @@ export function CanvasSideToolbar({
       <div className="h-px mx-1" style={{ backgroundColor: "#333333" }} />
 
       {/* Add Node */}
-      <div className="relative" ref={addMenuRef}>
+      <div className="relative">
         <button
           ref={addButtonRef}
           type="button"
