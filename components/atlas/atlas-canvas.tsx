@@ -545,6 +545,11 @@ export function AtlasCanvas({
           style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5" },
           animated: true,
         }}
+        connectionLineStyle={{
+          strokeWidth: presentationMode ? 3 : 2,
+          stroke: presentationMode ? "#F0FE00" : "#52525b",
+          strokeDasharray: presentationMode ? "8 4" : "5 5",
+        }}
         style={{ backgroundColor: "#0a0a0a" }}
         panOnDrag={commentMode ? false : [1, 2]}
         zoomOnScroll={true}
