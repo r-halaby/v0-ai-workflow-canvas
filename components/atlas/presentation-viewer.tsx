@@ -113,9 +113,9 @@ export function PresentationViewer({
     if (currentNode.type === "file") {
       const fileData = currentNode.data as FileNodeData;
       return (
-        <div className="flex flex-col items-center justify-center h-full">
+        <div className="flex flex-col items-center justify-center h-full w-full">
           {fileData.thumbnail || fileData.uploadedFile?.url ? (
-            <div className="relative w-full max-w-4xl aspect-video">
+            <div className="relative w-full max-w-6xl h-[70vh]">
               <Image
                 src={fileData.thumbnail || fileData.uploadedFile?.url || ""}
                 alt={fileData.fileName || "Slide"}
@@ -131,9 +131,16 @@ export function PresentationViewer({
               <span className="text-4xl text-gray-500">{fileData.fileExtension?.toUpperCase()}</span>
             </div>
           )}
-          <h2 className="text-2xl font-medium text-white mt-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+          <span 
+            className="mt-4 text-xs font-normal tracking-wide"
+            style={{ 
+              fontFamily: "system-ui, Inter, sans-serif",
+              color: "rgba(255,255,255,0.35)",
+              fontStyle: "italic"
+            }}
+          >
             {fileData.fileName || fileData.label}
-          </h2>
+          </span>
         </div>
       );
     }
