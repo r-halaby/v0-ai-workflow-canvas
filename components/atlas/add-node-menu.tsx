@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface AddNodeMenuProps {
   onAddStatusPill: () => void;
@@ -53,13 +54,22 @@ export function AddNodeMenu({
     setIsDragging(false);
   }, []);
 
+  // Sync menuPosition when position prop changes
+  useEffect(() => {
+    if (position) {
+      setMenuPosition(position);
+    }
+  }, [position]);
+
   const fontStyle = { fontFamily: "system-ui, Inter, sans-serif" };
 
-  return (
+  if (typeof document === "undefined") return null;
+  
+  return createPortal(
     <>
       {/* Backdrop to close menu */}
       <div 
-        style={{ position: "fixed", inset: 0, zIndex: 40 }}
+        style={{ position: "fixed", inset: 0, zIndex: 45 }}
         onClick={onClose}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -79,7 +89,7 @@ export function AddNodeMenu({
           cursor: isDragging ? "grabbing" : "default",
           maxHeight: "80vh",
           overflowY: "auto",
-          zIndex: 50,
+          zIndex: 9999,
           boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
         }}
         onMouseMove={handleMouseMove}
@@ -146,7 +156,7 @@ export function AddNodeMenu({
           {/* Status Pill */}
           <button
             type="button"
-            onClick={() => { onAddStatusPill(); onClose(); }}
+            onClick={() => { console.log("[v0] Status pill clicked"); onAddStatusPill(); onClose(); }}
             style={{
               width: "100%",
               padding: "8px 12px",
@@ -332,7 +342,7 @@ Generate
             <>
               <button
                 type="button"
-                onClick={() => { onAddTextNode("brief"); onClose(); }}
+                onClick={() => { console.log("[v0] Brief text node clicked"); onAddTextNode("brief"); onClose(); }}
                 style={{
                   width: "100%",
                   padding: "8px 12px",
@@ -570,6 +580,7 @@ Generate
           )}
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 }

@@ -9,6 +9,7 @@ interface CanvasSideToolbarProps {
   onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
   onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => void;
   onUploadFile: (files: FileList) => void;
+  onOpenAIGenerate: (type: "mockup" | "collateral") => void;
   onSettingsClick: () => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
@@ -27,6 +28,7 @@ export function CanvasSideToolbar({
   onAddSageNode,
   onAddOperationalNode,
   onUploadFile,
+  onOpenAIGenerate,
   onSettingsClick,
   onSearchChange,
   searchQuery,
@@ -60,7 +62,13 @@ export function CanvasSideToolbar({
   const handleOpenAddMenu = () => {
     if (addButtonRef.current) {
       const rect = addButtonRef.current.getBoundingClientRect();
-      setAddMenuPosition({ x: rect.left - 190, y: rect.top });
+      // Position menu to the left of the button, ensure it stays on screen
+      const menuWidth = 180;
+      const x = Math.max(10, rect.left - menuWidth - 20);
+      const y = Math.max(10, rect.top);
+      const newPos = { x, y };
+      console.log("[v0] Menu position:", newPos, "button rect:", rect);
+      setAddMenuPosition(newPos);
     }
     setShowAddMenu(true);
   };
@@ -215,6 +223,7 @@ export function CanvasSideToolbar({
           onAddSageNode={onAddSageNode}
           onAddOperationalNode={onAddOperationalNode}
           onUploadFile={onUploadFile}
+          onOpenAIGenerate={onOpenAIGenerate}
           onClose={() => setShowAddMenu(false)}
           position={addMenuPosition}
         />
