@@ -21,6 +21,15 @@ interface UploadedFileInfo {
   error?: string;
 }
 
+// Max file size: 100MB (Vercel Blob free tier limit)
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
+
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 interface UploadDialogProps {
   open: boolean;
   onClose: () => void;
@@ -36,6 +45,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
   const [files, setFiles] = useState<UploadedFileInfo[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -52,12 +62,27 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
 
   const processFiles = useCallback((fileList: FileList | File[]) => {
     const newFiles: UploadedFileInfo[] = [];
+    const errors: string[] = [];
     
     for (const file of Array.from(fileList)) {
       const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
       
+      // Check for unsupported file types
       if (!SUPPORTED_EXTENSIONS.includes(extension as FileExtension)) {
-        continue; // Skip unsupported files
+        errors.push(`"${file.name}" has unsupported format (${extension || "no extension"})`);
+        continue;
+      }
+
+      // Check file size limit
+      if (file.size > MAX_FILE_SIZE) {
+        errors.push(`"${file.name}" exceeds 100MB limit (${formatFileSize(file.size)})`);
+        continue;
+      }
+
+      // Check for empty files
+      if (file.size === 0) {
+        errors.push(`"${file.name}" is empty`);
+        continue;
       }
 
       const fileInfo: UploadedFileInfo = {
@@ -75,7 +100,17 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
       newFiles.push(fileInfo);
     }
 
-    setFiles(prev => [...prev, ...newFiles]);
+    if (errors.length > 0) {
+      setValidationErrors(prev => [...prev, ...errors]);
+      // Auto-clear errors after 5 seconds
+      setTimeout(() => {
+        setValidationErrors([]);
+      }, 5000);
+    }
+
+    if (newFiles.length > 0) {
+      setFiles(prev => [...prev, ...newFiles]);
+    }
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -194,14 +229,9 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
       if (f.preview) URL.revokeObjectURL(f.preview);
     });
     setFiles([]);
+    setValidationErrors([]);
     onClose();
   }, [files, onClose]);
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
 
   const getCategoryIcon = (extension: string) => {
     const category = getFileCategoryFromExtension(extension);
@@ -309,6 +339,48 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
             </div>
           </div>
         </div>
+
+        {/* Validation Errors */}
+        {validationErrors.length > 0 && (
+          <div className="px-6 py-3">
+            <div 
+              className="p-3 rounded-lg border"
+              style={{ 
+                backgroundColor: "rgba(239, 68, 68, 0.1)", 
+                borderColor: "rgba(239, 68, 68, 0.3)" 
+              }}
+            >
+              <div className="flex items-start gap-2">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
+                  <circle cx="9" cy="9" r="7" stroke="#EF4444" strokeWidth="1.5"/>
+                  <path d="M9 6V9.5" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="9" cy="12" r="0.75" fill="#EF4444"/>
+                </svg>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-red-400 mb-1" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+                    {validationErrors.length === 1 ? "File could not be added" : `${validationErrors.length} files could not be added`}
+                  </p>
+                  <ul className="text-xs text-red-300 space-y-0.5">
+                    {validationErrors.slice(0, 3).map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                    {validationErrors.length > 3 && (
+                      <li>...and {validationErrors.length - 3} more</li>
+                    )}
+                  </ul>
+                </div>
+                <button
+                  onClick={() => setValidationErrors([])}
+                  className="flex-shrink-0 p-1 hover:bg-white/10 rounded transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4L10 10M10 4L4 10" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* File List */}
         {files.length > 0 && (
