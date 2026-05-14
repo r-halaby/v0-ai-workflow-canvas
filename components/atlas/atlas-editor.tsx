@@ -265,6 +265,71 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     return () => clearTimeout(timeoutId);
   }, [nodes, edges]); // Only trigger on nodes/edges changes, not canvas/comments to avoid loops
 
+  // Listen for Sage action events
+  useEffect(() => {
+    const handleSageActionEvent = (e: CustomEvent<{
+      action: { 
+        action: string; 
+        pills?: Array<{ label: string; color: string; index: number }>; 
+        arrangement?: string;
+        title?: string;
+        content?: string;
+      };
+      nodeId: string;
+      position: { x: number; y: number };
+    }>) => {
+      const { action, position } = e.detail;
+      
+      if (action.action === "createStatusPills" && action.pills) {
+        const spacing = 200;
+        const arrangement = action.arrangement || "horizontal";
+        
+        const newNodes: AtlasNode[] = action.pills.map((pill, index) => {
+          let pos: { x: number; y: number };
+          
+          if (arrangement === "horizontal") {
+            pos = { x: position.x + 320 + (index * spacing), y: position.y };
+          } else if (arrangement === "vertical") {
+            pos = { x: position.x + 320, y: position.y + (index * 80) };
+          } else {
+            // grid - 3 columns
+            const col = index % 3;
+            const row = Math.floor(index / 3);
+            pos = { x: position.x + 320 + (col * spacing), y: position.y + (row * 80) };
+          }
+          
+          return {
+            id: `status-sage-${Date.now()}-${index}`,
+            type: "statusPill",
+            position: pos,
+            data: {
+              label: pill.label,
+              color: pill.color,
+            },
+          };
+        });
+        
+        setNodes((nds) => [...nds, ...newNodes]);
+      } else if (action.action === "createTextNote" && action.title) {
+        const newNode: AtlasNode = {
+          id: `text-sage-${Date.now()}`,
+          type: "text",
+          position: { x: position.x + 320, y: position.y },
+          data: {
+            textType: "note",
+            title: action.title,
+            content: action.content || "",
+            lastModified: new Date().toISOString(),
+          },
+        };
+        setNodes((nds) => [...nds, newNode]);
+      }
+    };
+
+    window.addEventListener("sage:action", handleSageActionEvent as EventListener);
+    return () => window.removeEventListener("sage:action", handleSageActionEvent as EventListener);
+  }, [setNodes]);
+
   const onConnect = useCallback(
     (params: Connection) => {
       setEdges((eds) =>

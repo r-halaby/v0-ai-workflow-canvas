@@ -1,13 +1,35 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { useChat } from "@ai-sdk/react";
 import type { SageChatbotNodeData } from "@/lib/atlas-types";
 
-export function SageChatbotNode({ id, data, selected }: NodeProps) {
+interface SageAction {
+  action: string;
+  pills?: Array<{ label: string; color: string; index: number }>;
+  arrangement?: string;
+  title?: string;
+  content?: string;
+  projectType?: string;
+  suggestion?: Array<{ label: string; color: string }>;
+}
+
+export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positionAbsoluteY }: NodeProps) {
   const nodeData = data as SageChatbotNodeData;
   const [inputValue, setInputValue] = useState("");
+  const [pendingSuggestion, setPendingSuggestion] = useState<Array<{ label: string; color: string }> | null>(null);
+  
+  // Emit event for parent to handle actions
+  const emitSageAction = useCallback((action: SageAction) => {
+    window.dispatchEvent(new CustomEvent("sage:action", {
+      detail: {
+        action,
+        nodeId: id,
+        position: { x: positionAbsoluteX || 0, y: positionAbsoluteY || 0 },
+      },
+    }));
+  }, [id, positionAbsoluteX, positionAbsoluteY]);
   
   const { messages, append, isLoading } = useChat({
     api: "/api/sage",
@@ -17,7 +39,31 @@ export function SageChatbotNode({ id, data, selected }: NodeProps) {
       role: m.role as "user" | "assistant",
       content: m.content,
     })) || [],
+    onToolCall: async ({ toolCall }) => {
+      // Handle tool results from the AI
+      const result = toolCall.args as SageAction;
+      
+      if (result.action === "createStatusPills") {
+        emitSageAction(result);
+      } else if (result.action === "suggestWorkflow" && result.suggestion) {
+        setPendingSuggestion(result.suggestion);
+      } else if (result.action === "createTextNote") {
+        emitSageAction(result);
+      }
+    },
   });
+
+  // Handle creating pills from a suggestion
+  const handleCreateFromSuggestion = useCallback(() => {
+    if (pendingSuggestion) {
+      emitSageAction({
+        action: "createStatusPills",
+        pills: pendingSuggestion.map((pill, index) => ({ ...pill, index })),
+        arrangement: "horizontal",
+      });
+      setPendingSuggestion(null);
+    }
+  }, [pendingSuggestion, emitSageAction]);
 
   const handleSend = useCallback(() => {
     if (!inputValue.trim() || isLoading) return;
@@ -63,9 +109,9 @@ export function SageChatbotNode({ id, data, selected }: NodeProps) {
       </div>
 
       {/* Messages */}
-      <div className="p-2 space-y-2 max-h-[120px] overflow-y-auto">
+      <div className="p-2 space-y-2 max-h-[180px] overflow-y-auto">
         {messages.length > 0 ? (
-          messages.slice(-3).map((msg) => (
+          messages.slice(-4).map((msg) => (
             <div
               key={msg.id}
               className={`text-xs px-2 py-1.5 rounded-lg ${
@@ -78,17 +124,48 @@ export function SageChatbotNode({ id, data, selected }: NodeProps) {
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
-              {msg.content.length > 80 ? msg.content.slice(0, 80) + "..." : msg.content}
+              {msg.content.length > 120 ? msg.content.slice(0, 120) + "..." : msg.content}
             </div>
           ))
         ) : (
           <div className="text-xs text-gray-500 text-center py-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-            Ask Sage anything about your project
+            Ask Sage to create statuses, suggest workflows, or help organize your project
           </div>
         )}
         {isLoading && (
           <div className="text-xs text-[#F0FE00] px-2 py-1.5 mr-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             Sage is thinking...
+          </div>
+        )}
+        
+        {/* Show pending suggestion with action button */}
+        {pendingSuggestion && (
+          <div className="mt-2 p-2 rounded-lg" style={{ backgroundColor: "#F0FE0015", border: "1px solid #F0FE0030" }}>
+            <div className="text-xs text-gray-400 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Suggested statuses:
+            </div>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {pendingSuggestion.map((pill, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 rounded-full text-[10px] font-medium text-black"
+                  style={{ backgroundColor: pill.color }}
+                >
+                  {pill.label}
+                </span>
+              ))}
+            </div>
+            <button
+              onClick={handleCreateFromSuggestion}
+              className="w-full py-1.5 rounded text-xs font-medium transition-colors"
+              style={{ 
+                backgroundColor: "#F0FE00", 
+                color: "#000",
+                fontFamily: "system-ui, Inter, sans-serif",
+              }}
+            >
+              Create these on canvas
+            </button>
           </div>
         )}
       </div>

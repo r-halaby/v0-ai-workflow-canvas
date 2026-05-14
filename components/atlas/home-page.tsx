@@ -12,7 +12,7 @@ import { FileNode } from "./file-node";
 import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "favorites" | "workspace" | "private";
-type HomeView = "home" | "canvases" | "favorites" | "community" | "workspace-canvas";
+type HomeView = "home" | "canvases" | "favorites" | "community" | "workspace-canvas" | "settings";
 type CanvasSubView = "canvases" | "files";
 
 const nodeTypes = { fileNode: FileNode };
@@ -454,10 +454,18 @@ const deleteCanvas = (canvasId: string) => {
         <div className="p-4 border-b" style={{ borderColor: "#222222" }}>
           <div className="flex items-center gap-3">
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold"
-              style={{ backgroundColor: "#F0FE00", color: "#121212" }}
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold overflow-hidden"
+              style={{ backgroundColor: workspaceSettings.branding?.workspaceIcon ? "transparent" : "#F0FE00", color: "#121212" }}
             >
-              {workspaceSettings.name.charAt(0)}
+              {workspaceSettings.branding?.workspaceIcon ? (
+                <img
+                  src={workspaceSettings.branding.workspaceIcon}
+                  alt={workspaceSettings.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                workspaceSettings.name.charAt(0)
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <div
@@ -539,6 +547,20 @@ const deleteCanvas = (canvasId: string) => {
                 <path d="M9 9C6.5 9 5 10.5 5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
               Community
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("settings")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                activeView === "settings" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 11.25C10.2426 11.25 11.25 10.2426 11.25 9C11.25 7.75736 10.2426 6.75 9 6.75C7.75736 6.75 6.75 7.75736 6.75 9C6.75 10.2426 7.75736 11.25 9 11.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14.55 11.25C14.4333 11.5166 14.3979 11.8123 14.4482 12.0992C14.4985 12.3861 14.6323 12.6517 14.8333 12.8625L14.8875 12.9167C15.0489 13.078 15.1768 13.2696 15.2641 13.4804C15.3514 13.6912 15.3964 13.917 15.3964 14.1451C15.3964 14.3731 15.3514 14.5989 15.2641 14.8097C15.1768 15.0205 15.0489 15.2122 14.8875 15.3735C14.7262 15.5349 14.5345 15.6628 14.3237 15.7501C14.1129 15.8374 13.8871 15.8824 13.6591 15.8824C13.431 15.8824 13.2052 15.8374 12.9944 15.7501C12.7836 15.6628 12.5919 15.5349 12.4306 15.3735L12.3764 15.3193C12.1656 15.1183 11.9 14.9846 11.6131 14.9343C11.3262 14.884 11.0305 14.9194 10.764 15.036C10.5028 15.1469 10.2813 15.3324 10.1267 15.5696C9.97213 15.8068 9.89122 16.0849 9.89396 16.3685V16.5C9.89396 16.9602 9.71117 17.4016 9.38611 17.7267C9.06104 18.0517 8.61962 18.2345 8.15943 18.2345C7.69923 18.2345 7.25781 18.0517 6.93275 17.7267C6.60768 17.4016 6.4249 16.9602 6.4249 16.5V16.431C6.41718 16.1399 6.32742 15.8569 6.16609 15.6174C6.00476 15.3779 5.77869 15.1919 5.51358 15.0819C5.24708 14.9653 4.95139 14.9299 4.66449 14.9802C4.3776 15.0305 4.11196 15.1642 3.90115 15.3652L3.84694 15.4194C3.68563 15.5808 3.49396 15.7087 3.28317 15.796C3.07238 15.8833 2.84656 15.9283 2.61854 15.9283C2.39052 15.9283 2.1647 15.8833 1.95391 15.796C1.74312 15.7087 1.55145 15.5808 1.39014 15.4194C1.22873 15.2581 1.10087 15.0665 1.01356 14.8557C0.926249 14.6449 0.881272 14.4191 0.881272 14.191C0.881272 13.963 0.926249 13.7372 1.01356 13.5264C1.10087 13.3156 1.22873 13.1239 1.39014 12.9626L1.44435 12.9084C1.64533 12.6976 1.77908 12.432 1.82936 12.1451C1.87965 11.8582 1.84422 11.5625 1.72762 11.296C1.61668 11.0348 1.43116 10.8133 1.19399 10.6587C0.956815 10.5041 0.678688 10.4232 0.395077 10.426H0.263687C-0.196508 10.426 -0.637924 10.2432 -0.962992 9.91813C-1.28806 9.59307 -1.47084 9.15165 -1.47084 8.69145C-1.47084 8.23126 -1.28806 7.78984 -0.962992 7.46478C-0.637924 7.13971 -0.196508 6.95693 0.263687 6.95693H0.332774C0.623912 6.94921 0.906917 6.85945 1.14641 6.69812C1.38591 6.53679 1.57192 6.31072 1.68192 6.04561C1.79852 5.77911 1.83395 5.48342 1.78366 5.19652C1.73338 4.90963 1.59963 4.64399 1.39865 4.43318L1.34444 4.37897C1.18303 4.21766 1.05517 4.02599 0.967863 3.8152C0.880553 3.60441 0.835576 3.37859 0.835576 3.15057C0.835576 2.92255 0.880553 2.69673 0.967863 2.48594C1.05517 2.27515 1.18303 2.08348 1.34444 1.92217C1.50575 1.76076 1.69742 1.6329 1.90821 1.54559C2.119 1.45828 2.34482 1.4133 2.57284 1.4133C2.80086 1.4133 3.02668 1.45828 3.23747 1.54559C3.44826 1.6329 3.63993 1.76076 3.80124 1.92217L3.85545 1.97638C4.06626 2.17736 4.3319 2.31111 4.61879 2.36139C4.90569 2.41168 5.20138 2.37625 5.46788 2.25965H5.51358C5.7748 2.14871 5.99631 1.9632 6.15093 1.72602C6.30555 1.48885 6.38646 1.21072 6.38372 0.927114V0.795724C6.38372 0.335528 6.5665 -0.105888 6.89157 -0.430956C7.21664 -0.756024 7.65806 -0.938805 8.11825 -0.938805C8.57845 -0.938805 9.01987 -0.756024 9.34493 -0.430956C9.67 -0.105888 9.85278 0.335528 9.85278 0.795724V0.864811C9.85004 1.14842 9.93095 1.42655 10.0856 1.66372C10.2402 1.9009 10.4617 2.08641 10.7229 2.19735C10.9894 2.31395 11.2851 2.34938 11.572 2.29909C11.8589 2.24881 12.1245 2.11506 12.3353 1.91408L12.3895 1.85987C12.5508 1.69846 12.7425 1.5706 12.9533 1.48329C13.1641 1.39598 13.3899 1.351 13.6179 1.351C13.846 1.351 14.0718 1.39598 14.2826 1.48329C14.4934 1.5706 14.685 1.69846 14.8463 1.85987C15.0077 2.02118 15.1356 2.21285 15.2229 2.42364C15.3102 2.63443 15.3552 2.86025 15.3552 3.08827C15.3552 3.31629 15.3102 3.54211 15.2229 3.7529C15.1356 3.96369 15.0077 4.15536 14.8463 4.31667L14.7921 4.37088C14.5911 4.58169 14.4574 4.84733 14.4071 5.13422C14.3568 5.42112 14.3923 5.71681 14.5088 5.98331V6.02901C14.6198 6.29023 14.8053 6.51174 15.0425 6.66636C15.2796 6.82098 15.5578 6.90189 15.8414 6.89915H15.9728C16.433 6.89915 16.8744 7.08193 17.1994 7.407C17.5245 7.73207 17.7073 8.17349 17.7073 8.63368C17.7073 9.09388 17.5245 9.5353 17.1994 9.86036C16.8744 10.1854 16.433 10.3682 15.9728 10.3682H15.9037C15.6201 10.3655 15.3419 10.4464 15.1048 10.601C14.8676 10.7556 14.6821 10.9771 14.5712 11.2383C14.4546 11.5048 14.4191 11.8005 14.4694 12.0874C14.5197 12.3743 14.6535 12.6399 14.8544 12.8507L14.9086 12.9049C15.07 13.0662 15.1979 13.2579 15.2852 13.4687C15.3725 13.6795 15.4175 13.9053 15.4175 14.1333C15.4175 14.3614 15.3725 14.5872 15.2852 14.798C15.1979 15.0087 15.07 15.2004 14.9086 15.3617C14.7473 15.5231 14.5556 15.651 14.3448 15.7383C14.134 15.8256 13.9082 15.8706 13.6802 15.8706C13.4522 15.8706 13.2263 15.8256 13.0156 15.7383C12.8048 15.651 12.6131 15.5231 12.4518 15.3617L12.3976 15.3075C12.1868 15.1065 11.9211 14.9728 11.6342 14.9225C11.3473 14.8722 11.0516 14.9076 10.7851 15.0242H10.7394C10.4782 15.1352 10.2567 15.3207 10.1021 15.5579C9.94746 15.7951 9.86655 16.0732 9.86929 16.3568V16.4882C9.86929 16.9484 9.68651 17.3898 9.36144 17.7149C9.03637 18.0399 8.59496 18.2227 8.13476 18.2227C7.67457 18.2227 7.23315 18.0399 6.90808 17.7149C6.58301 17.3898 6.40023 16.9484 6.40023 16.4882V16.419C6.39749 16.1354 6.31658 15.8573 6.16196 15.6201C6.00734 15.383 5.78583 15.1975 5.52461 15.0865C5.25811 14.9699 4.96242 14.9345 4.67553 14.9848C4.38863 15.0351 4.12299 15.1688 3.91218 15.3698L3.85797 15.424C3.69666 15.5854 3.50499 15.7133 3.2942 15.8006C3.08341 15.8879 2.85759 15.9329 2.62957 15.9329C2.40155 15.9329 2.17573 15.8879 1.96494 15.8006C1.75415 15.7133 1.56248 15.5854 1.40117 15.424C1.23976 15.2627 1.1119 15.071 1.02459 14.8602C0.937282 14.6494 0.892305 14.4236 0.892305 14.1956C0.892305 13.9676 0.937282 13.7417 1.02459 13.531C1.1119 13.3202 1.23976 13.1285 1.40117 12.9672L1.45538 12.913C1.65636 12.7022 1.79011 12.4365 1.84039 12.1496C1.89068 11.8627 1.85525 11.567 1.73865 11.3005V11.2548C1.62771 10.9936 1.44219 10.7721 1.20502 10.6175C0.967845 10.4629 0.689718 10.382 0.406107 10.3847H0.27472C-0.185476 10.3847 -0.626892 10.2019 -0.951959 9.87686C-1.27703 9.5518 -1.45981 9.11038 -1.45981 8.65018C-1.45981 8.18999 -1.27703 7.74857 -0.951959 7.4235C-0.626892 7.09843 -0.185476 6.91565 0.27472 6.91565H0.343807C0.627418 6.91839 0.905545 6.83748 1.14272 6.68286C1.37989 6.52824 1.5654 6.30673 1.67635 6.04551" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Settings
             </button>
           </nav>
 
@@ -756,6 +778,7 @@ const deleteCanvas = (canvasId: string) => {
             {activeView === "favorites" && "Favorites"}
             {activeView === "community" && "Community"}
             {activeView === "workspace-canvas" && "All Workspace"}
+            {activeView === "settings" && "Settings"}
           </div>
 
           <div className="flex items-center gap-3">
@@ -1125,6 +1148,301 @@ const deleteCanvas = (canvasId: string) => {
                 onOpenCanvas={onOpenCanvas}
               />
             </ReactFlowProvider>
+          </div>
+        ) : activeView === "settings" ? (
+          /* Settings View */
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-2xl">
+              {/* Branding Section */}
+              <div className="mb-8">
+                <h3
+                  className="text-white font-semibold text-lg mb-6"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Branding
+                </h3>
+                <div className="space-y-6">
+                  {/* Workspace Icon */}
+                  <div className="flex items-start gap-6">
+                    <div>
+                      <label
+                        className="block text-sm text-gray-400 mb-2"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Workspace Icon
+                      </label>
+                      <div
+                        className="w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden"
+                        style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}
+                      >
+                        {workspaceSettings.branding?.workspaceIcon ? (
+                          <img
+                            src={workspaceSettings.branding.workspaceIcon}
+                            alt="Workspace icon"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span
+                            className="text-2xl font-bold"
+                            style={{ color: "#F0FE00" }}
+                          >
+                            {workspaceSettings.name.charAt(0)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-7">
+                      <p
+                        className="text-xs text-gray-500 mb-3"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        SVG recommended. Square format, max 2MB.
+                      </p>
+                      <label
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-white/10"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                          color: "#ffffff",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Upload Icon
+                        <input
+                          type="file"
+                          accept="image/svg+xml,image/png,image/jpeg,image/webp"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            
+                            try {
+                              const res = await fetch("/api/upload/client", {
+                                method: "POST",
+                                body: JSON.stringify({ filename: file.name, contentType: file.type }),
+                                headers: { "Content-Type": "application/json" },
+                              });
+                              
+                              if (res.ok) {
+                                const { url, uploadUrl } = await res.json();
+                                await fetch(uploadUrl, { method: "PUT", body: file });
+                                onSettingsChange({
+                                  ...workspaceSettings,
+                                  branding: { ...workspaceSettings.branding, workspaceIcon: url },
+                                });
+                              }
+                            } catch (error) {
+                              console.error("Upload failed:", error);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Wordmark / Logo */}
+                  <div className="flex items-start gap-6">
+                    <div>
+                      <label
+                        className="block text-sm text-gray-400 mb-2"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Wordmark / Logo
+                      </label>
+                      <div
+                        className="w-48 h-16 rounded-xl flex items-center justify-center overflow-hidden"
+                        style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}
+                      >
+                        {workspaceSettings.branding?.wordmark ? (
+                          <img
+                            src={workspaceSettings.branding.wordmark}
+                            alt="Wordmark"
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <span
+                            className="text-sm text-gray-500"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            No wordmark
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-7">
+                      <p
+                        className="text-xs text-gray-500 mb-3"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        SVG recommended. Horizontal format, max 2MB.
+                      </p>
+                      <label
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-white/10"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                          color: "#ffffff",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Upload Wordmark
+                        <input
+                          type="file"
+                          accept="image/svg+xml,image/png,image/jpeg,image/webp"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            
+                            try {
+                              const res = await fetch("/api/upload/client", {
+                                method: "POST",
+                                body: JSON.stringify({ filename: file.name, contentType: file.type }),
+                                headers: { "Content-Type": "application/json" },
+                              });
+                              
+                              if (res.ok) {
+                                const { url, uploadUrl } = await res.json();
+                                await fetch(uploadUrl, { method: "PUT", body: file });
+                                onSettingsChange({
+                                  ...workspaceSettings,
+                                  branding: { ...workspaceSettings.branding, wordmark: url },
+                                });
+                              }
+                            } catch (error) {
+                              console.error("Upload failed:", error);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Profile Picture */}
+                  <div className="flex items-start gap-6">
+                    <div>
+                      <label
+                        className="block text-sm text-gray-400 mb-2"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Profile Picture
+                      </label>
+                      <div
+                        className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden"
+                        style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}
+                      >
+                        {workspaceSettings.branding?.profilePicture ? (
+                          <img
+                            src={workspaceSettings.branding.profilePicture}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <circle cx="16" cy="12" r="5" stroke="#666666" strokeWidth="2"/>
+                            <path d="M6 28C6 22.4772 10.4772 18 16 18C21.5228 18 26 22.4772 26 28" stroke="#666666" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-7">
+                      <p
+                        className="text-xs text-gray-500 mb-3"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Your personal profile picture. Square image recommended.
+                      </p>
+                      <label
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-white/10"
+                        style={{
+                          backgroundColor: "#1a1a1a",
+                          border: "1px solid #333333",
+                          color: "#ffffff",
+                          fontFamily: "system-ui, Inter, sans-serif",
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Upload Photo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            
+                            try {
+                              const res = await fetch("/api/upload/client", {
+                                method: "POST",
+                                body: JSON.stringify({ filename: file.name, contentType: file.type }),
+                                headers: { "Content-Type": "application/json" },
+                              });
+                              
+                              if (res.ok) {
+                                const { url, uploadUrl } = await res.json();
+                                await fetch(uploadUrl, { method: "PUT", body: file });
+                                onSettingsChange({
+                                  ...workspaceSettings,
+                                  branding: { ...workspaceSettings.branding, profilePicture: url },
+                                });
+                              }
+                            } catch (error) {
+                              console.error("Upload failed:", error);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t mb-8" style={{ borderColor: "#222222" }} />
+
+              {/* Other Settings Link */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsDialog(true)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5 w-full text-left"
+                  style={{
+                    backgroundColor: "#1a1a1a",
+                    border: "1px solid #333333",
+                    color: "#ffffff",
+                    fontFamily: "system-ui, Inter, sans-serif",
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M9 11.25C10.2426 11.25 11.25 10.2426 11.25 9C11.25 7.75736 10.2426 6.75 9 6.75C7.75736 6.75 6.75 7.75736 6.75 9C6.75 10.2426 7.75736 11.25 9 11.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <div className="flex-1">
+                    <div>All Workspace Settings</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Members, products, preferences, naming conventions</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         ) : activeView === "home" ? (
           <>
