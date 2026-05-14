@@ -3,6 +3,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { createClient } from "@/lib/supabase/server";
 
+// Increase timeout for large file uploads
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
+import { upload } from "@vercel/blob/client";
 import {
   ReactFlowProvider,
   useNodesState,
@@ -675,49 +676,32 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
         // Update progress to show we're starting this file
         setUploadProgress(prev => prev.map(p => 
-          p.id === uploadId ? { ...p, progress: 10 } : p
+          p.id === uploadId ? { ...p, progress: 5 } : p
         ));
 
         try {
-          const formData = new FormData();
-          formData.append("file", file);
-
-          // Update to 30% when starting upload
-          setUploadProgress(prev => prev.map(p => 
-            p.id === uploadId ? { ...p, progress: 30 } : p
-          ));
-
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
+          // Use client upload for direct-to-blob uploads (bypasses 4MB API limit)
+          const blob = await upload(file.name, file, {
+            access: "private",
+            handleUploadUrl: "/api/upload/client",
+            onUploadProgress: (progress) => {
+              setUploadProgress(prev => prev.map(p => 
+                p.id === uploadId ? { ...p, progress: Math.round(progress.percentage) } : p
+              ));
+            },
           });
 
-          // Update to 70% after response received
-          setUploadProgress(prev => prev.map(p => 
-            p.id === uploadId ? { ...p, progress: 70 } : p
-          ));
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            setUploadProgress(prev => prev.map(p => 
-              p.id === uploadId ? { ...p, status: "error", error: errorText || "Upload failed" } : p
-            ));
-            continue;
-          }
-
-          const result = await response.json();
-
-          const isImage = result.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
-          const servedUrl = `/api/file?pathname=${encodeURIComponent(result.pathname)}`;
+          const isImage = extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
+          const servedUrl = `/api/file?pathname=${encodeURIComponent(blob.pathname)}`;
 
           uploadedResults.push({
-            fileName: result.fileName,
-            extension: result.extension as FileExtension,
+            fileName: file.name,
+            extension: extension as FileExtension,
             uploadedFile: {
               url: servedUrl,
-              pathname: result.pathname,
-              size: result.size,
-              uploadedAt: result.uploadedAt,
+              pathname: blob.pathname,
+              size: file.size,
+              uploadedAt: new Date().toISOString(),
             },
             previewUrl: isImage ? servedUrl : undefined,
           });
@@ -728,8 +712,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           ));
         } catch (error) {
           console.error("Error uploading file:", file.name, error);
+          const errorMessage = error instanceof Error ? error.message : "Upload failed";
           setUploadProgress(prev => prev.map(p => 
-            p.id === uploadId ? { ...p, status: "error", error: "Upload failed" } : p
+            p.id === uploadId ? { ...p, status: "error", error: errorMessage } : p
           ));
         }
       }
