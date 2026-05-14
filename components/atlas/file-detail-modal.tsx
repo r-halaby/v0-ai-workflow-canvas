@@ -230,6 +230,28 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
       >
         {/* Header buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+          {/* Generate Mockups button */}
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent("atlas:generate-mockup", {
+                detail: { nodeId: fileData.label, fileData }
+              }));
+            }}
+            className="px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors hover:bg-[#F0FE00]/20"
+            style={{ 
+              backgroundColor: "#F0FE0015", 
+              border: "1px solid #F0FE0040",
+              fontFamily: "system-ui, Inter, sans-serif"
+            }}
+            title="Generate Mockups"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2L10 6L14 6.5L11 9.5L12 14L8 11.5L4 14L5 9.5L2 6.5L6 6L8 2Z" stroke="#F0FE00" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="text-xs font-medium" style={{ color: "#F0FE00" }}>Generate Mockups</span>
+          </button>
+          
           {/* Download button */}
           <button
             type="button"
