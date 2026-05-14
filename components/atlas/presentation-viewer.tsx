@@ -84,6 +84,15 @@ export function PresentationViewer({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger navigation shortcuts while editing the presentation name
+      if (isEditingName) {
+        if (e.key === "Escape") {
+          setIsEditingName(false);
+          setEditedName(presentationName);
+        }
+        return;
+      }
+      
       if (e.key === "ArrowRight" || e.key === " ") {
         e.preventDefault();
         goNext();
@@ -97,7 +106,7 @@ export function PresentationViewer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [goNext, goPrev, onClose]);
+  }, [goNext, goPrev, onClose, isEditingName, presentationName]);
 
   if (!currentNode || orderedNodeIds.length === 0) {
     return (
