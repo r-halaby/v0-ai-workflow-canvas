@@ -282,6 +282,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       <AtlasToolbar
         canvasName={canvas.name}
         onBack={onBack}
+        onCanvasNameChange={(name) => onCanvasChange({ ...canvas, name })}
       />
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
