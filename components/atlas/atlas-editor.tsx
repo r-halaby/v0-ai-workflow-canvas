@@ -25,6 +25,7 @@ import { MockupGeneratorDialog } from "./mockup-generator-dialog";
 import { MoodboardExpanded } from "./moodboard-expanded";
 import { PresentationViewer } from "./presentation-viewer";
 import { SaveTemplateDialog } from "./save-template-dialog";
+import { AddNodeMenu } from "./add-node-menu";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -174,6 +175,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
   // Clipboard state for copy/paste
   const [copiedNodes, setCopiedNodes] = useState<AtlasNode[]>([]);
+
+  // Double-click add menu state
+  const [showDoubleClickMenu, setShowDoubleClickMenu] = useState(false);
+  const [doubleClickPosition, setDoubleClickPosition] = useState<{ x: number; y: number } | null>(null);
+  const [doubleClickMenuScreenPosition, setDoubleClickMenuScreenPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Listen for mockup generation events from file nodes
   useEffect(() => {
@@ -773,31 +779,70 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   }, []);
 
   const handleDoubleClickCanvas = useCallback(
-    (position: { x: number; y: number }) => {
-      const today = new Date();
-      const formattedDate = today.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-
-      const newNode: AtlasNode = {
-        id: `file-${Date.now()}`,
-        type: "file",
-        position,
-        data: {
-          label: "Untitled File",
-          fileName: "Untitled File.fig",
-          product: "atlas",
-          status: "draft",
-          fileExtension: ".fig",
-          lastModified: formattedDate,
-        },
-      };
-      setNodes((nds) => [...nds, newNode]);
+    (position: { x: number; y: number }, screenPosition: { x: number; y: number }) => {
+      // Store both the canvas position (for placing the node) and screen position (for menu placement)
+      setDoubleClickPosition(position);
+      setDoubleClickMenuScreenPosition({ x: screenPosition.x + 10, y: screenPosition.y + 10 });
+      setShowDoubleClickMenu(true);
     },
-    [setNodes]
+    []
   );
+
+  // Close the double-click menu
+  const closeDoubleClickMenu = useCallback(() => {
+    setShowDoubleClickMenu(false);
+    setDoubleClickPosition(null);
+  }, []);
+
+  // Wrapper handlers that use the double-click position then close the menu
+  const handleDoubleClickAddStatusPill = useCallback(() => {
+    if (doubleClickPosition) {
+      handleAddStatusPill(doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleAddStatusPill, closeDoubleClickMenu]);
+
+  const handleDoubleClickAddTextNode = useCallback((textType: "brief" | "note" | "description") => {
+    if (doubleClickPosition) {
+      handleAddTextNode(textType, doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleAddTextNode, closeDoubleClickMenu]);
+
+  const handleDoubleClickAddSageNode = useCallback((sageType: "chatbot" | "overview" | "stakeholder") => {
+    if (doubleClickPosition) {
+      handleAddSageNode(sageType, doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleAddSageNode, closeDoubleClickMenu]);
+
+  const handleDoubleClickAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => {
+    if (doubleClickPosition) {
+      handleAddOperationalNode(opType, doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleAddOperationalNode, closeDoubleClickMenu]);
+
+  const handleDoubleClickUploadFile = useCallback((files: FileList) => {
+    if (doubleClickPosition) {
+      handleFileDrop(files, doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleFileDrop, closeDoubleClickMenu]);
+
+  const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collateral") => {
+    if (type === "mockup") {
+      const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
+      if (fileNode) {
+        setMockupSourceFile(fileNode.data as FileNodeData);
+      } else {
+        alert("Please upload an image first to generate mockups from.");
+      }
+    } else if (type === "collateral") {
+      alert("Collateral generation coming soon!");
+    }
+    closeDoubleClickMenu();
+  }, [nodes, closeDoubleClickMenu]);
 
   const handleFilesUploaded = useCallback(
     (files: Array<{
@@ -1131,6 +1176,20 @@ onAddOperationalNode={handleAddOperationalNode}
 
         
       </div>
+
+      {/* Double-click Add Node Menu */}
+      {showDoubleClickMenu && (
+        <AddNodeMenu
+          onAddStatusPill={handleDoubleClickAddStatusPill}
+          onAddTextNode={handleDoubleClickAddTextNode}
+          onAddSageNode={handleDoubleClickAddSageNode}
+          onAddOperationalNode={handleDoubleClickAddOperationalNode}
+          onUploadFile={handleDoubleClickUploadFile}
+          onOpenAIGenerate={handleDoubleClickOpenAIGenerate}
+          onClose={closeDoubleClickMenu}
+          position={doubleClickMenuScreenPosition}
+        />
+      )}
 
       {/* Upload Progress Indicator */}
       <UploadProgress 
