@@ -794,56 +794,6 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     setDoubleClickPosition(null);
   }, []);
 
-  // Wrapper handlers that use the double-click position then close the menu
-  const handleDoubleClickAddStatusPill = useCallback(() => {
-    if (doubleClickPosition) {
-      handleAddStatusPill(doubleClickPosition);
-    }
-    closeDoubleClickMenu();
-  }, [doubleClickPosition, handleAddStatusPill, closeDoubleClickMenu]);
-
-  const handleDoubleClickAddTextNode = useCallback((textType: "brief" | "note" | "description") => {
-    if (doubleClickPosition) {
-      handleAddTextNode(textType, doubleClickPosition);
-    }
-    closeDoubleClickMenu();
-  }, [doubleClickPosition, handleAddTextNode, closeDoubleClickMenu]);
-
-  const handleDoubleClickAddSageNode = useCallback((sageType: "chatbot" | "overview" | "stakeholder") => {
-    if (doubleClickPosition) {
-      handleAddSageNode(sageType, doubleClickPosition);
-    }
-    closeDoubleClickMenu();
-  }, [doubleClickPosition, handleAddSageNode, closeDoubleClickMenu]);
-
-  const handleDoubleClickAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => {
-    if (doubleClickPosition) {
-      handleAddOperationalNode(opType, doubleClickPosition);
-    }
-    closeDoubleClickMenu();
-  }, [doubleClickPosition, handleAddOperationalNode, closeDoubleClickMenu]);
-
-  const handleDoubleClickUploadFile = useCallback((files: FileList) => {
-    if (doubleClickPosition) {
-      handleFileDrop(files, doubleClickPosition);
-    }
-    closeDoubleClickMenu();
-  }, [doubleClickPosition, handleFileDrop, closeDoubleClickMenu]);
-
-  const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collateral") => {
-    if (type === "mockup") {
-      const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
-      if (fileNode) {
-        setMockupSourceFile(fileNode.data as FileNodeData);
-      } else {
-        alert("Please upload an image first to generate mockups from.");
-      }
-    } else if (type === "collateral") {
-      alert("Collateral generation coming soon!");
-    }
-    closeDoubleClickMenu();
-  }, [nodes, closeDoubleClickMenu]);
-
   const handleFilesUploaded = useCallback(
     (files: Array<{
       fileName: string;
@@ -1000,6 +950,56 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     },
     [setNodes, nodes]
   );
+
+  // Wrapper handlers that use the double-click position then close the menu
+  const handleDoubleClickAddStatusPill = useCallback(() => {
+    if (doubleClickPosition) {
+      handleAddStatusPill(doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleAddStatusPill, closeDoubleClickMenu]);
+
+  const handleDoubleClickAddTextNode = useCallback((textType: "brief" | "note" | "description") => {
+    if (doubleClickPosition) {
+      handleAddTextNode(textType, doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleAddTextNode, closeDoubleClickMenu]);
+
+  const handleDoubleClickAddSageNode = useCallback((sageType: "chatbot" | "overview" | "stakeholder") => {
+    if (doubleClickPosition) {
+      handleAddSageNode(sageType, doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleAddSageNode, closeDoubleClickMenu]);
+
+  const handleDoubleClickAddOperationalNode = useCallback((opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => {
+    if (doubleClickPosition) {
+      handleAddOperationalNode(opType, doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleAddOperationalNode, closeDoubleClickMenu]);
+
+  const handleDoubleClickUploadFile = useCallback((files: FileList) => {
+    if (doubleClickPosition) {
+      handleFileDrop(files, doubleClickPosition);
+    }
+    closeDoubleClickMenu();
+  }, [doubleClickPosition, handleFileDrop, closeDoubleClickMenu]);
+
+  const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collateral") => {
+    if (type === "mockup") {
+      const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
+      if (fileNode) {
+        setMockupSourceFile(fileNode.data as FileNodeData);
+      } else {
+        alert("Please upload an image first to generate mockups from.");
+      }
+    } else if (type === "collateral") {
+      alert("Collateral generation coming soon!");
+    }
+    closeDoubleClickMenu();
+  }, [nodes, closeDoubleClickMenu]);
 
   const handleNodesChangeWrapper = useCallback(
     (changes: NodeChange<AtlasNode>[]) => {
