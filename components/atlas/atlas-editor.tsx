@@ -509,6 +509,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onCancelNewComment={handleCancelNewComment}
           onNodeDoubleClick={setDetailModalNodeId}
           onFileDrop={handleFileDrop}
+          onUploadFile={(files, position) => {
+            // Use center of canvas if no position provided
+            const uploadPosition = position || { x: 400, y: 300 };
+            handleFileDrop(files, uploadPosition);
+          }}
           onAddStatusPill={handleAddStatusPill}
           onAddTextNode={handleAddTextNode}
         />

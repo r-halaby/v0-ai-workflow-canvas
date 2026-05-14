@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 
 interface AddNodeMenuProps {
   onAddStatusPill: () => void;
   onAddTextNode: (textType: "brief" | "note" | "description") => void;
+  onUploadFile: (files: FileList) => void;
   onClose: () => void;
   position?: { x: number; y: number };
   sourceNodeId?: string;
@@ -14,10 +15,12 @@ interface AddNodeMenuProps {
 export function AddNodeMenu({
   onAddStatusPill,
   onAddTextNode,
+  onUploadFile,
   onClose,
   position,
   sourceHandlePosition,
 }: AddNodeMenuProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // Calculate position styles
   const positionStyles = position
     ? {
@@ -119,7 +122,39 @@ export function AddNodeMenu({
           Status Pill
         </button>
         
+        {/* Divider */}
+        <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
+        
+        {/* File Upload Section */}
+        <div className="px-3 py-1 text-xs text-gray-500 uppercase tracking-wide" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+          Files
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) {
+              onUploadFile(e.target.files);
+              onClose();
+            }
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+        >
+          <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#52525b20", color: "#a1a1aa" }}>
+            <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+              <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          Upload File
+        </button>
+      </div>
     </>
   );
 }

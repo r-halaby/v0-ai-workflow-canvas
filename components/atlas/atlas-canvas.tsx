@@ -52,6 +52,7 @@ interface AtlasCanvasProps {
   onCancelNewComment: () => void;
   onNodeDoubleClick?: (nodeId: string) => void;
   onFileDrop?: (files: FileList, position: { x: number; y: number }) => void;
+  onUploadFile?: (files: FileList, position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddStatusPill?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddTextNode?: (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => void;
 }
@@ -78,6 +79,7 @@ export function AtlasCanvas({
   onCancelNewComment,
   onNodeDoubleClick,
   onFileDrop,
+  onUploadFile,
   onAddStatusPill,
   onAddTextNode,
 }: AtlasCanvasProps) {
@@ -188,6 +190,13 @@ export function AtlasCanvas({
     }
     setHandleMenu(null);
   }, [handleMenu, onAddTextNode]);
+
+  const handleMenuUploadFile = useCallback((files: FileList) => {
+    if (handleMenu && onUploadFile) {
+      onUploadFile(files, handleMenu.canvasPosition, handleMenu.sourceNodeId);
+    }
+    setHandleMenu(null);
+  }, [handleMenu, onUploadFile]);
 
   // Handle file drag and drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -451,6 +460,7 @@ export function AtlasCanvas({
         <AddNodeMenu
           onAddStatusPill={handleMenuAddStatusPill}
           onAddTextNode={handleMenuAddTextNode}
+          onUploadFile={handleMenuUploadFile}
           onClose={() => setHandleMenu(null)}
           position={handleMenu.position}
           sourceHandlePosition={handleMenu.handlePosition}
