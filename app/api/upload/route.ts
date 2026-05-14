@@ -29,10 +29,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Vercel Blob
+    // Upload to Vercel Blob (private store)
     const userPrefix = user?.id || "anonymous";
     const blob = await put(`atlas/${userPrefix}/${Date.now()}-${fileName}`, file, {
-      access: "public",
+      access: "private",
     });
 
     // Save file metadata to Supabase if user is authenticated
