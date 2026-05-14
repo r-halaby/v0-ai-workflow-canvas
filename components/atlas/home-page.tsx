@@ -1,12 +1,103 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { Canvas, CanvasVisibility, WorkspaceSettings } from "@/lib/atlas-types";
-import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS } from "@/lib/atlas-types";
+import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode } from "@/lib/atlas-types";
+import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS } from "@/lib/atlas-types";
+import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
+import { FileNode } from "./file-node";
+import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "favorites" | "workspace" | "private";
-type HomeView = "canvases" | "community";
+type HomeView = "canvases" | "community" | "workspace-canvas";
+
+const nodeTypes = { fileNode: FileNode };
+
+interface WorkspaceCanvasViewProps {
+  nodes: AtlasNode[];
+  groups: { canvasId: string; canvasName: string; startX: number; nodeCount: number }[];
+  onOpenCanvas: (canvasId: string) => void;
+}
+
+function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasViewProps) {
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(nodes);
+  
+  return (
+    <div className="w-full h-full" style={{ backgroundColor: "#0A0A0A" }}>
+      <ReactFlow
+        nodes={flowNodes}
+        edges={[]}
+        onNodesChange={onNodesChange}
+        nodeTypes={nodeTypes}
+        fitView
+        minZoom={0.1}
+        maxZoom={1.5}
+        defaultViewport={{ x: 50, y: 50, zoom: 0.6 }}
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background color="#1a1a1a" gap={20} />
+        <Controls 
+          className="!bg-[#1a1a1a] !border-[#2a2a2a] !rounded-lg"
+          style={{ button: { backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" } }}
+        />
+        
+        {/* Canvas Group Labels */}
+        {groups.map((group) => (
+          <div
+            key={group.canvasId}
+            className="absolute"
+            style={{
+              left: group.startX,
+              top: 0,
+              transform: "translateY(-10px)",
+              pointerEvents: "auto",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => onOpenCanvas(group.canvasId)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all hover:scale-105"
+              style={{
+                backgroundColor: "#1a1a1a",
+                border: "1px solid #2a2a2a",
+                color: "#ffffff",
+                fontFamily: "system-ui, Inter, sans-serif",
+              }}
+            >
+              {group.canvasName}
+              <span className="ml-2 text-gray-500">({group.nodeCount})</span>
+            </button>
+          </div>
+        ))}
+      </ReactFlow>
+      
+      {/* Empty state */}
+      {nodes.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <div
+              className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+            >
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="4" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+                <rect x="18" y="4" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+                <rect x="4" y="18" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+                <rect x="18" y="18" width="10" height="10" rx="2" stroke="#666666" strokeWidth="2"/>
+              </svg>
+            </div>
+            <p
+              className="text-gray-500 text-sm"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              No workspace canvases with files yet
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface HomePageProps {
   onOpenCanvas: (canvasId: string) => void;
@@ -24,6 +115,51 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
   const [newCanvasVisibility, setNewCanvasVisibility] = useState<CanvasVisibility>("workspace");
   const [showSageChat, setShowSageChat] = useState(false);
   const [sageMessage, setSageMessage] = useState("");
+
+  // Combine all workspace nodes with canvas grouping
+  const workspaceNodesData = useMemo(() => {
+    const workspaceCanvases = canvases.filter(c => c.visibility === "workspace");
+    const allNodes: AtlasNode[] = [];
+    const canvasGroups: { canvasId: string; canvasName: string; startX: number; nodeCount: number }[] = [];
+    
+    let currentX = 0;
+    const groupSpacing = 400;
+    const nodeSpacing = 280;
+    
+    workspaceCanvases.forEach((canvas) => {
+      if (canvas.nodes.length === 0) return;
+      
+      const startX = currentX;
+      canvasGroups.push({
+        canvasId: canvas.id,
+        canvasName: canvas.name,
+        startX,
+        nodeCount: canvas.nodes.length,
+      });
+      
+      canvas.nodes.forEach((node, index) => {
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        allNodes.push({
+          ...node,
+          id: `${canvas.id}-${node.id}`,
+          position: {
+            x: startX + col * nodeSpacing,
+            y: row * 260 + 60,
+          },
+          data: {
+            ...node.data,
+            canvasName: canvas.name,
+          },
+        });
+      });
+      
+      const rows = Math.ceil(canvas.nodes.length / 3);
+      currentX += Math.min(canvas.nodes.length, 3) * nodeSpacing + groupSpacing;
+    });
+    
+    return { nodes: allNodes, groups: canvasGroups };
+  }, [canvases]);
 
   const recentCanvases = useMemo(() => {
     return [...canvases]
@@ -247,9 +383,9 @@ Recent Canvases
             </div>
             <button
               type="button"
-              onClick={() => setSidebarFilter("workspace")}
+              onClick={() => { setSidebarFilter("workspace"); setActiveView("workspace-canvas"); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                sidebarFilter === "workspace" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                activeView === "workspace-canvas" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -332,7 +468,7 @@ Recent Canvases
             className="text-lg font-medium text-white"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
-            {activeView === "community" ? "Community" : (
+            {activeView === "community" ? "Community" : activeView === "workspace-canvas" ? "All Workspace" : (
               <>
                 {sidebarFilter === "all" && "All"}
                 {sidebarFilter === "favorites" && "Favorites"}
@@ -459,6 +595,17 @@ Recent Canvases
                 </div>
               </div>
             </div>
+          </div>
+        ) : activeView === "workspace-canvas" ? (
+          /* Workspace Canvas View - All nodes from all workspace canvases */
+          <div className="flex-1 relative">
+            <ReactFlowProvider>
+              <WorkspaceCanvasView 
+                nodes={workspaceNodesData.nodes}
+                groups={workspaceNodesData.groups}
+                onOpenCanvas={onOpenCanvas}
+              />
+            </ReactFlowProvider>
           </div>
         ) : (
           <>
