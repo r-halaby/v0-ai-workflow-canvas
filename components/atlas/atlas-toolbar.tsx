@@ -139,8 +139,8 @@ export function AtlasToolbar({ filters, onFiltersChange, onAddNode, onUploadClic
           onClick={onUploadClick}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           style={{ 
-            backgroundColor: "#534AB7", 
-            color: "white",
+            backgroundColor: "#F0FE00", 
+            color: "#121212",
             fontFamily: "system-ui, Inter, sans-serif",
           }}
         >
