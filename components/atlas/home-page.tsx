@@ -1196,7 +1196,7 @@ const deleteCanvas = (canvasId: string) => {
                         className="text-xs text-gray-500 mb-3"
                         style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                       >
-                        Square image recommended. Max 2MB.
+                        SVG recommended. Square format, max 2MB.
                       </p>
                       <label
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-white/10"
@@ -1215,7 +1215,7 @@ const deleteCanvas = (canvasId: string) => {
                         Upload Icon
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/svg+xml,image/png,image/jpeg,image/webp"
                           className="hidden"
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
@@ -1282,7 +1282,7 @@ const deleteCanvas = (canvasId: string) => {
                         className="text-xs text-gray-500 mb-3"
                         style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                       >
-                        Horizontal logo or wordmark. PNG with transparency recommended.
+                        SVG recommended. Horizontal format, max 2MB.
                       </p>
                       <label
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-white/10"
@@ -1301,7 +1301,7 @@ const deleteCanvas = (canvasId: string) => {
                         Upload Wordmark
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/svg+xml,image/png,image/jpeg,image/webp"
                           className="hidden"
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
