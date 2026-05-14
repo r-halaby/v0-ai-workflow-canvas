@@ -29,7 +29,8 @@ export function AddNodeMenu({
   const [menuPosition, setMenuPosition] = useState(position || { x: 200, y: 200 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [hoveredSection, setHoveredSection] = useState<string | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.menu-content')) return;
@@ -50,6 +51,20 @@ export function AddNodeMenu({
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+  }, []);
+
+  const handleMenuEnter = useCallback((menu: string) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setActiveSubmenu(menu);
+  }, []);
+
+  const handleMenuLeave = useCallback(() => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setActiveSubmenu(null);
+    }, 150);
   }, []);
 
   return (
@@ -101,8 +116,8 @@ export function AddNodeMenu({
           {/* Text - with hover submenu */}
           <div 
             className="relative"
-            onMouseEnter={() => setHoveredSection("text")}
-            onMouseLeave={() => setHoveredSection(null)}
+            onMouseEnter={() => handleMenuEnter("text")}
+            onMouseLeave={handleMenuLeave}
           >
             <button
               type="button"
@@ -123,15 +138,14 @@ export function AddNodeMenu({
             </button>
             
             {/* Text Submenu */}
-            {hoveredSection === "text" && (
-              <>
-                {/* Invisible bridge to prevent hover gap */}
-                <div className="absolute left-full top-0 w-2 h-full" />
-                <div 
-                  className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
-                >
-                  <button
+            {activeSubmenu === "text" && (
+              <div 
+                className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
+                onMouseEnter={() => handleMenuEnter("text")}
+                onMouseLeave={handleMenuLeave}
+              >
+                <button
                   type="button"
                   onClick={() => { onAddTextNode("brief"); onClose(); }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
@@ -169,11 +183,13 @@ export function AddNodeMenu({
                     </svg>
                   </div>
                   Description
-                  </button>
-                </div>
-              </>
+                </button>
+              </div>
             )}
           </div>
+
+          {/* Divider */}
+          <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
 
           {/* Status Pill */}
           <button
@@ -192,8 +208,8 @@ export function AddNodeMenu({
           {/* Sage - with hover submenu */}
           <div 
             className="relative"
-            onMouseEnter={() => setHoveredSection("sage")}
-            onMouseLeave={() => setHoveredSection(null)}
+            onMouseEnter={() => handleMenuEnter("sage")}
+            onMouseLeave={handleMenuLeave}
           >
             <button
               type="button"
@@ -201,11 +217,7 @@ export function AddNodeMenu({
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               <span className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z" />
-                  </svg>
-                </div>
+                <img src="/sage-logo.svg" alt="Sage" className="w-4 h-4" />
                 Sage
               </span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-500">
@@ -214,15 +226,14 @@ export function AddNodeMenu({
             </button>
             
             {/* Sage Submenu */}
-            {hoveredSection === "sage" && (
-              <>
-                {/* Invisible bridge to prevent hover gap */}
-                <div className="absolute left-full top-0 w-2 h-full" />
-                <div 
-                  className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
-                >
-                  <button
+            {activeSubmenu === "sage" && (
+              <div 
+                className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
+                onMouseEnter={() => handleMenuEnter("sage")}
+                onMouseLeave={handleMenuLeave}
+              >
+                <button
                   type="button"
                   onClick={() => { onAddSageNode("chatbot"); onClose(); }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
@@ -262,20 +273,19 @@ export function AddNodeMenu({
                     </svg>
                   </div>
                   Stakeholder
-                  </button>
-                </div>
-              </>
+                </button>
+              </div>
             )}
           </div>
           
           {/* Divider */}
           <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
           
-          {/* Operations - with hover submenu */}
+          {/* Ops Data - with hover submenu */}
           <div 
             className="relative"
-            onMouseEnter={() => setHoveredSection("operations")}
-            onMouseLeave={() => setHoveredSection(null)}
+            onMouseEnter={() => handleMenuEnter("operations")}
+            onMouseLeave={handleMenuLeave}
           >
             <button
               type="button"
@@ -289,7 +299,7 @@ export function AddNodeMenu({
                     <path d="M7 16l4-8 4 4 6-6" />
                   </svg>
                 </div>
-                Operations
+                Ops Data
               </span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-gray-500">
                 <path d="M4.5 3L7.5 6L4.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -297,17 +307,16 @@ export function AddNodeMenu({
             </button>
             
             {/* Operations Submenu */}
-            {hoveredSection === "operations" && (
-              <>
-                {/* Invisible bridge to prevent hover gap */}
-                <div className="absolute left-full top-0 w-2 h-full" />
-                <div 
-                  className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
-                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => { onAddOperationalNode("capacity"); onClose(); }}
+            {activeSubmenu === "operations" && (
+              <div 
+                className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
+                onMouseEnter={() => handleMenuEnter("operations")}
+                onMouseLeave={handleMenuLeave}
+              >
+                <button
+                  type="button"
+                  onClick={() => { onAddOperationalNode("capacity"); onClose(); }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                 >
@@ -373,9 +382,8 @@ export function AddNodeMenu({
                     </svg>
                   </div>
                   Team Health
-                  </button>
-                </div>
-              </>
+                </button>
+              </div>
             )}
           </div>
           
