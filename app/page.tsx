@@ -1,5 +1,5 @@
-import { WorkflowEditor } from "@/components/workflow/workflow-editor";
+import { AtlasEditor } from "@/components/atlas/atlas-editor";
 
 export default function Page() {
-  return <WorkflowEditor />;
+  return <AtlasEditor />;
 }

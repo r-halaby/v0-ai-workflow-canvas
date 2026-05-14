@@ -145,22 +145,22 @@ body {
 
 /* React Flow controls theme support */
 .react-flow__controls {
-  background: hsl(var(--workflow-surface)) !important;
-  border: 1px solid hsl(var(--workflow-border)) !important;
+  background: #111111 !important;
+  border: 1px solid #222222 !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3) !important;
 }
 
 .react-flow__controls-button {
-  background: hsl(var(--workflow-surface)) !important;
-  border-bottom: 1px solid hsl(var(--workflow-border)) !important;
-  fill: hsl(var(--workflow-text-muted)) !important;
+  background: #111111 !important;
+  border-bottom: 1px solid #222222 !important;
+  fill: #888888 !important;
   transition: all 0.15s ease !important;
 }
 
 .react-flow__controls-button:hover {
-  background: hsl(var(--workflow-surface-hover)) !important;
-  fill: hsl(var(--workflow-text)) !important;
+  background: #1a1a1a !important;
+  fill: #ffffff !important;
 }
 
 .react-flow__controls-button:last-child {
@@ -169,14 +169,15 @@ body {
 
 /* React Flow minimap theme support */
 .react-flow__minimap {
-  background: hsl(var(--workflow-surface)) !important;
-  border: 1px solid hsl(var(--workflow-border)) !important;
+  background: #111111 !important;
+  border: 1px solid #222222 !important;
   border-radius: 0.5rem !important;
 }
 
 /* React Flow edges theme support */
 .react-flow__edge-path {
-  stroke: hsl(var(--workflow-edge)) !important;
+  stroke: #52525b !important;
+  stroke-dasharray: 5 5 !important;
 }
 
 /* React Flow attribution hide */

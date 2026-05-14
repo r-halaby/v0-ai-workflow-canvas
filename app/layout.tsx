@@ -9,8 +9,8 @@ const _geist = Geist({ subsets: ['latin'] })
 const _geistMono = Geist_Mono({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Workflow Editor - Visual AI Workflow Builder',
-  description: 'Build AI-powered document generation workflows with a visual node-based editor. Create agents.md, README files, and more.',
+  title: 'Atlas - Design Operations Platform by Ideate',
+  description: 'A node-based design operations platform for managing design files, documents, and brand assets.',
   generator: 'v0.app',
 }
 
@@ -26,7 +26,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
-          storageKey="flowforge-theme"
+          storageKey="atlas-theme"
         >
           {children}
         </ThemeProvider>
