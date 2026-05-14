@@ -11,8 +11,8 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas } from "@/lib/atlas-types";
-import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment } from "@/lib/atlas-types";
+import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
 import { CanvasSideToolbar } from "./canvas-side-toolbar";
@@ -31,20 +31,30 @@ interface AtlasEditorProps {
 function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange }: AtlasEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
+  const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Comment mode state
+  const [commentMode, setCommentMode] = useState(false);
+  const [newCommentPosition, setNewCommentPosition] = useState<{ x: number; y: number } | null>(null);
+  const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
+
+  // Current user (first member for demo)
+  const currentUser = workspaceSettings.members[0] || WORKSPACE_MEMBERS[0];
 
   // Sync canvas changes back to parent
-  const syncCanvas = useCallback(() => {
+  const syncCanvas = useCallback((updatedComments?: CanvasComment[]) => {
     onCanvasChange({
       ...canvas,
       nodes,
       edges,
+      comments: updatedComments || comments,
       updatedAt: new Date().toISOString(),
     });
-  }, [canvas, nodes, edges, onCanvasChange]);
+  }, [canvas, nodes, edges, comments, onCanvasChange]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -146,10 +156,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       previewUrl?: string;
     }>) => {
       const newNodes: AtlasNode[] = files.map((file, index) => {
-        // Get file name without extension for label
         const label = file.fileName.replace(file.extension, "");
-        
-        // Generate preview images array if we have a preview
         const previewImages = file.previewUrl ? [file.previewUrl] : undefined;
         
         return {
@@ -195,6 +202,65 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     [onNodesChange, nodes, selectedNode]
   );
 
+  // Comment handlers
+  const handleCanvasClick = useCallback((position: { x: number; y: number }) => {
+    if (commentMode) {
+      setNewCommentPosition(position);
+      setSelectedCommentId(null);
+    }
+  }, [commentMode]);
+
+  const handleCommentSelect = useCallback((commentId: string | null) => {
+    setSelectedCommentId(commentId);
+    setNewCommentPosition(null);
+  }, []);
+
+  const handleCommentAdd = useCallback((content: string, position: { x: number; y: number }) => {
+    const newComment: CanvasComment = {
+      id: `comment-${Date.now()}`,
+      position,
+      content,
+      author: currentUser,
+      createdAt: new Date().toISOString(),
+      resolved: false,
+      replies: [],
+    };
+    
+    const updatedComments = [...comments, newComment];
+    setComments(updatedComments);
+    setNewCommentPosition(null);
+    setCommentMode(false);
+    setSelectedCommentId(newComment.id);
+    syncCanvas(updatedComments);
+  }, [comments, currentUser, syncCanvas]);
+
+  const handleCommentUpdate = useCallback((updatedComment: CanvasComment) => {
+    const updatedComments = comments.map(c => 
+      c.id === updatedComment.id ? updatedComment : c
+    );
+    setComments(updatedComments);
+    syncCanvas(updatedComments);
+  }, [comments, syncCanvas]);
+
+  const handleCommentDelete = useCallback((commentId: string) => {
+    const updatedComments = comments.filter(c => c.id !== commentId);
+    setComments(updatedComments);
+    setSelectedCommentId(null);
+    syncCanvas(updatedComments);
+  }, [comments, syncCanvas]);
+
+  const handleCancelNewComment = useCallback(() => {
+    setNewCommentPosition(null);
+  }, []);
+
+  const handleCommentModeChange = useCallback((enabled: boolean) => {
+    setCommentMode(enabled);
+    if (!enabled) {
+      setNewCommentPosition(null);
+    }
+    setSelectedCommentId(null);
+  }, []);
+
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: "#0a0a0a" }}>
       <AtlasToolbar
@@ -208,11 +274,22 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           nodes={nodes}
           edges={edges}
           searchQuery={searchQuery}
+          comments={comments}
+          commentMode={commentMode}
+          newCommentPosition={newCommentPosition}
+          selectedCommentId={selectedCommentId}
+          currentUser={currentUser}
           onNodesChange={handleNodesChangeWrapper}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodesUpdate={handleNodesUpdate}
           onDoubleClick={handleDoubleClickCanvas}
+          onCanvasClick={handleCanvasClick}
+          onCommentSelect={handleCommentSelect}
+          onCommentAdd={handleCommentAdd}
+          onCommentUpdate={handleCommentUpdate}
+          onCommentDelete={handleCommentDelete}
+          onCancelNewComment={handleCancelNewComment}
         />
 
         <CanvasSideToolbar
@@ -220,6 +297,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onSettingsClick={() => setShowSettingsDialog(true)}
           onSearchChange={setSearchQuery}
           searchQuery={searchQuery}
+          commentMode={commentMode}
+          onCommentModeChange={handleCommentModeChange}
+          commentCount={comments.filter(c => !c.resolved).length}
         />
 
         {selectedNode && (

@@ -455,6 +455,25 @@ export const FILE_TYPE_CATEGORIES: Record<FileTypeCategory, { label: string; ext
   brand: { label: "Brand Asset", extensions: [".ai", ".indd"] },
 };
 
+// Comment interface for Figma-style commenting
+export interface CanvasComment {
+  id: string;
+  position: { x: number; y: number };
+  nodeId?: string; // If attached to a specific node
+  content: string;
+  author: WorkspaceMember;
+  createdAt: string;
+  resolved: boolean;
+  replies: CommentReply[];
+}
+
+export interface CommentReply {
+  id: string;
+  content: string;
+  author: WorkspaceMember;
+  createdAt: string;
+}
+
 // Canvas visibility type
 export type CanvasVisibility = "workspace" | "private";
 
@@ -466,12 +485,43 @@ export interface Canvas {
   previewImage?: string;
   nodes: AtlasNode[];
   edges: Edge[];
+  comments: CanvasComment[];
   createdAt: string;
   updatedAt: string;
   createdBy: WorkspaceMember;
   isFavorite: boolean;
   visibility: CanvasVisibility;
 }
+
+// Sample comments for initial canvas
+export const INITIAL_COMMENTS: CanvasComment[] = [
+  {
+    id: "comment-1",
+    position: { x: 480, y: 120 },
+    nodeId: "file-2",
+    content: "Can we explore a more vibrant color palette for this?",
+    author: WORKSPACE_MEMBERS[1],
+    createdAt: "2026-05-12T10:30:00Z",
+    resolved: false,
+    replies: [
+      {
+        id: "reply-1",
+        content: "Good idea! I'll prepare some alternatives.",
+        author: WORKSPACE_MEMBERS[0],
+        createdAt: "2026-05-12T11:15:00Z",
+      },
+    ],
+  },
+  {
+    id: "comment-2",
+    position: { x: 800, y: 280 },
+    content: "Need to align this with the new brand guidelines",
+    author: WORKSPACE_MEMBERS[2],
+    createdAt: "2026-05-11T14:00:00Z",
+    resolved: true,
+    replies: [],
+  },
+];
 
 // Initial canvases
 export const INITIAL_CANVASES: Canvas[] = [
@@ -482,6 +532,7 @@ export const INITIAL_CANVASES: Canvas[] = [
     previewImage: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&h=400&fit=crop",
     nodes: INITIAL_FILE_NODES,
     edges: INITIAL_EDGES,
+    comments: INITIAL_COMMENTS,
     createdAt: "2026-05-01T10:00:00Z",
     updatedAt: "2026-05-13T14:30:00Z",
     createdBy: WORKSPACE_MEMBERS[0],
@@ -495,6 +546,7 @@ export const INITIAL_CANVASES: Canvas[] = [
     previewImage: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=400&fit=crop",
     nodes: [],
     edges: [],
+    comments: [],
     createdAt: "2026-05-05T09:00:00Z",
     updatedAt: "2026-05-12T16:45:00Z",
     createdBy: WORKSPACE_MEMBERS[1],
@@ -508,6 +560,7 @@ export const INITIAL_CANVASES: Canvas[] = [
     previewImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop",
     nodes: [],
     edges: [],
+    comments: [],
     createdAt: "2026-05-08T11:30:00Z",
     updatedAt: "2026-05-11T10:15:00Z",
     createdBy: WORKSPACE_MEMBERS[0],
