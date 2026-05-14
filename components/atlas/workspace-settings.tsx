@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth-context";
@@ -47,6 +47,7 @@ interface WorkspaceSettingsProps {
   onClose: () => void;
   settings: WorkspaceSettings;
   onSettingsChange: (settings: WorkspaceSettings) => void;
+  initialTab?: SettingsTab;
 }
 
 const ROLE_LABELS: Record<MemberRole, string> = {
@@ -61,8 +62,17 @@ export function WorkspaceSettingsDialog({
   onClose,
   settings,
   onSettingsChange,
+  initialTab = "general",
 }: WorkspaceSettingsProps) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+  
+  // Sync activeTab with initialTab when dialog opens
+  useEffect(() => {
+    if (open) {
+      setActiveTab(initialTab);
+    }
+  }, [open, initialTab]);
+
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<MemberRole>("viewer");
   const [inviteLoading, setInviteLoading] = useState(false);

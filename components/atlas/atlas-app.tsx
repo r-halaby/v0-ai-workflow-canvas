@@ -48,6 +48,7 @@ export function AtlasApp() {
     <HomePage
       onOpenCanvas={handleOpenCanvas}
       workspaceSettings={workspaceSettings}
+      onWorkspaceSettingsChange={setWorkspaceSettings}
       canvases={canvases}
       onCanvasesChange={setCanvases}
     />

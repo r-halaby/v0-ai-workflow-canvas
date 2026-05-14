@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode } from "@/lib/atlas-types";
+import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS } from "@/lib/atlas-types";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
@@ -167,11 +168,12 @@ function UserSection() {
 interface HomePageProps {
   onOpenCanvas: (canvasId: string) => void;
   workspaceSettings: WorkspaceSettings;
+  onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
   canvases: Canvas[];
   onCanvasesChange: (canvases: Canvas[]) => void;
 }
 
-export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvasesChange }: HomePageProps) {
+export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
@@ -180,6 +182,8 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
   const [newCanvasVisibility, setNewCanvasVisibility] = useState<CanvasVisibility>("workspace");
   const [showSageChat, setShowSageChat] = useState(false);
   const [sageMessage, setSageMessage] = useState("");
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<"general" | "members" | "products" | "conventions">("general");
 
   // Combine all workspace nodes with canvas grouping
   const workspaceNodesData = useMemo(() => {
@@ -593,17 +597,29 @@ Recent Canvases
             </div>
 
             {/* Member count */}
-            <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-400" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsInitialTab("members");
+                setShowSettingsDialog(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+            >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M2 14C2 11.2386 4.68629 9 8 9C11.3137 9 14 11.2386 14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
               {workspaceSettings.members.length}
-            </div>
+            </button>
 
             {/* Invite */}
             <button
               type="button"
+              onClick={() => {
+                setSettingsInitialTab("members");
+                setShowSettingsDialog(true);
+              }}
               className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors hover:bg-white/10"
               style={{
                 backgroundColor: "#1a1a1a",
@@ -1274,6 +1290,15 @@ Recent Canvases
           </div>
         </div>
       )}
+
+      {/* Workspace Settings Dialog */}
+      <WorkspaceSettingsDialog
+        open={showSettingsDialog}
+        onClose={() => setShowSettingsDialog(false)}
+        settings={workspaceSettings}
+        onSettingsChange={onWorkspaceSettingsChange}
+        initialTab={settingsInitialTab}
+      />
 
       {/* Sage AI Bot FAB */}
       <button
