@@ -23,30 +23,51 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
   const containerRef = useRef<HTMLDivElement>(null);
   const maxZIndexRef = useRef(data.images?.length || 0);
 
-  // Calculate non-overlapping initial positions for images without saved positions
+  // Seeded random number generator for consistent positions
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  };
+
+  // Calculate scattered initial positions for images without saved positions
   const initialPositions = useMemo(() => {
     if (!data.images) return {};
     
-    const cols = 4;
-    const imageWidth = 220;
-    const imageHeight = 180;
-    const gap = 24;
-    const padding = 24;
-    
     const newPositions: Record<string, MoodboardImagePosition> = {};
+    const imageCount = data.images.length;
     
+    // Create a scattered layout that clusters toward center with organic spread
     data.images.forEach((img, index) => {
       // Use saved position if available
       if (positions[img.id]) {
         newPositions[img.id] = positions[img.id];
       } else {
-        // Calculate grid position to avoid overlap
-        const col = index % cols;
-        const row = Math.floor(index / cols);
+        // Generate deterministic but scattered positions
+        const seed = img.id.charCodeAt(0) + index * 137;
+        
+        // Spread across the canvas with some clustering
+        const angle = (index / imageCount) * Math.PI * 2 + seededRandom(seed) * 0.8;
+        const radius = 150 + seededRandom(seed + 1) * 300 + (index % 3) * 100;
+        
+        // Center point offset
+        const centerX = 450;
+        const centerY = 280;
+        
+        const x = centerX + Math.cos(angle) * radius * 0.9 + seededRandom(seed + 2) * 100 - 50;
+        const y = centerY + Math.sin(angle) * radius * 0.6 + seededRandom(seed + 3) * 80 - 40;
+        
+        // Random rotation between -12 and 12 degrees
+        const rotation = (seededRandom(seed + 4) - 0.5) * 24;
+        
+        // Random scale between 0.7 and 1.1
+        const scale = 0.7 + seededRandom(seed + 5) * 0.4;
+        
         newPositions[img.id] = {
-          x: padding + col * (imageWidth + gap),
-          y: padding + row * (imageHeight + gap),
+          x: Math.max(20, Math.min(800, x)),
+          y: Math.max(20, Math.min(500, y)),
           zIndex: index + 1,
+          rotation,
+          scale,
         };
       }
     });
@@ -86,13 +107,16 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
     setDraggingId(imageId);
     setSelectedImage(imageId);
     
-    // Bring to front
+    // Bring to front and preserve rotation/scale
     maxZIndexRef.current += 1;
+    const current = currentPositions[imageId];
     setPositions(prev => ({
       ...prev,
       [imageId]: {
-        ...currentPositions[imageId],
+        ...current,
         zIndex: maxZIndexRef.current,
+        rotation: current?.rotation ?? 0,
+        scale: current?.scale ?? 1,
       },
     }));
   }, [layoutMode, currentPositions]);
@@ -104,15 +128,20 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
     const newX = e.clientX - containerRect.left - dragOffset.x;
     const newY = e.clientY - containerRect.top - dragOffset.y;
     
-    setPositions(prev => ({
-      ...prev,
-      [draggingId]: {
-        ...prev[draggingId],
-        x: Math.max(0, newX),
-        y: Math.max(0, newY),
-        zIndex: prev[draggingId]?.zIndex || maxZIndexRef.current,
-      },
-    }));
+    setPositions(prev => {
+      const current = prev[draggingId] || currentPositions[draggingId];
+      return {
+        ...prev,
+        [draggingId]: {
+          ...current,
+          x: Math.max(0, newX),
+          y: Math.max(0, newY),
+          zIndex: current?.zIndex || maxZIndexRef.current,
+          rotation: current?.rotation ?? 0,
+          scale: current?.scale ?? 1,
+        },
+      };
+    });
   }, [draggingId, dragOffset]);
 
   const handleMouseUp = useCallback(() => {
@@ -302,20 +331,27 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
             </div>
           )}
 
-          {/* Freeform Layout */}
+          {/* Freeform Layout - Scattered collage style */}
           {layoutMode === "freeform" && (
             <div 
               ref={containerRef}
-              className="relative w-full select-none"
-              style={{ minHeight: "600px", cursor: draggingId ? "grabbing" : "default" }}
+              className="relative w-full select-none overflow-hidden"
+              style={{ 
+                minHeight: "650px", 
+                cursor: draggingId ? "grabbing" : "default",
+                background: "linear-gradient(135deg, #0a0a0a 0%, #151515 100%)",
+                borderRadius: "12px",
+              }}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseLeave}
             >
               {data.images?.map((img) => {
-                const pos = currentPositions[img.id] || { x: 0, y: 0, zIndex: 1 };
+                const pos = currentPositions[img.id] || { x: 0, y: 0, zIndex: 1, rotation: 0, scale: 1 };
                 const isSelected = selectedImage === img.id;
                 const isDragging = draggingId === img.id;
+                const rotation = pos.rotation ?? 0;
+                const scale = pos.scale ?? 1;
                 
                 return (
                   <div
@@ -324,37 +360,42 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
                     style={{
                       left: pos.x,
                       top: pos.y,
-                      zIndex: pos.zIndex,
+                      zIndex: isDragging ? 9999 : pos.zIndex,
                       cursor: isDragging ? "grabbing" : "grab",
-                      transition: isDragging ? "none" : "box-shadow 0.2s ease",
+                      transition: isDragging ? "none" : "transform 0.15s ease, box-shadow 0.2s ease",
+                      transform: `rotate(${rotation}deg) scale(${isDragging ? scale * 1.05 : scale})`,
+                      transformOrigin: "center center",
                     }}
                     onMouseDown={(e) => handleMouseDown(e, img.id)}
                   >
                     <div 
-                      className="relative rounded-xl overflow-hidden transition-all duration-200"
+                      className="relative rounded-lg overflow-hidden"
                       style={{
-                        maxWidth: "220px",
-                        border: isSelected ? "2px solid #ffffff" : "none",
+                        width: "180px",
+                        border: isSelected ? "3px solid #ffffff" : "none",
                         boxShadow: isDragging 
-                          ? "0 20px 40px rgba(0,0,0,0.5)" 
-                          : "0 4px 12px rgba(0,0,0,0.3)",
-                        transform: isDragging ? "scale(1.02)" : "scale(1)",
+                          ? "0 25px 50px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.4)" 
+                          : "0 8px 24px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3)",
                       }}
                     >
                       <img
                         src={img.url}
                         alt={img.fileName}
-                        className="w-full h-auto object-contain"
+                        className="w-full h-auto block"
                         draggable={false}
+                        style={{ 
+                          aspectRatio: "1 / 1",
+                          objectFit: "cover",
+                        }}
                       />
                       
                       {/* Hover overlay */}
                       <div 
                         className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                        style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
+                        style={{ background: "linear-gradient(transparent 40%, rgba(0,0,0,0.85))" }}
                       >
-                        <div className="p-3 w-full">
-                          <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        <div className="p-2.5 w-full">
+                          <p className="text-xs text-white truncate font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                             {img.fileName}
                           </p>
                         </div>

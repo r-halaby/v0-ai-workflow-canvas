@@ -358,6 +358,8 @@ export interface MoodboardImagePosition {
   x: number; // pixel position from left
   y: number; // pixel position from top
   zIndex: number;
+  rotation: number; // degrees of rotation (-15 to 15)
+  scale: number; // scale factor (0.6 to 1.2)
 }
 
 // Moodboard node data interface - groups multiple images together
