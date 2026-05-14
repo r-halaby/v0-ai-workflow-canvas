@@ -48,6 +48,8 @@ export interface FileNodeData {
   status: FileStatus;
   fileExtension: FileExtension;
   lastModified: string;
+  previewImages?: string[]; // Array of up to 4 preview image URLs
+  fileCount?: number; // Number of files in this asset
 }
 
 // Atlas node type
@@ -74,7 +76,14 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       product: "atlas",
       status: "approved",
       fileExtension: ".pdf",
-      lastModified: "May 10, 2026",
+      lastModified: "Updated 2 days ago",
+      fileCount: 12,
+      previewImages: [
+        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1557683316-973673baf926?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=200&h=200&fit=crop",
+      ],
     },
   },
   {
@@ -87,7 +96,14 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       product: "synthesis",
       status: "approved",
       fileExtension: ".ai",
-      lastModified: "May 8, 2026",
+      lastModified: "Updated 4 days ago",
+      fileCount: 8,
+      previewImages: [
+        "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1634942537034-2531766767d1?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=200&h=200&fit=crop",
+      ],
     },
   },
   {
@@ -100,20 +116,34 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       product: "synthesis",
       status: "in-review",
       fileExtension: ".fig",
-      lastModified: "May 12, 2026",
+      lastModified: "Updated yesterday",
+      fileCount: 4,
+      previewImages: [
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=200&h=200&fit=crop",
+      ],
     },
   },
   {
     id: "file-4",
     type: "file",
-    position: { x: 100, y: 300 },
+    position: { x: 100, y: 350 },
     data: {
       label: "Client Presentation",
       fileName: "Client Presentation.pptx",
       product: "atlas",
       status: "in-review",
       fileExtension: ".pptx",
-      lastModified: "May 11, 2026",
+      lastModified: "Updated 1 day ago",
+      fileCount: 24,
+      previewImages: [
+        "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1551434678-e076c223a692?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1552664730-d307ca884978?w=200&h=200&fit=crop",
+      ],
     },
   },
   {
@@ -126,46 +156,74 @@ export const INITIAL_FILE_NODES: AtlasNode[] = [
       product: "synthesis",
       status: "draft",
       fileExtension: ".psd",
-      lastModified: "May 13, 2026",
+      lastModified: "Updated today",
+      fileCount: 6,
+      previewImages: [
+        "https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1516796181074-bf453fbfa3e6?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",
+      ],
     },
   },
   {
     id: "file-6",
     type: "file",
-    position: { x: 450, y: 350 },
+    position: { x: 450, y: 400 },
     data: {
       label: "Feedback Log",
       fileName: "Feedback Log.pdf",
       product: "sage",
       status: "in-review",
       fileExtension: ".pdf",
-      lastModified: "May 9, 2026",
+      lastModified: "Updated 3 days ago",
+      fileCount: 3,
+      previewImages: [
+        "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=200&h=200&fit=crop",
+      ],
     },
   },
   {
     id: "file-7",
     type: "file",
-    position: { x: 750, y: 400 },
+    position: { x: 750, y: 450 },
     data: {
       label: "Social Templates",
       fileName: "Social Templates.fig",
       product: "atlas",
       status: "approved",
       fileExtension: ".fig",
-      lastModified: "May 7, 2026",
+      lastModified: "Updated 5 days ago",
+      fileCount: 16,
+      previewImages: [
+        "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?w=200&h=200&fit=crop",
+      ],
     },
   },
   {
     id: "file-8",
     type: "file",
-    position: { x: 1050, y: 450 },
+    position: { x: 1050, y: 500 },
     data: {
       label: "Brand Video",
       fileName: "Brand Video.mp4",
       product: "sage",
       status: "draft",
       fileExtension: ".mp4",
-      lastModified: "May 6, 2026",
+      lastModified: "Updated 6 days ago",
+      fileCount: 1,
+      previewImages: [
+        "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=200&h=200&fit=crop",
+        "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200&h=200&fit=crop",
+      ],
     },
   },
 ];
