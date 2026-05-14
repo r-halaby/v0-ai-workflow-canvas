@@ -113,9 +113,9 @@ export function PresentationViewer({
     if (currentNode.type === "file") {
       const fileData = currentNode.data as FileNodeData;
       return (
-        <div className="flex flex-col items-center justify-center h-full">
+        <div className="flex flex-col items-center justify-center h-full w-full">
           {fileData.thumbnail || fileData.uploadedFile?.url ? (
-            <div className="relative w-full max-w-4xl aspect-video">
+            <div className="relative w-full max-w-6xl h-[70vh]">
               <Image
                 src={fileData.thumbnail || fileData.uploadedFile?.url || ""}
                 alt={fileData.fileName || "Slide"}
@@ -131,9 +131,16 @@ export function PresentationViewer({
               <span className="text-4xl text-gray-500">{fileData.fileExtension?.toUpperCase()}</span>
             </div>
           )}
-          <h2 className="text-2xl font-medium text-white mt-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+          <span 
+            className="mt-4 text-xs font-normal tracking-wide"
+            style={{ 
+              fontFamily: "system-ui, Inter, sans-serif",
+              color: "rgba(255,255,255,0.35)",
+              fontStyle: "italic"
+            }}
+          >
             {fileData.fileName || fileData.label}
-          </h2>
+          </span>
         </div>
       );
     }
@@ -175,21 +182,45 @@ export function PresentationViewer({
     >
       {/* Header */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
+          {/* Previous arrow */}
+          <button
+            type="button"
+            onClick={goPrev}
+            disabled={currentIndex === 0}
+            className="w-6 h-6 rounded flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          
           <div 
-            className="px-3 py-1.5 rounded-full text-sm text-white"
-            style={{ backgroundColor: "#1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+            className="px-2 py-1 rounded text-xs text-gray-400"
+            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
             {currentIndex + 1} / {orderedNodeIds.length}
           </div>
+          
+          {/* Next arrow */}
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={currentIndex === orderedNodeIds.length - 1}
+            className="w-6 h-6 rounded flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed hover:bg-white/10"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18L15 12L9 6" stroke="#888888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
           style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
             <path d="M15 5L5 15M5 5L15 15" stroke="#888888" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </button>
@@ -198,49 +229,6 @@ export function PresentationViewer({
       {/* Content */}
       <div className="flex-1 flex items-center justify-center p-16">
         {renderNodeContent()}
-      </div>
-
-      {/* Navigation */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-4">
-        <button
-          type="button"
-          onClick={goPrev}
-          disabled={currentIndex === 0}
-          className="w-12 h-12 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10"
-          style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-
-        {/* Progress dots */}
-        <div className="flex items-center gap-2 px-4">
-          {orderedNodeIds.map((_, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => setCurrentIndex(index)}
-              className="w-2 h-2 rounded-full transition-all"
-              style={{
-                backgroundColor: index === currentIndex ? "#F0FE00" : "#333333",
-                transform: index === currentIndex ? "scale(1.5)" : "scale(1)",
-              }}
-            />
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={goNext}
-          disabled={currentIndex === orderedNodeIds.length - 1}
-          className="w-12 h-12 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10"
-          style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18L15 12L9 6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
       </div>
 
       {/* Keyboard hint */}
