@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Canvas, WorkspaceSettings } from "@/lib/atlas-types";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS } from "@/lib/atlas-types";
 import { HomePage } from "./home-page";
@@ -8,11 +8,74 @@ import { AtlasEditor } from "./atlas-editor";
 
 type View = "home" | "canvas";
 
+const STORAGE_KEY = "atlas-canvases";
+const SETTINGS_STORAGE_KEY = "atlas-workspace-settings";
+
+// Load canvases from localStorage
+function loadCanvases(): Canvas[] {
+  if (typeof window === "undefined") return INITIAL_CANVASES;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Merge with initial canvases to ensure we have defaults
+      return parsed.length > 0 ? parsed : INITIAL_CANVASES;
+    }
+  } catch (e) {
+    console.error("Failed to load canvases from localStorage:", e);
+  }
+  return INITIAL_CANVASES;
+}
+
+// Load settings from localStorage
+function loadSettings(): WorkspaceSettings {
+  if (typeof window === "undefined") return DEFAULT_WORKSPACE_SETTINGS;
+  try {
+    const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error("Failed to load settings from localStorage:", e);
+  }
+  return DEFAULT_WORKSPACE_SETTINGS;
+}
+
 export function AtlasApp() {
   const [view, setView] = useState<View>("home");
   const [activeCanvasId, setActiveCanvasId] = useState<string | null>(null);
   const [canvases, setCanvases] = useState<Canvas[]>(INITIAL_CANVASES);
   const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>(DEFAULT_WORKSPACE_SETTINGS);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Load from localStorage on mount (client-side only)
+  useEffect(() => {
+    setCanvases(loadCanvases());
+    setWorkspaceSettings(loadSettings());
+    setIsHydrated(true);
+  }, []);
+
+  // Save canvases to localStorage whenever they change
+  useEffect(() => {
+    if (isHydrated) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(canvases));
+      } catch (e) {
+        console.error("Failed to save canvases to localStorage:", e);
+      }
+    }
+  }, [canvases, isHydrated]);
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    if (isHydrated) {
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(workspaceSettings));
+      } catch (e) {
+        console.error("Failed to save settings to localStorage:", e);
+      }
+    }
+  }, [workspaceSettings, isHydrated]);
 
   const handleOpenCanvas = useCallback((canvasId: string) => {
     setActiveCanvasId(canvasId);

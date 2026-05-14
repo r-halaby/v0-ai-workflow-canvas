@@ -124,6 +124,24 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     });
   }, [canvas, nodes, edges, comments, onCanvasChange]);
 
+  // Auto-save nodes and edges when they change (debounced)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      // Only save if there are actual changes (compare by length as a quick check)
+      if (nodes.length > 0 || edges.length > 0) {
+        onCanvasChange({
+          ...canvas,
+          nodes,
+          edges,
+          comments,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [nodes, edges]); // Only trigger on nodes/edges changes, not canvas/comments to avoid loops
+
   const onConnect = useCallback(
     (params: Connection) => {
       setEdges((eds) =>
