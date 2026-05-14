@@ -6,6 +6,7 @@ import type { Canvas, CanvasVisibility, WorkspaceSettings } from "@/lib/atlas-ty
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS } from "@/lib/atlas-types";
 
 type SidebarFilter = "all" | "favorites" | "workspace" | "private";
+type HomeView = "canvases" | "community";
 
 interface HomePageProps {
   onOpenCanvas: (canvasId: string) => void;
@@ -17,6 +18,7 @@ interface HomePageProps {
 export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvasesChange }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
+  const [activeView, setActiveView] = useState<HomeView>("canvases");
   const [showNewCanvasDialog, setShowNewCanvasDialog] = useState(false);
   const [newCanvasName, setNewCanvasName] = useState("");
   const [newCanvasVisibility, setNewCanvasVisibility] = useState<CanvasVisibility>("workspace");
@@ -135,9 +137,9 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
           <nav className="space-y-1 mb-6">
             <button
               type="button"
-              onClick={() => setSidebarFilter("all")}
+              onClick={() => { setSidebarFilter("all"); setActiveView("canvases"); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                sidebarFilter === "all" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                sidebarFilter === "all" && activeView === "canvases" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -151,9 +153,9 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
             </button>
             <button
               type="button"
-              onClick={() => setSidebarFilter("favorites")}
+              onClick={() => { setSidebarFilter("favorites"); setActiveView("canvases"); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                sidebarFilter === "favorites" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                sidebarFilter === "favorites" && activeView === "canvases" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
@@ -161,6 +163,23 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
                 <path d="M9 2L11.09 6.26L16 6.97L12.5 10.34L13.18 15.25L9 13.05L4.82 15.25L5.5 10.34L2 6.97L6.91 6.26L9 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Favorites
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("community")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                activeView === "community" ? "bg-white/10 text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="4" cy="12" r="2" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="14" cy="12" r="2" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M9 9C11.5 9 13 10.5 13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M9 9C6.5 9 5 10.5 5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              Community
             </button>
           </nav>
 
@@ -313,10 +332,14 @@ Recent Canvases
             className="text-lg font-medium text-white"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
-            {sidebarFilter === "all" && "All"}
-            {sidebarFilter === "favorites" && "Favorites"}
-            {sidebarFilter === "workspace" && "Workspace"}
-            {sidebarFilter === "private" && "Private"}
+            {activeView === "community" ? "Community" : (
+              <>
+                {sidebarFilter === "all" && "All"}
+                {sidebarFilter === "favorites" && "Favorites"}
+                {sidebarFilter === "workspace" && "Workspace"}
+                {sidebarFilter === "private" && "Private"}
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -385,8 +408,62 @@ Recent Canvases
           </div>
         </div>
 
-        {/* Chaos Ribbon Module */}
-        <div className="px-6 pt-6">
+        {activeView === "community" ? (
+          /* Community Coming Soon View */
+          <div className="flex-1 flex flex-col items-center justify-center p-6">
+            <div
+              className="max-w-md text-center"
+            >
+              <div
+                className="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+              >
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="20" cy="12" r="6" stroke="#F0FE00" strokeWidth="2"/>
+                  <circle cx="8" cy="28" r="4" stroke="#F0FE00" strokeWidth="2"/>
+                  <circle cx="32" cy="28" r="4" stroke="#F0FE00" strokeWidth="2"/>
+                  <path d="M20 18C26 18 30 22 30 28" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M20 18C14 18 10 22 10 28" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h2
+                className="text-2xl font-semibold text-white mb-3"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Community
+              </h2>
+              <p
+                className="text-gray-400 mb-6 leading-relaxed"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Coming soon. This is where the content feed and marketplace will live. Share templates, discover workflows, and connect with other creators.
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <div
+                  className="px-4 py-2 rounded-full text-sm"
+                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Template Marketplace
+                </div>
+                <div
+                  className="px-4 py-2 rounded-full text-sm"
+                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Community Feed
+                </div>
+                <div
+                  className="px-4 py-2 rounded-full text-sm"
+                  style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888888", fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Creator Profiles
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Chaos Ribbon Module */}
+            <div className="px-6 pt-6">
           <div
             className="rounded-xl p-5"
             style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
@@ -687,6 +764,8 @@ Recent Canvases
             </div>
           )}
         </div>
+          </>
+        )}
       </div>
 
       {/* New Canvas Dialog */}
