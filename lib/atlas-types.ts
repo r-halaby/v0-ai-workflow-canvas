@@ -652,6 +652,21 @@ export const PROJECT_COLORS = [
   "#06B6D4", // Cyan
 ];
 
+// Presentation group - groups multiple nodes into a single slide
+export interface PresentationGroup {
+  id: string;
+  nodeIds: string[]; // IDs of nodes in this group
+  label?: string;
+}
+
+// Presentation group node data
+export interface PresentationGroupNodeData {
+  label?: string;
+  nodeIds: string[];
+  thumbnails: string[]; // URLs of thumbnails for preview
+  [key: string]: unknown;
+}
+
 // Canvas interface
 export interface Canvas {
   id: string;
@@ -668,6 +683,7 @@ export interface Canvas {
   isFavorite: boolean;
   visibility: CanvasVisibility;
   presentationName?: string; // Optional name for presentation mode
+  presentationGroups?: PresentationGroup[]; // Grouped nodes for presentation
 }
 
 // Sample comments for initial canvas

@@ -171,6 +171,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   // Presentation state
   const [presentationMode, setPresentationMode] = useState(false);
   const [presentationEdges, setPresentationEdges] = useState<Edge[]>([]);
+  const [presentationGroups, setPresentationGroups] = useState<Array<{ id: string; nodeIds: string[] }>>([]);
   const [isPresenting, setIsPresenting] = useState(false);
 
   // Clipboard state for copy/paste
@@ -762,12 +763,58 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     []
   );
 
+  // Create presentation group from selected nodes
+  const handleCreatePresentationGroup = useCallback((nodeIds: string[]) => {
+    if (nodeIds.length < 2) return;
+    
+    const groupId = `presentationGroup-${Date.now()}`;
+    
+    // Get the selected nodes to extract thumbnails and calculate position
+    const selectedNodes = nodes.filter(n => nodeIds.includes(n.id));
+    
+    // Calculate center position of selected nodes
+    const avgX = selectedNodes.reduce((sum, n) => sum + n.position.x, 0) / selectedNodes.length;
+    const avgY = selectedNodes.reduce((sum, n) => sum + n.position.y, 0) / selectedNodes.length;
+    
+    // Extract thumbnails from file nodes
+    const thumbnails = selectedNodes
+      .map(n => {
+        const fileData = n.data as { thumbnail?: string; uploadedFile?: { url?: string } };
+        return fileData.thumbnail || fileData.uploadedFile?.url || "";
+      })
+      .filter(url => url);
+    
+    // Create the presentation group node
+    const groupNode: AtlasNode = {
+      id: groupId,
+      type: "presentationGroup",
+      position: { x: avgX + 250, y: avgY }, // Position to the right of selected nodes
+      data: {
+        label: `Slide Group (${nodeIds.length} images)`,
+        nodeIds,
+        thumbnails,
+      },
+    };
+    
+    // Store the group data and add the node
+    setPresentationGroups(groups => [...groups, { id: groupId, nodeIds }]);
+    
+    // Add the group node and deselect the original nodes
+    setNodes(nds => [
+      ...nds.map(n => ({
+        ...n,
+        selected: false,
+      })),
+      groupNode,
+    ]);
+  }, [nodes, setNodes]);
+
   // Start presentation
   const handleStartPresentation = useCallback(() => {
-    if (presentationEdges.length > 0) {
+    if (presentationEdges.length > 0 || presentationGroups.length > 0) {
       setIsPresenting(true);
     }
-  }, [presentationEdges]);
+  }, [presentationEdges, presentationGroups]);
 
   // Clear presentation edges when exiting presentation mode
   const handlePresentationModeChange = useCallback((enabled: boolean) => {
@@ -1138,10 +1185,11 @@ onAddOperationalNode={handleAddOperationalNode}
   }}
   onCreateMoodboard={handleCreateMoodboard}
           onMoodboardClick={handleMoodboardClick}
-          presentationMode={presentationMode}
-          presentationEdges={presentationEdges}
-          onPresentationConnect={handlePresentationConnect}
-        />
+presentationMode={presentationMode}
+  presentationEdges={presentationEdges}
+  onPresentationConnect={handlePresentationConnect}
+  onCreatePresentationGroup={handleCreatePresentationGroup}
+  />
 
 <CanvasSideToolbar
   onAddStatusPill={handleAddStatusPill}
@@ -1281,19 +1329,20 @@ onAddOperationalNode={handleAddOperationalNode}
 
       {/* Presentation Viewer */}
       {isPresenting && (
-        <PresentationViewer
-          nodes={nodes}
-          presentationEdges={presentationEdges}
-          onClose={() => {
-            setIsPresenting(false);
-            setPresentationMode(false);
-          }}
-          presentationName={canvas.presentationName || "Untitled Presentation"}
-          onPresentationNameChange={(name) => {
-            onCanvasChange({ ...canvas, presentationName: name });
-          }}
-          workspaceName={workspaceSettings.name}
-        />
+<PresentationViewer
+  nodes={nodes}
+  presentationEdges={presentationEdges}
+  presentationGroups={presentationGroups}
+  onClose={() => {
+  setIsPresenting(false);
+  setPresentationMode(false);
+  }}
+  presentationName={canvas.presentationName || "Untitled Presentation"}
+  onPresentationNameChange={(name) => {
+  onCanvasChange({ ...canvas, presentationName: name });
+  }}
+  workspaceName={workspaceSettings.name}
+  />
       )}
     </div>
   );
