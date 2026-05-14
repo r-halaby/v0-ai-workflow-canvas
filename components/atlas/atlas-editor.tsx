@@ -848,6 +848,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           onAddTextNode={handleAddTextNode}
           onAddSageNode={handleAddSageNode}
           onAddOperationalNode={handleAddOperationalNode}
+          onUploadFile={(files) => handleFileDrop(files, { x: 400, y: 300 })}
           onSettingsClick={() => setShowSettingsDialog(true)}
           onSearchChange={setSearchQuery}
           searchQuery={searchQuery}
