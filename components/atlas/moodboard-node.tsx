@@ -17,7 +17,7 @@ export function MoodboardNode({ data, selected }: NodeProps) {
       className="group rounded-xl transition-all duration-200"
       style={{
         backgroundColor: "#1a1a1a",
-        border: selected ? "2px solid #a855f7" : "1px solid #a855f730",
+        border: selected ? "2px solid #ffffff" : "1px solid #ffffff30",
         width: 200,
         minHeight: 160,
       }}
@@ -32,7 +32,7 @@ export function MoodboardNode({ data, selected }: NodeProps) {
         style={{
           width: 8,
           height: 8,
-          backgroundColor: "#a855f7",
+          backgroundColor: "#ffffff",
           border: "2px solid #1a1a1a",
         }}
       />
@@ -43,7 +43,7 @@ export function MoodboardNode({ data, selected }: NodeProps) {
         style={{
           width: 8,
           height: 8,
-          backgroundColor: "#a855f7",
+          backgroundColor: "#ffffff",
           border: "2px solid #1a1a1a",
         }}
       />
@@ -51,13 +51,13 @@ export function MoodboardNode({ data, selected }: NodeProps) {
       {/* Header */}
       <div
         className="px-3 py-2 flex items-center gap-2 border-b"
-        style={{ borderColor: "#a855f720" }}
+        style={{ borderColor: "#ffffff20" }}
       >
         <div
           className="w-6 h-6 rounded flex items-center justify-center"
-          style={{ backgroundColor: "#a855f720" }}
+          style={{ backgroundColor: "#ffffff20" }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -115,7 +115,7 @@ export function MoodboardNode({ data, selected }: NodeProps) {
       <div
         className="px-3 py-2 border-t text-center transition-all duration-200"
         style={{
-          borderColor: "#a855f720",
+          borderColor: "#ffffff20",
           opacity: isHovered ? 1 : 0,
           maxHeight: isHovered ? 40 : 0,
           overflow: "hidden",

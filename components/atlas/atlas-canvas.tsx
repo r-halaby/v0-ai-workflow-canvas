@@ -609,8 +609,8 @@ export function AtlasCanvas({
             }}
             className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
             style={{
-              backgroundColor: "#a855f7",
-              color: "#ffffff",
+              backgroundColor: "#ffffff",
+              color: "#1a1a1a",
               fontFamily: "system-ui, Inter, sans-serif",
             }}
           >

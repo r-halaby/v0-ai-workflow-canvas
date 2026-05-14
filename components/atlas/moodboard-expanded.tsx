@@ -33,9 +33,9 @@ export function MoodboardExpanded({ data, onClose, onUngroup }: MoodboardExpande
           <div className="flex items-center gap-3">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "#a855f720" }}
+              style={{ backgroundColor: "#ffffff20" }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2">
                 <rect x="3" y="3" width="7" height="7" rx="1" />
                 <rect x="14" y="3" width="7" height="7" rx="1" />
                 <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -96,7 +96,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup }: MoodboardExpande
                 <div 
                   className="relative rounded-lg overflow-hidden transition-all duration-200"
                   style={{
-                    border: selectedImage === img.id ? "2px solid #a855f7" : "1px solid #333333",
+                    border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid #333333",
                   }}
                 >
                   <img
