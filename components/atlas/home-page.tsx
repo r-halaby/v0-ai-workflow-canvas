@@ -20,6 +20,8 @@ export function HomePage({ onOpenCanvas, workspaceSettings, canvases, onCanvases
   const [showNewCanvasDialog, setShowNewCanvasDialog] = useState(false);
   const [newCanvasName, setNewCanvasName] = useState("");
   const [newCanvasVisibility, setNewCanvasVisibility] = useState<CanvasVisibility>("workspace");
+  const [showSageChat, setShowSageChat] = useState(false);
+  const [sageMessage, setSageMessage] = useState("");
 
   const recentCanvases = useMemo(() => {
     return [...canvases]
@@ -804,6 +806,158 @@ Recent Canvases
                 }}
               >
                 Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sage AI Bot FAB */}
+      <button
+        type="button"
+        onClick={() => setShowSageChat(!showSageChat)}
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105 z-50"
+        style={{
+          backgroundColor: showSageChat ? "#333333" : "#F0FE00",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
+        }}
+      >
+        {showSageChat ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6L18 18" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        ) : (
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 3C8.477 3 4 7.477 4 13C4 14.89 4.525 16.66 5.438 18.168L4 24L9.832 22.562C11.34 23.475 13.11 24 15 24C20.523 24 25 19.523 25 14C25 8.477 20.523 4 15 4" stroke="#121212" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="10" cy="13" r="1.5" fill="#121212"/>
+            <circle cx="14" cy="13" r="1.5" fill="#121212"/>
+            <circle cx="18" cy="13" r="1.5" fill="#121212"/>
+          </svg>
+        )}
+      </button>
+
+      {/* Sage Chat Panel */}
+      {showSageChat && (
+        <div
+          className="fixed bottom-24 right-6 w-96 rounded-2xl overflow-hidden shadow-2xl z-50"
+          style={{
+            backgroundColor: "#141414",
+            border: "1px solid #2a2a2a",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
+          }}
+        >
+          {/* Chat Header */}
+          <div
+            className="px-5 py-4 flex items-center gap-3"
+            style={{ borderBottom: "1px solid #2a2a2a" }}
+          >
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: "#F0FE00" }}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+              </svg>
+            </div>
+            <div>
+              <h4
+                className="text-white font-semibold text-sm"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                Sage
+              </h4>
+              <p
+                className="text-gray-500 text-xs"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                AI Design Assistant
+              </p>
+            </div>
+          </div>
+
+          {/* Chat Messages */}
+          <div className="h-80 overflow-y-auto p-4 space-y-4">
+            {/* Welcome message */}
+            <div className="flex gap-3">
+              <div
+                className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                style={{ backgroundColor: "#F0FE00" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+                </svg>
+              </div>
+              <div
+                className="flex-1 p-3 rounded-xl rounded-tl-sm"
+                style={{ backgroundColor: "#1e1e1e" }}
+              >
+                <p
+                  className="text-sm text-gray-300 leading-relaxed"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  Hey! I&apos;m Sage, your AI design assistant. I can help you with:
+                </p>
+                <ul className="mt-2 space-y-1">
+                  <li
+                    className="text-sm text-gray-400 flex items-center gap-2"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <span style={{ color: "#F0FE00" }}>•</span> Organizing your design files
+                  </li>
+                  <li
+                    className="text-sm text-gray-400 flex items-center gap-2"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <span style={{ color: "#F0FE00" }}>•</span> Finding assets across canvases
+                  </li>
+                  <li
+                    className="text-sm text-gray-400 flex items-center gap-2"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <span style={{ color: "#F0FE00" }}>•</span> Project status summaries
+                  </li>
+                  <li
+                    className="text-sm text-gray-400 flex items-center gap-2"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <span style={{ color: "#F0FE00" }}>•</span> Design system suggestions
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Chat Input */}
+          <div
+            className="p-4"
+            style={{ borderTop: "1px solid #2a2a2a" }}
+          >
+            <div
+              className="flex items-center gap-2 px-4 py-3 rounded-xl"
+              style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+            >
+              <input
+                type="text"
+                value={sageMessage}
+                onChange={(e) => setSageMessage(e.target.value)}
+                placeholder="Ask Sage anything..."
+                className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              />
+              <button
+                type="button"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                style={{ backgroundColor: sageMessage.trim() ? "#F0FE00" : "#333333" }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M14 2L7 9M14 2L10 14L7 9M14 2L2 6L7 9"
+                    stroke={sageMessage.trim() ? "#121212" : "#666666"}
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </button>
             </div>
           </div>
