@@ -19,6 +19,9 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("masonry");
   const [isPresentationMode, setIsPresentationMode] = useState(false);
   const [presentationLayout, setPresentationLayout] = useState<PresentationLayout>("columns");
+  const [isEditingLabel, setIsEditingLabel] = useState(false);
+  const [editedLabel, setEditedLabel] = useState(data.label || "Moodboard");
+  const labelInputRef = useRef<HTMLInputElement>(null);
   const [positions, setPositions] = useState<Record<string, MoodboardImagePosition>>(() => {
     return data.freeformPositions || {};
   });
@@ -159,6 +162,31 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
     }
   }, [draggingId]);
 
+  // Handle label editing
+  const handleLabelClick = () => {
+    setIsEditingLabel(true);
+    setTimeout(() => labelInputRef.current?.focus(), 0);
+  };
+
+  const handleLabelSave = () => {
+    setIsEditingLabel(false);
+    if (editedLabel.trim() && editedLabel !== data.label && onDataChange) {
+      onDataChange({
+        ...data,
+        label: editedLabel.trim(),
+      });
+    }
+  };
+
+  const handleLabelKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleLabelSave();
+    } else if (e.key === "Escape") {
+      setEditedLabel(data.label || "Moodboard");
+      setIsEditingLabel(false);
+    }
+  };
+
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -190,9 +218,27 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                {data.label || "Moodboard"} ({data.images?.length || 0})
-              </h2>
+              {isEditingLabel ? (
+                <input
+                  ref={labelInputRef}
+                  type="text"
+                  value={editedLabel}
+                  onChange={(e) => setEditedLabel(e.target.value)}
+                  onBlur={handleLabelSave}
+                  onKeyDown={handleLabelKeyDown}
+                  className="text-lg font-semibold text-white bg-transparent border-b border-white/30 outline-none px-1"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif", minWidth: "120px" }}
+                />
+              ) : (
+                <h2 
+                  className="text-lg font-semibold text-white cursor-pointer hover:text-gray-300 transition-colors"
+                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  onClick={handleLabelClick}
+                  title="Click to edit"
+                >
+                  {data.label || "Moodboard"} ({data.images?.length || 0})
+                </h2>
+              )}
               <p className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 {data.images?.length || 0} images
               </p>
@@ -483,9 +529,27 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
                 className="px-4 py-2 rounded-full"
                 style={{ backgroundColor: "#1a1a1a" }}
               >
-                <span className="text-sm font-medium text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                  {data.label || "Moodboard"}
-                </span>
+                {isEditingLabel ? (
+                  <input
+                    ref={labelInputRef}
+                    type="text"
+                    value={editedLabel}
+                    onChange={(e) => setEditedLabel(e.target.value)}
+                    onBlur={handleLabelSave}
+                    onKeyDown={handleLabelKeyDown}
+                    className="text-sm font-medium text-gray-300 bg-transparent border-b border-white/30 outline-none"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif", minWidth: "100px" }}
+                  />
+                ) : (
+                  <span 
+                    className="text-sm font-medium text-gray-300 cursor-pointer hover:text-white transition-colors"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    onClick={handleLabelClick}
+                    title="Click to edit"
+                  >
+                    {data.label || "Moodboard"}
+                  </span>
+                )}
               </div>
             </div>
 
