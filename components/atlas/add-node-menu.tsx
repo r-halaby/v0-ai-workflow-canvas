@@ -29,8 +29,6 @@ export function AddNodeMenu({
   const [menuPosition, setMenuPosition] = useState(position || { x: 200, y: 200 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.menu-content')) return;
@@ -53,22 +51,27 @@ export function AddNodeMenu({
     setIsDragging(false);
   }, []);
 
-  const handleMenuEnter = useCallback((menu: string) => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    setActiveSubmenu(menu);
-  }, []);
-
-  const handleMenuLeave = useCallback(() => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setActiveSubmenu(null);
-    }, 150);
-  }, []);
+  // Submenu button style
+  const submenuBtnClass = "w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2";
+  const fontStyle = { fontFamily: "system-ui, Inter, sans-serif" };
 
   return (
     <>
+      {/* CSS for hover submenus */}
+      <style jsx>{`
+        .submenu-trigger:hover .submenu-panel {
+          opacity: 1;
+          pointer-events: auto;
+          transform: translateX(0);
+        }
+        .submenu-panel {
+          opacity: 0;
+          pointer-events: none;
+          transform: translateX(-8px);
+          transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+      `}</style>
+      
       {/* Backdrop to close menu */}
       <div 
         className="fixed inset-0 z-40" 
@@ -102,7 +105,7 @@ export function AddNodeMenu({
           style={{ borderColor: "#333333" }}
           onMouseDown={handleMouseDown}
         >
-          <span className="text-xs font-medium text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+          <span className="text-xs font-medium text-gray-400" style={fontStyle}>
             Add Node
           </span>
           <div className="flex gap-0.5">
@@ -114,15 +117,11 @@ export function AddNodeMenu({
 
         <div className="menu-content py-1">
           {/* Text - with hover submenu */}
-          <div 
-            className="relative"
-            onMouseEnter={() => handleMenuEnter("text")}
-            onMouseLeave={handleMenuLeave}
-          >
+          <div className="submenu-trigger relative">
             <button
               type="button"
               className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-between"
-              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              style={fontStyle}
             >
               <span className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#3B82F620", color: "#3B82F6" }}>
@@ -138,54 +137,35 @@ export function AddNodeMenu({
             </button>
             
             {/* Text Submenu */}
-            {activeSubmenu === "text" && (
-              <div 
-                className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
-                onMouseEnter={() => handleMenuEnter("text")}
-                onMouseLeave={handleMenuLeave}
-              >
-                <button
-                  type="button"
-                  onClick={() => { onAddTextNode("brief"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#3B82F620", color: "#3B82F6" }}>
-                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                      <rect x="2" y="2" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-                    </svg>
-                  </div>
-                  Creative Brief
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { onAddTextNode("note"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F59E0B20", color: "#F59E0B" }}>
-                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                      <path d="M2 4H12M2 7H10M2 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                  Note
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { onAddTextNode("description"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#8B5CF620", color: "#8B5CF6" }}>
-                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                      <path d="M2 4H12M2 7H10M2 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                  Description
-                </button>
-              </div>
-            )}
+            <div 
+              className="submenu-panel absolute left-full top-0 py-1 rounded-lg shadow-lg ml-1"
+              style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150 }}
+            >
+              <button type="button" onClick={() => { onAddTextNode("brief"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#3B82F620", color: "#3B82F6" }}>
+                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                    <rect x="2" y="2" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                  </svg>
+                </div>
+                Creative Brief
+              </button>
+              <button type="button" onClick={() => { onAddTextNode("note"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F59E0B20", color: "#F59E0B" }}>
+                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 4H12M2 7H10M2 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                Note
+              </button>
+              <button type="button" onClick={() => { onAddTextNode("description"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#8B5CF620", color: "#8B5CF6" }}>
+                  <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 4H12M2 7H10M2 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                Description
+              </button>
+            </div>
           </div>
 
           {/* Divider */}
@@ -196,7 +176,7 @@ export function AddNodeMenu({
             type="button"
             onClick={() => { onAddStatusPill(); onClose(); }}
             className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            style={fontStyle}
           >
             <div className="w-4 h-2.5 rounded-full" style={{ backgroundColor: "#e5e5e5" }} />
             Status Pill
@@ -206,15 +186,11 @@ export function AddNodeMenu({
           <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
           
           {/* Sage - with hover submenu */}
-          <div 
-            className="relative"
-            onMouseEnter={() => handleMenuEnter("sage")}
-            onMouseLeave={handleMenuLeave}
-          >
+          <div className="submenu-trigger relative">
             <button
               type="button"
               className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-between"
-              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              style={fontStyle}
             >
               <span className="flex items-center gap-2">
                 <img src="/sage-logo.svg" alt="Sage" className="w-4 h-4" />
@@ -226,71 +202,48 @@ export function AddNodeMenu({
             </button>
             
             {/* Sage Submenu */}
-            {activeSubmenu === "sage" && (
-              <div 
-                className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
-                onMouseEnter={() => handleMenuEnter("sage")}
-                onMouseLeave={handleMenuLeave}
-              >
-                <button
-                  type="button"
-                  onClick={() => { onAddSageNode("chatbot"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                  </div>
-                  Sage Chat
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { onAddSageNode("overview"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 3v18h18" />
-                      <path d="M18 17l-5-5-4 4-3-3" />
-                    </svg>
-                  </div>
-                  Overview
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { onAddSageNode("stakeholder"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="7" r="4" />
-                      <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
-                    </svg>
-                  </div>
-                  Stakeholder
-                </button>
-              </div>
-            )}
+            <div 
+              className="submenu-panel absolute left-full top-0 py-1 rounded-lg shadow-lg ml-1"
+              style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150 }}
+            >
+              <button type="button" onClick={() => { onAddSageNode("chatbot"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </div>
+                Sage Chat
+              </button>
+              <button type="button" onClick={() => { onAddSageNode("overview"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 3v18h18" />
+                    <path d="M18 17l-5-5-4 4-3-3" />
+                  </svg>
+                </div>
+                Overview
+              </button>
+              <button type="button" onClick={() => { onAddSageNode("stakeholder"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#F0FE0020", color: "#F0FE00" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="7" r="4" />
+                    <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+                  </svg>
+                </div>
+                Stakeholder
+              </button>
+            </div>
           </div>
           
           {/* Divider */}
           <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
           
           {/* Ops Data - with hover submenu */}
-          <div 
-            className="relative"
-            onMouseEnter={() => handleMenuEnter("operations")}
-            onMouseLeave={handleMenuLeave}
-          >
+          <div className="submenu-trigger relative">
             <button
               type="button"
               className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-between"
-              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              style={fontStyle}
             >
               <span className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#3b82f620", color: "#3b82f6" }}>
@@ -306,85 +259,56 @@ export function AddNodeMenu({
               </svg>
             </button>
             
-            {/* Operations Submenu */}
-            {activeSubmenu === "operations" && (
-              <div 
-                className="absolute left-full top-0 py-1 rounded-lg shadow-lg"
-                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150, marginLeft: 4 }}
-                onMouseEnter={() => handleMenuEnter("operations")}
-                onMouseLeave={handleMenuLeave}
-              >
-                <button
-                  type="button"
-                  onClick={() => { onAddOperationalNode("capacity"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#3b82f620", color: "#3b82f6" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="7" height="7" />
-                      <rect x="14" y="14" width="7" height="7" />
-                    </svg>
-                  </div>
-                  Capacity
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { onAddOperationalNode("financial"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#10b98120", color: "#10b981" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="12" y1="1" x2="12" y2="23" />
-                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                    </svg>
-                  </div>
-                  Financial
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { onAddOperationalNode("projectHealth"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#8b5cf620", color: "#8b5cf6" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                    </svg>
-                  </div>
-                  Project Health
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { onAddOperationalNode("pipeline"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#f59e0b20", color: "#f59e0b" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 3v18h18" />
-                      <path d="M7 16l4-8 4 4 6-6" />
-                    </svg>
-                  </div>
-                  Pipeline
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { onAddOperationalNode("teamHealth"); onClose(); }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#ec489920", color: "#ec4899" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                    </svg>
-                  </div>
-                  Team Health
-                </button>
-              </div>
-            )}
+            {/* Ops Data Submenu */}
+            <div 
+              className="submenu-panel absolute left-full top-0 py-1 rounded-lg shadow-lg ml-1"
+              style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", width: 150 }}
+            >
+              <button type="button" onClick={() => { onAddOperationalNode("capacity"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#3b82f620", color: "#3b82f6" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                  </svg>
+                </div>
+                Capacity
+              </button>
+              <button type="button" onClick={() => { onAddOperationalNode("financial"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#10b98120", color: "#10b981" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="12" y1="1" x2="12" y2="23" />
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                </div>
+                Financial
+              </button>
+              <button type="button" onClick={() => { onAddOperationalNode("projectHealth"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#8b5cf620", color: "#8b5cf6" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                  </svg>
+                </div>
+                Project Health
+              </button>
+              <button type="button" onClick={() => { onAddOperationalNode("pipeline"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#f59e0b20", color: "#f59e0b" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 3v18h18" />
+                    <path d="M7 16l4-8 4 4 6-6" />
+                  </svg>
+                </div>
+                Pipeline
+              </button>
+              <button type="button" onClick={() => { onAddOperationalNode("teamHealth"); onClose(); }} className={submenuBtnClass} style={fontStyle}>
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#ec489920", color: "#ec4899" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                  </svg>
+                </div>
+                Team Health
+              </button>
+            </div>
           </div>
           
           {/* Divider */}
@@ -407,7 +331,7 @@ export function AddNodeMenu({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            style={fontStyle}
           >
             <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: "#52525b20", color: "#a1a1aa" }}>
               <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
