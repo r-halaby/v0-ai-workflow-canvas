@@ -9,6 +9,8 @@ interface AtlasToolbarProps {
   onAddNode: (extension: FileExtension) => void;
   onUploadClick: () => void;
   onSettingsClick: () => void;
+  canvasName?: string;
+  onBack?: () => void;
 }
 
 const FILE_TYPE_OPTIONS: { label: string; extension: FileExtension }[] = [
@@ -19,7 +21,7 @@ const FILE_TYPE_OPTIONS: { label: string; extension: FileExtension }[] = [
   { label: "Brand Asset", extension: ".ai" },
 ];
 
-export function AtlasToolbar({ filters, onFiltersChange, onAddNode, onUploadClick, onSettingsClick }: AtlasToolbarProps) {
+export function AtlasToolbar({ filters, onFiltersChange, onAddNode, onUploadClick, onSettingsClick, canvasName, onBack }: AtlasToolbarProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
 
@@ -42,14 +44,36 @@ export function AtlasToolbar({ filters, onFiltersChange, onAddNode, onUploadClic
         borderBottom: "1px solid #222222",
       }}
     >
-      {/* Left: Logo */}
-      <div className="flex items-center">
+      {/* Left: Logo + Back + Canvas Name */}
+      <div className="flex items-center gap-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 14L6 9L11 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
         <img 
           src="/atlas-logo.svg" 
           alt="Atlas" 
           className="h-6"
           style={{ width: "auto" }}
         />
+        {canvasName && (
+          <>
+            <div className="w-px h-5" style={{ backgroundColor: "#333333" }} />
+            <span
+              className="text-sm text-white font-medium truncate max-w-[200px]"
+              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              {canvasName}
+            </span>
+          </>
+        )}
       </div>
 
       {/* Center: Controls */}

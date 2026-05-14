@@ -454,3 +454,64 @@ export const FILE_TYPE_CATEGORIES: Record<FileTypeCategory, { label: string; ext
   image: { label: "Image", extensions: [".psd"] },
   brand: { label: "Brand Asset", extensions: [".ai", ".indd"] },
 };
+
+// Canvas visibility type
+export type CanvasVisibility = "workspace" | "private";
+
+// Canvas interface
+export interface Canvas {
+  id: string;
+  name: string;
+  description?: string;
+  previewImage?: string;
+  nodes: AtlasNode[];
+  edges: Edge[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy: WorkspaceMember;
+  isFavorite: boolean;
+  visibility: CanvasVisibility;
+}
+
+// Initial canvases
+export const INITIAL_CANVASES: Canvas[] = [
+  {
+    id: "canvas-1",
+    name: "Brand Refresh 2026",
+    description: "Main branding project for Q2 refresh",
+    previewImage: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&h=400&fit=crop",
+    nodes: INITIAL_FILE_NODES,
+    edges: INITIAL_EDGES,
+    createdAt: "2026-05-01T10:00:00Z",
+    updatedAt: "2026-05-13T14:30:00Z",
+    createdBy: WORKSPACE_MEMBERS[0],
+    isFavorite: true,
+    visibility: "workspace",
+  },
+  {
+    id: "canvas-2",
+    name: "Social Media Kit",
+    description: "Templates for social media campaigns",
+    previewImage: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=400&fit=crop",
+    nodes: [],
+    edges: [],
+    createdAt: "2026-05-05T09:00:00Z",
+    updatedAt: "2026-05-12T16:45:00Z",
+    createdBy: WORKSPACE_MEMBERS[1],
+    isFavorite: false,
+    visibility: "workspace",
+  },
+  {
+    id: "canvas-3",
+    name: "Product Launch Assets",
+    description: "Design assets for upcoming product launch",
+    previewImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop",
+    nodes: [],
+    edges: [],
+    createdAt: "2026-05-08T11:30:00Z",
+    updatedAt: "2026-05-11T10:15:00Z",
+    createdBy: WORKSPACE_MEMBERS[0],
+    isFavorite: true,
+    visibility: "private",
+  },
+];

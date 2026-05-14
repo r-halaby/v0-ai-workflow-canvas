@@ -11,7 +11,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FilterState, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings } from "@/lib/atlas-types";
+import type { AtlasNode, FilterState, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -19,14 +19,31 @@ import { FileDetailPanel } from "./file-detail-panel";
 import { UploadDialog } from "./upload-dialog";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
 
-function AtlasEditorInner() {
-  const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(INITIAL_FILE_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
+interface AtlasEditorProps {
+  canvas: Canvas;
+  onCanvasChange: (canvas: Canvas) => void;
+  onBack: () => void;
+  workspaceSettings: WorkspaceSettings;
+  onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
+}
+
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange }: AtlasEditorProps) {
+  const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
   const [filters, setFilters] = useState<FilterState>({ product: "all", status: "all" });
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>(DEFAULT_WORKSPACE_SETTINGS);
+
+  // Sync canvas changes back to parent
+  const syncCanvas = useCallback(() => {
+    onCanvasChange({
+      ...canvas,
+      nodes,
+      edges,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [canvas, nodes, edges, onCanvasChange]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -185,6 +202,8 @@ function AtlasEditorInner() {
         onAddNode={handleAddNode}
         onUploadClick={() => setShowUploadDialog(true)}
         onSettingsClick={() => setShowSettingsDialog(true)}
+        canvasName={canvas.name}
+        onBack={onBack}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -220,16 +239,16 @@ function AtlasEditorInner() {
         open={showSettingsDialog}
         onClose={() => setShowSettingsDialog(false)}
         settings={workspaceSettings}
-        onSettingsChange={setWorkspaceSettings}
+        onSettingsChange={onWorkspaceSettingsChange}
       />
     </div>
   );
 }
 
-export function AtlasEditor() {
+export function AtlasEditor(props: AtlasEditorProps) {
   return (
     <ReactFlowProvider>
-      <AtlasEditorInner />
+      <AtlasEditorInner {...props} />
     </ReactFlowProvider>
   );
 }
