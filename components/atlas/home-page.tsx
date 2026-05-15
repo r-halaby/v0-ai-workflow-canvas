@@ -204,6 +204,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [templates, setTemplates] = useState<CanvasTemplate[]>(SAMPLE_TEMPLATES);
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | "all">("all");
   const [viewingTemplate, setViewingTemplate] = useState<CanvasTemplate | null>(null);
+  const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
   // Combine all workspace nodes with canvas grouping
@@ -1440,202 +1441,383 @@ const deleteCanvas = (canvasId: string) => {
           </div>
         ) : activeView === "home" ? (
           <>
-            {/* Chaos Ribbon Module - Only on Home view */}
-            <div className="px-6 pt-6">
-          <div
-            className="rounded-xl p-5"
-            style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3
-                  className="text-white font-semibold text-base"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  Project Chaos Ribbon
-                </h3>
-                <p
-                  className="text-gray-500 text-sm mt-0.5"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  Brand Refresh 2026 • Day 18 of 30
-                </p>
-              </div>
-              {/* Legend */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#4ADE80" }} />
-                  <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Smooth</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FCD34D" }} />
-                  <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Minor</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FB923C" }} />
-                  <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Moderate</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#F87171" }} />
-                  <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>High</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Timeline Ribbon */}
-            <div className="relative mb-3">
-              {/* Today marker */}
-              <div className="absolute top-0 left-[60%] -translate-x-1/2 -translate-y-full pb-1">
+            {/* Scrollable Content - Ribbon and Canvas Grid */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Fault Management Ribbon */}
+              <div className="mb-6">
                 <div
-                  className="px-2 py-0.5 rounded text-xs font-medium"
-                  style={{ backgroundColor: "#333333", color: "#ffffff", fontFamily: "system-ui, Inter, sans-serif" }}
+                  className="rounded-xl p-5"
+                  style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
                 >
-                  Today
-                </div>
-              </div>
-              
-              {/* Ribbon squares */}
-              <div className="flex gap-1 pt-6">
-                {/* Week 1 - mostly smooth */}
-                {[...Array(7)].map((_, i) => (
-                  <div
-                    key={`w1-${i}`}
-                    className="flex-1 h-8 rounded"
-                    style={{ backgroundColor: i < 5 ? "#4ADE80" : i === 5 ? "#FCD34D" : "#FB923C" }}
-                  />
-                ))}
-                {/* Week 2 - mixed */}
-                {[...Array(7)].map((_, i) => (
-                  <div
-                    key={`w2-${i}`}
-                    className="flex-1 h-8 rounded relative"
-                    style={{ backgroundColor: i < 2 ? "#FCD34D" : i < 4 ? "#FB923C" : i === 4 ? "#F87171" : "#FB923C" }}
-                  >
-                    {i === 2 && (
-                      <span className="absolute inset-0 flex items-center justify-center text-xs">$</span>
-                    )}
-                    {i === 3 && (
-                      <svg className="absolute inset-0 m-auto" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <circle cx="6" cy="6" r="4" stroke="#000" strokeWidth="1.5"/>
-                        <path d="M6 4V6.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
-                    )}
-                  </div>
-                ))}
-                {/* Week 3 - current week with today marker */}
-                {[...Array(7)].map((_, i) => (
-                  <div
-                    key={`w3-${i}`}
-                    className={`flex-1 h-8 rounded relative ${i >= 4 ? "opacity-40" : ""}`}
-                    style={{ backgroundColor: i < 2 ? "#FB923C" : i === 2 ? "#FCD34D" : i === 3 ? "#4ADE80" : "#FCD34D" }}
-                  >
-                    {i === 3 && (
-                      <svg className="absolute inset-0 m-auto" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 6C3 4 5 8 6 6C7 4 9 8 10 6" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
-                    )}
-                    {i === 4 && (
-                      <svg className="absolute inset-0 m-auto" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <circle cx="6" cy="6" r="4" stroke="#000" strokeWidth="1.5"/>
-                        <path d="M6 4V6.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
-                    )}
-                  </div>
-                ))}
-                {/* Week 4 - future (dimmed) */}
-                {[...Array(7)].map((_, i) => (
-                  <div
-                    key={`w4-${i}`}
-                    className="flex-1 h-8 rounded opacity-40"
-                    style={{ backgroundColor: i % 2 === 0 ? "#FCD34D" : "#FB923C" }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Week labels */}
-            <div className="flex text-xs text-gray-500 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-              <div className="flex-1">Week 1</div>
-              <div className="flex-1 text-center">Week 2</div>
-              <div className="flex-1 text-center">Week 3</div>
-              <div className="flex-1 text-right">Week 4</div>
-            </div>
-
-            {/* Today's Detail Card */}
-            <div
-              className="rounded-lg p-4"
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div
-                    className="text-xs font-medium text-gray-500 mb-1"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    Today
-                  </div>
-                  <div
-                    className="text-sm text-gray-400 mb-3"
-                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                  >
-                    Moderate disruptions
-                  </div>
-
-                  {/* Blocker */}
-                  <div className="flex items-start gap-2 mb-3">
-                    <svg className="mt-0.5 text-red-400" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M8 5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
-                    </svg>
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div
-                        className="text-red-400 font-medium text-sm"
+                      <h3
+                        className="text-white font-semibold text-base"
                         style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                       >
-                        Critical Blocker
+                        Fault Management Ribbon
+                      </h3>
+                      <p
+                        className="text-gray-500 text-sm mt-0.5"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        7 active client engagements
+                      </p>
+                    </div>
+                    {/* Legend */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#4ADE80" }} />
+                        <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Smooth</span>
                       </div>
-                      <div
-                        className="text-white text-sm mt-0.5"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        Stakeholder Approval Delayed - Out of Office
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FCD34D" }} />
+                        <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Minor</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FB923C" }} />
+                        <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Moderate</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#F87171" }} />
+                        <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>High</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Tags */}
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="px-2 py-1 rounded text-xs font-medium"
-                      style={{ backgroundColor: "rgba(248, 113, 113, 0.2)", color: "#F87171" }}
-                    >
-                      Blocker
-                    </span>
-                    <span
-                      className="px-2 py-1 rounded text-xs font-medium"
-                      style={{ backgroundColor: "rgba(248, 113, 113, 0.2)", color: "#F87171" }}
-                    >
-                      High Severity
-                    </span>
-                  </div>
-                </div>
+                  {/* Timeline Ribbon */}
+                  <div className="relative mb-3">
+                    {/* Today marker */}
+                    <div className="absolute top-0 left-[60%] -translate-x-1/2 -translate-y-full pb-1">
+                      <div
+                        className="px-2 py-0.5 rounded text-xs font-medium"
+                        style={{ backgroundColor: "#333333", color: "#ffffff", fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        Today
+                      </div>
+                    </div>
+                    
+                    {/* Ribbon data for each day */}
+                  {(() => {
+                    const todayIndex = 17; // Today is day 18 (index 17)
+                    
+                    // Sample data for 28 days - design agency scenarios
+                    // Past days (index 0-16) show what happened
+                    // Today (index 17) shows current status
+                    // Future days (index 18-27) show predictions based on scheduled work
+                    const ribbonDays = [
+                      // Week 1 (14-20 days ago) - Past
+                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"], isFuture: false },
+                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"], isFuture: false },
+                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"], isFuture: false },
+                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"], isFuture: false },
+                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"], isFuture: false },
+                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"], isFuture: false },
+                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"], isFuture: false },
+                      // Week 2 (7-13 days ago) - Past
+                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"], isFuture: false },
+                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"], isFuture: false },
+                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"], isFuture: false },
+                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"], isFuture: false },
+                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"], isFuture: false },
+                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"], isFuture: false },
+                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"], isFuture: false },
+                      // Week 3 - Current week
+                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"], isFuture: false },
+                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"], isFuture: false },
+                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"], isFuture: false },
+                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"], isFuture: false }, // TODAY
+                      // Future days - Predictive based on scheduled work and current project status
+                      { status: "minor", title: "Client Presentation Due", description: "Final brand presentation scheduled - team is prepared but client has history of last-minute changes", tags: ["Scheduled", "Risk: Scope Creep"], isFuture: true },
+                      { status: "minor", title: "Deliverables Deadline", description: "Final asset package due - currently 85% complete, may need overtime to finish", tags: ["At Risk", "Tight Timeline"], isFuture: true },
+                      { status: "smooth", title: "Buffer Day", description: "No major deliverables - time allocated for revisions if needed", tags: ["Flexible", "Catch-up"], isFuture: true },
+                      // Week 4 - Future (projected risks)
+                      { status: "minor", title: "Phase 2 Kickoff", description: "New phase begins - scope not yet finalized, pending client approval", tags: ["Pending Approval", "Planning"], isFuture: true },
+                      { status: "moderate", title: "Resource Conflict", description: "Lead designer scheduled on overlapping project - capacity at 120%", tags: ["Overbooked", "Need Coverage"], isFuture: true },
+                      { status: "minor", title: "Vendor Dependency", description: "Motion graphics delivery expected - vendor has been reliable but external dependency", tags: ["External", "Monitoring"], isFuture: true },
+                      { status: "moderate", title: "Budget Review", description: "Q3 allocation meeting - Phase 2 funding not yet confirmed", tags: ["Financial Risk", "Pending"], isFuture: true },
+                      { status: "minor", title: "Team Training", description: "New design system workshop - reduced capacity for client work", tags: ["Reduced Capacity", "Investment"], isFuture: true },
+                      { status: "smooth", title: "Sprint Planning", description: "Phase 2 sprint begins - assuming approvals come through on schedule", tags: ["Optimistic", "Dependent"], isFuture: true },
+                      { status: "smooth", title: "Client Sync", description: "Weekly check-in - good opportunity to address any accumulated concerns", tags: ["Routine", "Communication"], isFuture: true },
+                    ];
 
-                <div
-                  className="text-sm text-gray-400"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  Phase Halted
+                    const statusColors: Record<string, string> = {
+                      smooth: "#4ADE80",
+                      minor: "#FCD34D", 
+                      moderate: "#FB923C",
+                      high: "#F87171"
+                    };
+
+                    return (
+                      <>
+                        {/* Ribbon squares */}
+                        <div className="flex gap-1 pt-6">
+                          {ribbonDays.map((day, i) => (
+                            <div
+                              key={`day-${i}`}
+                              onClick={() => setSelectedRibbonDay(i)}
+                              className={`flex-1 h-8 rounded relative cursor-pointer transition-all hover:opacity-80 ${
+                                i === selectedRibbonDay 
+                                  ? "ring-2 ring-white ring-offset-1 ring-offset-[#141414]" 
+                                  : i === todayIndex
+                                  ? "opacity-60"
+                                  : "opacity-40"
+                              }`}
+                              style={{ backgroundColor: statusColors[day.status] }}
+                              title={`${day.title}: ${day.description}`}
+                            >
+                              {i === todayIndex && i !== selectedRibbonDay && (
+                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </> 
+                    );
+                  })()}
+                  </div>
+
+                  {/* Week labels - dynamic dates */}
+                  {(() => {
+                    const today = new Date();
+                    const formatWeekDate = (weeksOffset: number) => {
+                      const date = new Date(today);
+                      date.setDate(today.getDate() + (weeksOffset * 7));
+                      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    };
+                    return (
+                      <div className="flex text-xs text-gray-500 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        <div className="flex-1">{formatWeekDate(-2)}</div>
+                        <div className="flex-1 text-center">{formatWeekDate(-1)}</div>
+                        <div className="flex-1 text-center">{formatWeekDate(0)}</div>
+                        <div className="flex-1 text-right">{formatWeekDate(1)}</div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Selected Day Detail Card */}
+                  {(() => {
+                    const todayIndex = 17;
+                    
+                    const ribbonDays = [
+                      // Week 1 (14-20 days ago) - Past
+                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"], isFuture: false },
+                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"], isFuture: false },
+                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"], isFuture: false },
+                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"], isFuture: false },
+                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"], isFuture: false },
+                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"], isFuture: false },
+                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"], isFuture: false },
+                      // Week 2 (7-13 days ago) - Past
+                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"], isFuture: false },
+                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"], isFuture: false },
+                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"], isFuture: false },
+                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"], isFuture: false },
+                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"], isFuture: false },
+                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"], isFuture: false },
+                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"], isFuture: false },
+                      // Week 3 - Current week
+                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"], isFuture: false },
+                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"], isFuture: false },
+                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"], isFuture: false },
+                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"], isFuture: false }, // TODAY
+                      // Future days - Predictive
+                      { status: "minor", title: "Client Presentation Due", description: "Final brand presentation scheduled - team is prepared but client has history of last-minute changes", tags: ["Scheduled", "Risk: Scope Creep"], isFuture: true },
+                      { status: "minor", title: "Deliverables Deadline", description: "Final asset package due - currently 85% complete, may need overtime to finish", tags: ["At Risk", "Tight Timeline"], isFuture: true },
+                      { status: "smooth", title: "Buffer Day", description: "No major deliverables - time allocated for revisions if needed", tags: ["Flexible", "Catch-up"], isFuture: true },
+                      // Week 4 - Future
+                      { status: "minor", title: "Phase 2 Kickoff", description: "New phase begins - scope not yet finalized, pending client approval", tags: ["Pending Approval", "Planning"], isFuture: true },
+                      { status: "moderate", title: "Resource Conflict", description: "Lead designer scheduled on overlapping project - capacity at 120%", tags: ["Overbooked", "Need Coverage"], isFuture: true },
+                      { status: "minor", title: "Vendor Dependency", description: "Motion graphics delivery expected - vendor has been reliable but external dependency", tags: ["External", "Monitoring"], isFuture: true },
+                      { status: "moderate", title: "Budget Review", description: "Q3 allocation meeting - Phase 2 funding not yet confirmed", tags: ["Financial Risk", "Pending"], isFuture: true },
+                      { status: "minor", title: "Team Training", description: "New design system workshop - reduced capacity for client work", tags: ["Reduced Capacity", "Investment"], isFuture: true },
+                      { status: "smooth", title: "Sprint Planning", description: "Phase 2 sprint begins - assuming approvals come through on schedule", tags: ["Optimistic", "Dependent"], isFuture: true },
+                      { status: "smooth", title: "Client Sync", description: "Weekly check-in - good opportunity to address any accumulated concerns", tags: ["Routine", "Communication"], isFuture: true },
+                    ];
+
+                    const selectedDay = ribbonDays[selectedRibbonDay];
+                    const daysFromToday = selectedRibbonDay - todayIndex;
+                    
+                    // Calculate the actual date for the selected day
+                    const selectedDate = new Date();
+                    selectedDate.setDate(selectedDate.getDate() + daysFromToday);
+                    const formattedDate = selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+                    const statusConfig: Record<string, { color: string; bgColor: string; icon: React.ReactNode; phaseText: string; futurePhaseText: string }> = {
+                      smooth: {
+                        color: "#4ADE80",
+                        bgColor: "rgba(74, 222, 128, 0.2)",
+                        icon: (
+                          <svg className="mt-0.5" style={{ color: "#4ADE80" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                            <path d="M5.5 8L7 9.5L10.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        ),
+                        phaseText: "Completed",
+                        futurePhaseText: "Low Risk"
+                      },
+                      minor: {
+                        color: "#FCD34D",
+                        bgColor: "rgba(252, 211, 77, 0.2)",
+                        icon: (
+                          <svg className="mt-0.5" style={{ color: "#FCD34D" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                            <path d="M8 5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+                          </svg>
+                        ),
+                        phaseText: "Resolved",
+                        futurePhaseText: "Monitor"
+                      },
+                      moderate: {
+                        color: "#FB923C",
+                        bgColor: "rgba(251, 146, 60, 0.2)",
+                        icon: (
+                          <svg className="mt-0.5" style={{ color: "#FB923C" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                            <path d="M8 6V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+                          </svg>
+                        ),
+                        phaseText: "Was Disrupted",
+                        futurePhaseText: "High Risk"
+                      },
+                      high: {
+                        color: "#F87171",
+                        bgColor: "rgba(248, 113, 113, 0.2)",
+                        icon: (
+                          <svg className="mt-0.5" style={{ color: "#F87171" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                            <path d="M8 5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+                          </svg>
+                        ),
+                        phaseText: "Was Blocked",
+                        futurePhaseText: "Critical Risk"
+                      }
+                    };
+
+                    const config = statusConfig[selectedDay.status];
+                    const isToday = selectedRibbonDay === todayIndex;
+                    const isFuture = selectedDay.isFuture;
+
+                    // Determine the label text
+                    let dateLabel = formattedDate;
+                    if (isToday) {
+                      dateLabel = "Today";
+                    } else if (daysFromToday === -1) {
+                      dateLabel = "Yesterday";
+                    } else if (daysFromToday === 1) {
+                      dateLabel = "Tomorrow";
+                    }
+
+                    // Status summary based on time
+                    const getStatusSummary = () => {
+                      if (isToday) {
+                        if (selectedDay.status === "smooth") return "All systems running smoothly";
+                        if (selectedDay.status === "minor") return "Minor issues being addressed";
+                        if (selectedDay.status === "moderate") return "Moderate disruptions";
+                        return "Critical issues detected";
+                      } else if (isFuture) {
+                        if (selectedDay.status === "smooth") return "Low risk day - no major concerns predicted";
+                        if (selectedDay.status === "minor") return "Minor risk - deliverable or dependency scheduled";
+                        if (selectedDay.status === "moderate") return "Elevated risk - potential blockers identified";
+                        return "High risk - critical dependencies or conflicts";
+                      } else {
+                        if (selectedDay.status === "smooth") return "Day completed without issues";
+                        if (selectedDay.status === "minor") return "Minor issues were resolved";
+                        if (selectedDay.status === "moderate") return "Day had moderate disruptions";
+                        return "Critical blocker occurred";
+                      }
+                    };
+
+                    return (
+                      <div
+                        className="rounded-lg p-4"
+                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <div
+                                className="text-xs font-medium text-gray-500"
+                                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                              >
+                                {dateLabel}
+                              </div>
+                              {isFuture && (
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                  style={{ backgroundColor: "rgba(147, 51, 234, 0.2)", color: "#A855F7" }}
+                                >
+                                  Forecast
+                                </span>
+                              )}
+                              {!isToday && !isFuture && (
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                  style={{ backgroundColor: "rgba(100, 100, 100, 0.2)", color: "#888888" }}
+                                >
+                                  Past
+                                </span>
+                              )}
+                            </div>
+                            <div
+                              className="text-sm text-gray-400 mb-3"
+                              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                            >
+                              {getStatusSummary()}
+                            </div>
+
+                            {/* Status */}
+                            <div className="flex items-start gap-2 mb-3">
+                              {config.icon}
+                              <div>
+                                <div
+                                  className="font-medium text-sm"
+                                  style={{ color: config.color, fontFamily: "system-ui, Inter, sans-serif" }}
+                                >
+                                  {selectedDay.title}
+                                </div>
+                                <div
+                                  className="text-white text-sm mt-0.5"
+                                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                >
+                                  {selectedDay.description}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Tags */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {selectedDay.tags.map((tag, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2 py-1 rounded text-xs font-medium"
+                                  style={{ backgroundColor: config.bgColor, color: config.color }}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div
+                            className="text-sm text-gray-400 text-right"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                          >
+                            {isToday ? "Active" : isFuture ? config.futurePhaseText : config.phaseText}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Canvas Grid */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {filteredCanvases.length === 0 ? (
+              {/* Canvas Grid */}
+              {filteredCanvases.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: "#1a1a1a" }}>
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1755,9 +1937,9 @@ const deleteCanvas = (canvasId: string) => {
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
           </>
         ) : (activeView === "canvases" || activeView === "favorites") ? (
           /* Canvas/Files View with Tab Switcher */
