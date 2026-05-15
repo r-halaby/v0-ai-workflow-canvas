@@ -1,6 +1,10 @@
 "use client";
 
-import React, { useCallback, useRef, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useRef, useMemo, useState, useEffect, createContext, useContext } from "react";
+
+// Context to share presentation mode state with nodes
+export const PresentationModeContext = createContext(false);
+export const usePresentationMode = () => useContext(PresentationModeContext);
 import {
   ReactFlow,
   Background,
@@ -524,6 +528,7 @@ const reactFlowInstance = useReactFlow();
       onMouseMove={handleSelectionMove}
       onMouseUp={handleSelectionEnd}
     >
+      <PresentationModeContext.Provider value={presentationMode}>
       <ReactFlow
         nodes={filteredNodes}
         edges={styledEdges}
@@ -622,6 +627,7 @@ onClick={(event) => {
           }}
         />
       </ReactFlow>
+      </PresentationModeContext.Provider>
 
       {/* Comment Pins Layer */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>

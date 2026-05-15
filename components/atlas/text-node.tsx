@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import type { TextNodeData } from "@/lib/atlas-types";
+import { usePresentationMode } from "./atlas-canvas";
 
 // Text size options
 const TEXT_SIZES = [
@@ -62,6 +63,7 @@ interface TextFormatting {
 
 export function TextNode({ id, data, selected }: NodeProps) {
   const textData = data as TextNodeData;
+  const presentationMode = usePresentationMode();
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(textData.content || textData.label);
@@ -182,11 +184,11 @@ export function TextNode({ id, data, selected }: NodeProps) {
         position={Position.Left}
         className="transition-all !cursor-pointer"
         style={{
-          background: "#1a1a1a",
-          border: "2px solid #525252",
+          background: presentationMode ? "#F0FE00" : "#1a1a1a",
+          border: presentationMode ? "2px solid #F0FE00" : "2px solid #525252",
           width: 12,
           height: 12,
-          opacity: isHovered ? 1 : 0,
+          opacity: isHovered || presentationMode ? 1 : 0,
         }}
       />
       <Handle
@@ -194,11 +196,11 @@ export function TextNode({ id, data, selected }: NodeProps) {
         position={Position.Right}
         className="transition-all !cursor-pointer"
         style={{
-          background: "#1a1a1a",
-          border: "2px solid #525252",
+          background: presentationMode ? "#F0FE00" : "#1a1a1a",
+          border: presentationMode ? "2px solid #F0FE00" : "2px solid #525252",
           width: 12,
           height: 12,
-          opacity: isHovered ? 1 : 0,
+          opacity: isHovered || presentationMode ? 1 : 0,
         }}
       />
 
@@ -421,7 +423,7 @@ export function TextNode({ id, data, selected }: NodeProps) {
         style={{
           minWidth: 100,
           maxWidth: 400,
-          outline: selected ? "2px solid white" : "none",
+          outline: selected ? "2px solid white" : (presentationMode ? "2px dashed #F0FE00" : "none"),
           outlineOffset: 4,
           borderRadius: 4,
         }}
