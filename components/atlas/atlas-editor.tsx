@@ -1480,21 +1480,15 @@ presentationMode={presentationMode}
 
       {/* Sage Expanded Modal */}
       {detailModalNodeId && (() => {
-        console.log("[v0] Checking for Sage modal, detailModalNodeId:", detailModalNodeId);
         const node = nodes.find(n => n.id === detailModalNodeId);
-        console.log("[v0] Found node:", node?.type, node?.id);
-        const sageTypes = ["sage-chatbot", "sage-overview", "sage-stakeholder"];
-        if (!node || !sageTypes.includes(node.type || "")) {
-          console.log("[v0] Not a Sage node, skipping modal");
-          return null;
-        }
-        console.log("[v0] Rendering SageExpandedModal for:", node.id);
+        const sageTypes = ["sageChatbot", "sageOverview", "stakeholder"];
+        if (!node || !sageTypes.includes(node.type || "")) return null;
         return (
           <SageExpandedModal
             isOpen={true}
             onClose={() => setDetailModalNodeId(null)}
             nodeId={node.id}
-            nodeType={node.type as "sage-chatbot" | "sage-overview" | "sage-stakeholder"}
+            nodeType={node.type as "sageChatbot" | "sageOverview" | "stakeholder"}
             nodeData={node.data}
             nodePosition={node.position}
           />

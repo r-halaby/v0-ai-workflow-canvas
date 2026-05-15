@@ -535,16 +535,13 @@ const reactFlowInstance = useReactFlow();
         onPaneClick={handlePaneClick}
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={(event, node) => {
-          console.log("[v0] Node double-clicked:", node.type, node.id);
           // Don't open modal if clicking on a handle
           const target = event.target as HTMLElement;
           if (target.closest(".react-flow__handle")) return;
           
           // Handle file and sage nodes
-          const expandableTypes = ["file", "sage-chatbot", "sage-overview", "sage-stakeholder"];
-          console.log("[v0] Is expandable type?", expandableTypes.includes(node.type || ""), "onNodeDoubleClick exists?", !!onNodeDoubleClick);
+          const expandableTypes = ["file", "sageChatbot", "sageOverview", "stakeholder"];
           if (expandableTypes.includes(node.type || "") && onNodeDoubleClick) {
-            console.log("[v0] Calling onNodeDoubleClick with id:", node.id);
             onNodeDoubleClick(node.id);
           }
         }}

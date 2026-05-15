@@ -33,7 +33,7 @@ interface SageExpandedModalProps {
   isOpen: boolean;
   onClose: () => void;
   nodeId: string;
-  nodeType: "sage-chatbot" | "sage-overview" | "sage-stakeholder";
+  nodeType: "sageChatbot" | "sageOverview" | "stakeholder";
   nodeData: SageChatbotNodeData | SageOverviewNodeData;
   nodePosition: { x: number; y: number };
 }
