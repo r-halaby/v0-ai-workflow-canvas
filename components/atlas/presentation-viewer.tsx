@@ -234,10 +234,11 @@ export function PresentationViewer({
     return "";
   };
 
-  // Render a single image in a bento cell
-  const renderBentoImage = (node: Node, index: number, total: number) => {
+  // Render a single media item (image or video) in a bento cell
+  const renderBentoMedia = (node: Node, index: number, total: number) => {
     const fileData = node.data as FileNodeData;
-    const imageUrl = fileData.thumbnail || fileData.uploadedFile?.url;
+    const mediaUrl = fileData.uploadedFile?.url || fileData.thumbnail;
+    const isVideo = fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
     
     return (
       <div 
@@ -245,9 +246,18 @@ export function PresentationViewer({
         className={`relative overflow-hidden rounded-lg ${getBentoItemClass(index, total)}`}
         style={{ backgroundColor: "#1a1a1a" }}
       >
-        {imageUrl ? (
+        {isVideo && mediaUrl ? (
+          <video
+            src={mediaUrl}
+            className="w-full h-full object-cover"
+            muted
+            loop
+            autoPlay
+            playsInline
+          />
+        ) : mediaUrl ? (
           <Image
-            src={imageUrl}
+            src={mediaUrl}
             alt={fileData.fileName || "Image"}
             fill
             className="object-cover"
@@ -274,7 +284,7 @@ export function PresentationViewer({
             className={`grid ${getBentoLayout(count)} gap-3 w-full max-w-6xl`}
             style={{ height: '65vh' }}
           >
-            {currentNodes.map((node, index) => renderBentoImage(node, index, count))}
+            {currentNodes.map((node, index) => renderBentoMedia(node, index, count))}
           </div>
         </div>
       );
@@ -286,12 +296,42 @@ export function PresentationViewer({
 
     if (currentNode.type === "file") {
       const fileData = currentNode.data as FileNodeData;
+      const isVideo = fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+      const mediaUrl = fileData.uploadedFile?.url || fileData.thumbnail;
+
+      // Video slide
+      if (isVideo && mediaUrl) {
+        return (
+          <div className="flex flex-col items-center justify-center h-full w-full">
+            <video
+              key={currentNode.id}
+              src={mediaUrl}
+              controls
+              autoPlay
+              className="max-w-6xl max-h-[70vh] rounded-lg"
+              style={{ backgroundColor: "#000" }}
+            />
+            <span 
+              className="mt-4 text-xs font-normal tracking-wide"
+              style={{ 
+                fontFamily: "system-ui, Inter, sans-serif",
+                color: "rgba(255,255,255,0.35)",
+                fontStyle: "italic"
+              }}
+            >
+              {fileData.fileName || fileData.label}
+            </span>
+          </div>
+        );
+      }
+
+      // Image slide
       return (
         <div className="flex flex-col items-center justify-center h-full w-full">
-          {fileData.thumbnail || fileData.uploadedFile?.url ? (
+          {mediaUrl ? (
             <div className="relative w-full max-w-6xl h-[70vh]">
               <Image
-                src={fileData.thumbnail || fileData.uploadedFile?.url || ""}
+                src={mediaUrl}
                 alt={fileData.fileName || "Slide"}
                 fill
                 className="object-contain rounded-lg"
@@ -321,14 +361,50 @@ export function PresentationViewer({
 
     if (currentNode.type === "text") {
       const textData = currentNode.data as TextNodeData;
+      const formatting = textData.formatting;
+      
+      // Map size to Tailwind classes for presentation (larger than normal)
+      const sizeMap: Record<string, string> = {
+        small: "text-2xl md:text-3xl",
+        medium: "text-3xl md:text-5xl", 
+        large: "text-4xl md:text-6xl",
+        xlarge: "text-5xl md:text-8xl",
+      };
+      
+      const fontMap: Record<string, string> = {
+        sans: "font-sans",
+        serif: "font-serif",
+        mono: "font-mono",
+      };
+      
+      const alignMap: Record<string, string> = {
+        left: "text-left items-start",
+        center: "text-center items-center",
+        right: "text-right items-end",
+      };
+
+      const textSize = sizeMap[formatting?.size || "large"];
+      const textFont = fontMap[formatting?.font || "sans"];
+      const textAlign = alignMap[formatting?.align || "center"];
+      const textColor = formatting?.color || "#ffffff";
+      const isBold = formatting?.bold;
+
       return (
-        <div className="flex flex-col items-center justify-center h-full max-w-3xl mx-auto text-center px-8">
-          <h2 className="text-3xl font-semibold text-white mb-6" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+        <div className={`flex flex-col justify-center h-full max-w-4xl mx-auto px-8 ${textAlign}`}>
+          <h2 
+            className={`mb-6 leading-tight ${textSize} ${textFont} ${isBold ? "font-bold" : "font-semibold"}`}
+            style={{ color: textColor }}
+          >
             {textData.label}
           </h2>
-          <p className="text-xl text-gray-300 leading-relaxed" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-            {textData.content}
-          </p>
+          {textData.content && (
+            <p 
+              className={`text-xl md:text-2xl leading-relaxed ${textFont}`}
+              style={{ color: `${textColor}99` }}
+            >
+              {textData.content}
+            </p>
+          )}
         </div>
       );
     }
