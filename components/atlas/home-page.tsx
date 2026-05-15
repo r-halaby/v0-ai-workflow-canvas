@@ -204,6 +204,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [templates, setTemplates] = useState<CanvasTemplate[]>(SAMPLE_TEMPLATES);
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | "all">("all");
   const [viewingTemplate, setViewingTemplate] = useState<CanvasTemplate | null>(null);
+  const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
   // Combine all workspace nodes with canvas grouping
@@ -1499,40 +1500,46 @@ const deleteCanvas = (canvasId: string) => {
                     
                     {/* Ribbon data for each day */}
                   {(() => {
+                    const todayIndex = 17; // Today is day 18 (index 17)
+                    
                     // Sample data for 28 days - design agency scenarios
+                    // Past days (index 0-16) show what happened
+                    // Today (index 17) shows current status
+                    // Future days (index 18-27) show predictions based on scheduled work
                     const ribbonDays = [
-                      // Week 1 (14-20 days ago)
-                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"] },
-                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"] },
-                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"] },
-                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"] },
-                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"] },
-                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"] },
-                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"] },
-                      // Week 2 (7-13 days ago)
-                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"] },
-                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"] },
-                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"] },
-                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"] },
-                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"] },
-                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"] },
-                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"] },
-                      // Week 3 - Current week (today is index 17, which is day 4 of week 3)
-                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"] },
-                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"] },
-                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"] },
-                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"] }, // TODAY
-                      { status: "minor", title: "Review Scheduled", description: "Client presentation scheduled for tomorrow", tags: ["Prepared", "Confident"] },
-                      { status: "minor", title: "Handoff Prep", description: "Preparing final deliverables package", tags: ["In Progress", "On Schedule"] },
-                      { status: "smooth", title: "Wrap Up", description: "Project retrospective and documentation", tags: ["Closing", "Learnings"] },
-                      // Week 4 - Future (projected)
-                      { status: "minor", title: "New Brief", description: "Phase 2 briefing with expanded scope", tags: ["Upcoming", "Planning"] },
-                      { status: "moderate", title: "Resource Planning", description: "Team allocation for next sprint", tags: ["Scheduling", "TBD"] },
-                      { status: "minor", title: "Vendor Kickoff", description: "Motion graphics vendor onboarding", tags: ["New Partner", "Setup"] },
-                      { status: "moderate", title: "Budget Review", description: "Q3 budget allocation meeting", tags: ["Financial", "Review"] },
-                      { status: "minor", title: "Training Day", description: "New design system workshop", tags: ["Learning", "Team"] },
-                      { status: "smooth", title: "Sprint Start", description: "Phase 2 development begins", tags: ["Fresh Start", "Energized"] },
-                      { status: "smooth", title: "Check-in", description: "Weekly client sync scheduled", tags: ["Routine", "Aligned"] },
+                      // Week 1 (14-20 days ago) - Past
+                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"], isFuture: false },
+                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"], isFuture: false },
+                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"], isFuture: false },
+                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"], isFuture: false },
+                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"], isFuture: false },
+                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"], isFuture: false },
+                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"], isFuture: false },
+                      // Week 2 (7-13 days ago) - Past
+                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"], isFuture: false },
+                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"], isFuture: false },
+                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"], isFuture: false },
+                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"], isFuture: false },
+                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"], isFuture: false },
+                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"], isFuture: false },
+                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"], isFuture: false },
+                      // Week 3 - Current week
+                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"], isFuture: false },
+                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"], isFuture: false },
+                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"], isFuture: false },
+                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"], isFuture: false }, // TODAY
+                      // Future days - Predictive based on scheduled work and current project status
+                      { status: "minor", title: "Client Presentation Due", description: "Final brand presentation scheduled - team is prepared but client has history of last-minute changes", tags: ["Scheduled", "Risk: Scope Creep"], isFuture: true },
+                      { status: "minor", title: "Deliverables Deadline", description: "Final asset package due - currently 85% complete, may need overtime to finish", tags: ["At Risk", "Tight Timeline"], isFuture: true },
+                      { status: "smooth", title: "Buffer Day", description: "No major deliverables - time allocated for revisions if needed", tags: ["Flexible", "Catch-up"], isFuture: true },
+                      // Week 4 - Future (projected risks)
+                      { status: "minor", title: "Phase 2 Kickoff", description: "New phase begins - scope not yet finalized, pending client approval", tags: ["Pending Approval", "Planning"], isFuture: true },
+                      { status: "moderate", title: "Resource Conflict", description: "Lead designer scheduled on overlapping project - capacity at 120%", tags: ["Overbooked", "Need Coverage"], isFuture: true },
+                      { status: "minor", title: "Vendor Dependency", description: "Motion graphics delivery expected - vendor has been reliable but external dependency", tags: ["External", "Monitoring"], isFuture: true },
+                      { status: "moderate", title: "Budget Review", description: "Q3 allocation meeting - Phase 2 funding not yet confirmed", tags: ["Financial Risk", "Pending"], isFuture: true },
+                      { status: "minor", title: "Team Training", description: "New design system workshop - reduced capacity for client work", tags: ["Reduced Capacity", "Investment"], isFuture: true },
+                      { status: "smooth", title: "Sprint Planning", description: "Phase 2 sprint begins - assuming approvals come through on schedule", tags: ["Optimistic", "Dependent"], isFuture: true },
+                      { status: "smooth", title: "Client Sync", description: "Weekly check-in - good opportunity to address any accumulated concerns", tags: ["Routine", "Communication"], isFuture: true },
                     ];
 
                     const statusColors: Record<string, string> = {
@@ -1542,9 +1549,6 @@ const deleteCanvas = (canvasId: string) => {
                       high: "#F87171"
                     };
 
-                    const todayIndex = 17; // Day 4 of Week 3
-                    const todayData = ribbonDays[todayIndex];
-
                     return (
                       <>
                         {/* Ribbon squares */}
@@ -1552,14 +1556,21 @@ const deleteCanvas = (canvasId: string) => {
                           {ribbonDays.map((day, i) => (
                             <div
                               key={`day-${i}`}
-                              className={`flex-1 h-8 rounded relative cursor-pointer transition-all hover:opacity-70 ${
-                                i === todayIndex 
+                              onClick={() => setSelectedRibbonDay(i)}
+                              className={`flex-1 h-8 rounded relative cursor-pointer transition-all hover:opacity-80 ${
+                                i === selectedRibbonDay 
                                   ? "ring-2 ring-white ring-offset-1 ring-offset-[#141414]" 
+                                  : i === todayIndex
+                                  ? "opacity-60"
                                   : "opacity-40"
                               }`}
                               style={{ backgroundColor: statusColors[day.status] }}
                               title={`${day.title}: ${day.description}`}
-                            />
+                            >
+                              {i === todayIndex && i !== selectedRibbonDay && (
+                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white" />
+                              )}
+                            </div>
                           ))}
                         </div>
                       </> 
@@ -1585,47 +1596,55 @@ const deleteCanvas = (canvasId: string) => {
                     );
                   })()}
 
-                  {/* Today's Detail Card */}
+                  {/* Selected Day Detail Card */}
                   {(() => {
+                    const todayIndex = 17;
+                    
                     const ribbonDays = [
-                      // Week 1 (14-20 days ago)
-                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"] },
-                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"] },
-                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"] },
-                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"] },
-                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"] },
-                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"] },
-                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"] },
-                      // Week 2 (7-13 days ago)
-                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"] },
-                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"] },
-                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"] },
-                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"] },
-                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"] },
-                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"] },
-                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"] },
+                      // Week 1 (14-20 days ago) - Past
+                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"], isFuture: false },
+                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"], isFuture: false },
+                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"], isFuture: false },
+                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"], isFuture: false },
+                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"], isFuture: false },
+                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"], isFuture: false },
+                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"], isFuture: false },
+                      // Week 2 (7-13 days ago) - Past
+                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"], isFuture: false },
+                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"], isFuture: false },
+                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"], isFuture: false },
+                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"], isFuture: false },
+                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"], isFuture: false },
+                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"], isFuture: false },
+                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"], isFuture: false },
                       // Week 3 - Current week
-                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"] },
-                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"] },
-                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"] },
-                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"] }, // TODAY
-                      { status: "minor", title: "Review Scheduled", description: "Client presentation scheduled for tomorrow", tags: ["Prepared", "Confident"] },
-                      { status: "minor", title: "Handoff Prep", description: "Preparing final deliverables package", tags: ["In Progress", "On Schedule"] },
-                      { status: "smooth", title: "Wrap Up", description: "Project retrospective and documentation", tags: ["Closing", "Learnings"] },
+                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"], isFuture: false },
+                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"], isFuture: false },
+                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"], isFuture: false },
+                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"], isFuture: false }, // TODAY
+                      // Future days - Predictive
+                      { status: "minor", title: "Client Presentation Due", description: "Final brand presentation scheduled - team is prepared but client has history of last-minute changes", tags: ["Scheduled", "Risk: Scope Creep"], isFuture: true },
+                      { status: "minor", title: "Deliverables Deadline", description: "Final asset package due - currently 85% complete, may need overtime to finish", tags: ["At Risk", "Tight Timeline"], isFuture: true },
+                      { status: "smooth", title: "Buffer Day", description: "No major deliverables - time allocated for revisions if needed", tags: ["Flexible", "Catch-up"], isFuture: true },
                       // Week 4 - Future
-                      { status: "minor", title: "New Brief", description: "Phase 2 briefing with expanded scope", tags: ["Upcoming", "Planning"] },
-                      { status: "moderate", title: "Resource Planning", description: "Team allocation for next sprint", tags: ["Scheduling", "TBD"] },
-                      { status: "minor", title: "Vendor Kickoff", description: "Motion graphics vendor onboarding", tags: ["New Partner", "Setup"] },
-                      { status: "moderate", title: "Budget Review", description: "Q3 budget allocation meeting", tags: ["Financial", "Review"] },
-                      { status: "minor", title: "Training Day", description: "New design system workshop", tags: ["Learning", "Team"] },
-                      { status: "smooth", title: "Sprint Start", description: "Phase 2 development begins", tags: ["Fresh Start", "Energized"] },
-                      { status: "smooth", title: "Check-in", description: "Weekly client sync scheduled", tags: ["Routine", "Aligned"] },
+                      { status: "minor", title: "Phase 2 Kickoff", description: "New phase begins - scope not yet finalized, pending client approval", tags: ["Pending Approval", "Planning"], isFuture: true },
+                      { status: "moderate", title: "Resource Conflict", description: "Lead designer scheduled on overlapping project - capacity at 120%", tags: ["Overbooked", "Need Coverage"], isFuture: true },
+                      { status: "minor", title: "Vendor Dependency", description: "Motion graphics delivery expected - vendor has been reliable but external dependency", tags: ["External", "Monitoring"], isFuture: true },
+                      { status: "moderate", title: "Budget Review", description: "Q3 allocation meeting - Phase 2 funding not yet confirmed", tags: ["Financial Risk", "Pending"], isFuture: true },
+                      { status: "minor", title: "Team Training", description: "New design system workshop - reduced capacity for client work", tags: ["Reduced Capacity", "Investment"], isFuture: true },
+                      { status: "smooth", title: "Sprint Planning", description: "Phase 2 sprint begins - assuming approvals come through on schedule", tags: ["Optimistic", "Dependent"], isFuture: true },
+                      { status: "smooth", title: "Client Sync", description: "Weekly check-in - good opportunity to address any accumulated concerns", tags: ["Routine", "Communication"], isFuture: true },
                     ];
 
-                    const todayIndex = 17;
-                    const todayData = ribbonDays[todayIndex];
+                    const selectedDay = ribbonDays[selectedRibbonDay];
+                    const daysFromToday = selectedRibbonDay - todayIndex;
+                    
+                    // Calculate the actual date for the selected day
+                    const selectedDate = new Date();
+                    selectedDate.setDate(selectedDate.getDate() + daysFromToday);
+                    const formattedDate = selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
-                    const statusConfig: Record<string, { color: string; bgColor: string; icon: React.ReactNode; phaseText: string }> = {
+                    const statusConfig: Record<string, { color: string; bgColor: string; icon: React.ReactNode; phaseText: string; futurePhaseText: string }> = {
                       smooth: {
                         color: "#4ADE80",
                         bgColor: "rgba(74, 222, 128, 0.2)",
@@ -1635,7 +1654,8 @@ const deleteCanvas = (canvasId: string) => {
                             <path d="M5.5 8L7 9.5L10.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         ),
-                        phaseText: "Active"
+                        phaseText: "Completed",
+                        futurePhaseText: "Low Risk"
                       },
                       minor: {
                         color: "#FCD34D",
@@ -1647,7 +1667,8 @@ const deleteCanvas = (canvasId: string) => {
                             <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
                           </svg>
                         ),
-                        phaseText: "Monitoring"
+                        phaseText: "Resolved",
+                        futurePhaseText: "Monitor"
                       },
                       moderate: {
                         color: "#FB923C",
@@ -1659,7 +1680,8 @@ const deleteCanvas = (canvasId: string) => {
                             <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
                           </svg>
                         ),
-                        phaseText: "Attention Needed"
+                        phaseText: "Was Disrupted",
+                        futurePhaseText: "High Risk"
                       },
                       high: {
                         color: "#F87171",
@@ -1671,11 +1693,44 @@ const deleteCanvas = (canvasId: string) => {
                             <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
                           </svg>
                         ),
-                        phaseText: "Phase Halted"
+                        phaseText: "Was Blocked",
+                        futurePhaseText: "Critical Risk"
                       }
                     };
 
-                    const config = statusConfig[todayData.status];
+                    const config = statusConfig[selectedDay.status];
+                    const isToday = selectedRibbonDay === todayIndex;
+                    const isFuture = selectedDay.isFuture;
+
+                    // Determine the label text
+                    let dateLabel = formattedDate;
+                    if (isToday) {
+                      dateLabel = "Today";
+                    } else if (daysFromToday === -1) {
+                      dateLabel = "Yesterday";
+                    } else if (daysFromToday === 1) {
+                      dateLabel = "Tomorrow";
+                    }
+
+                    // Status summary based on time
+                    const getStatusSummary = () => {
+                      if (isToday) {
+                        if (selectedDay.status === "smooth") return "All systems running smoothly";
+                        if (selectedDay.status === "minor") return "Minor issues being addressed";
+                        if (selectedDay.status === "moderate") return "Moderate disruptions";
+                        return "Critical issues detected";
+                      } else if (isFuture) {
+                        if (selectedDay.status === "smooth") return "Low risk day - no major concerns predicted";
+                        if (selectedDay.status === "minor") return "Minor risk - deliverable or dependency scheduled";
+                        if (selectedDay.status === "moderate") return "Elevated risk - potential blockers identified";
+                        return "High risk - critical dependencies or conflicts";
+                      } else {
+                        if (selectedDay.status === "smooth") return "Day completed without issues";
+                        if (selectedDay.status === "minor") return "Minor issues were resolved";
+                        if (selectedDay.status === "moderate") return "Day had moderate disruptions";
+                        return "Critical blocker occurred";
+                      }
+                    };
 
                     return (
                       <div
@@ -1684,19 +1739,35 @@ const deleteCanvas = (canvasId: string) => {
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <div
-                              className="text-xs font-medium text-gray-500 mb-1"
-                              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                            >
-                              Today
+                            <div className="flex items-center gap-2 mb-1">
+                              <div
+                                className="text-xs font-medium text-gray-500"
+                                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                              >
+                                {dateLabel}
+                              </div>
+                              {isFuture && (
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                  style={{ backgroundColor: "rgba(147, 51, 234, 0.2)", color: "#A855F7" }}
+                                >
+                                  Forecast
+                                </span>
+                              )}
+                              {!isToday && !isFuture && (
+                                <span
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                  style={{ backgroundColor: "rgba(100, 100, 100, 0.2)", color: "#888888" }}
+                                >
+                                  Past
+                                </span>
+                              )}
                             </div>
                             <div
                               className="text-sm text-gray-400 mb-3"
                               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                             >
-                              {todayData.status === "smooth" ? "All systems running smoothly" : 
-                               todayData.status === "minor" ? "Minor issues being addressed" :
-                               todayData.status === "moderate" ? "Moderate disruptions" : "Critical issues detected"}
+                              {getStatusSummary()}
                             </div>
 
                             {/* Status */}
@@ -1707,20 +1778,20 @@ const deleteCanvas = (canvasId: string) => {
                                   className="font-medium text-sm"
                                   style={{ color: config.color, fontFamily: "system-ui, Inter, sans-serif" }}
                                 >
-                                  {todayData.title}
+                                  {selectedDay.title}
                                 </div>
                                 <div
                                   className="text-white text-sm mt-0.5"
                                   style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                                 >
-                                  {todayData.description}
+                                  {selectedDay.description}
                                 </div>
                               </div>
                             </div>
 
                             {/* Tags */}
-                            <div className="flex items-center gap-2">
-                              {todayData.tags.map((tag, i) => (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {selectedDay.tags.map((tag, i) => (
                                 <span
                                   key={i}
                                   className="px-2 py-1 rounded text-xs font-medium"
@@ -1733,10 +1804,10 @@ const deleteCanvas = (canvasId: string) => {
                           </div>
 
                           <div
-                            className="text-sm text-gray-400"
+                            className="text-sm text-gray-400 text-right"
                             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                           >
-                            {config.phaseText}
+                            {isToday ? "Active" : isFuture ? config.futurePhaseText : config.phaseText}
                           </div>
                         </div>
                       </div>
