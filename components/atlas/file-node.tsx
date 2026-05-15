@@ -138,18 +138,26 @@ export function FileNode({ id, data, selected }: NodeProps) {
   const fileIcon = FileIcons[fileData.fileExtension] || FileIcons.default;
   const statusStyle = STATUS_BADGE_STYLES[fileData.status] || STATUS_BADGE_STYLES.draft;
   const statusLabel = STATUS_LABELS[fileData.status] || "Draft";
-  const taskCount = fileData.tasks?.length || 0;
-  const completedTasks = fileData.tasks?.filter(t => t.completed).length || 0;
+  const tasks = Array.isArray(fileData.tasks) ? fileData.tasks : [];
+  const taskCount = tasks.length;
+  const completedTasks = tasks.filter(t => t.completed).length;
 
-  // File extensions that browsers cannot render as images (includes videos)
-  const NON_RENDERABLE_EXTENSIONS = [".ai", ".psd", ".fig", ".sketch", ".xd", ".indd", ".pdf", ".mp4", ".mov", ".avi", ".webm", ".mkv"];
+  // Video file extensions
+  const VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".webm", ".mkv", ".m4v"];
+  const isVideo = VIDEO_EXTENSIONS.includes(fileData.fileExtension?.toLowerCase() || "");
+  
+  // File extensions that browsers cannot render as images (excludes videos which we handle separately)
+  const NON_RENDERABLE_EXTENSIONS = [".ai", ".psd", ".fig", ".sketch", ".xd", ".indd", ".pdf"];
   const isNonRenderable = NON_RENDERABLE_EXTENSIONS.includes(fileData.fileExtension);
   
   // Get preview image - use first preview image, uploaded file (only if renderable), or default
   const previewImage = fileData.previewImages?.[0] 
-    || (isNonRenderable ? null : fileData.uploadedFile?.url)
+    || (isNonRenderable || isVideo ? null : fileData.uploadedFile?.url)
     || DEFAULT_PREVIEWS[fileData.fileExtension] 
     || DEFAULT_PREVIEWS.default;
+  
+  // Get video URL for video files
+  const videoUrl = isVideo ? fileData.uploadedFile?.url : null;
 
   return (
     <div
@@ -221,20 +229,45 @@ export function FileNode({ id, data, selected }: NodeProps) {
           transition: "box-shadow 0.2s ease",
         }}
       >
-        {/* Image Preview */}
+        {/* Media Preview */}
         <div 
           className="relative w-full overflow-hidden"
           style={{ height: 140 }}
         >
-          <img
-            src={previewImage}
-            alt={fileData.label}
-            className="w-full h-full object-cover"
-            style={{
-              transition: "transform 0.3s ease",
-              transform: isHovered ? "scale(1.05)" : "scale(1)",
-            }}
-          />
+          {videoUrl ? (
+            <video
+              src={videoUrl}
+              className="w-full h-full object-cover"
+              muted
+              loop
+              autoPlay
+              playsInline
+            />
+          ) : (
+            <img
+              src={previewImage}
+              alt={fileData.label}
+              className="w-full h-full object-cover"
+              style={{
+                transition: "transform 0.3s ease",
+                transform: isHovered ? "scale(1.05)" : "scale(1)",
+              }}
+            />
+          )}
+          
+          {/* Play icon overlay for videos */}
+          {isVideo && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div 
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
+                  <path d="M4 3L13 8L4 13V3Z" />
+                </svg>
+              </div>
+            </div>
+          )}
           
           {/* Gradient overlay on hover */}
           <div
