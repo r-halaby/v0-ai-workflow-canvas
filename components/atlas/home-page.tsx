@@ -1139,297 +1139,260 @@ All Frameworks
             </ReactFlowProvider>
           </div>
         ) : activeView === "settings" ? (
-          /* Settings View */
+          /* All Settings View - Single Page */
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-2xl">
-              {/* Branding Section */}
-              <div className="mb-8">
-                <h3
-                  className="text-white font-semibold text-lg mb-6"
-                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                >
-                  Branding
+            <div className="max-w-3xl space-y-8">
+              {/* Page Header */}
+              <div>
+                <h2 className="text-white font-semibold text-xl" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Workspace Settings
+                </h2>
+                <p className="text-gray-500 text-sm mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Manage your workspace branding, team, and preferences
+                </p>
+              </div>
+
+              {/* Workspace Details */}
+              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                    <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" strokeWidth="1.5"/>
+                  </svg>
+                  Workspace Details
                 </h3>
-                <div className="space-y-6">
-                  {/* Workspace Icon */}
-                  <div className="flex items-start gap-6">
-                    <div>
-                      <label
-                        className="block text-sm text-gray-400 mb-2"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        Workspace Icon
-                      </label>
-                      <div
-                        className="w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}
-                      >
-                        {workspaceSettings.branding?.workspaceIcon ? (
-                          <img
-                            src={workspaceSettings.branding.workspaceIcon}
-                            alt="Workspace icon"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span
-                            className="text-2xl font-bold"
-                            style={{ color: "#F0FE00" }}
-                          >
-                            {workspaceSettings.name.charAt(0)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1 pt-7">
-                      <p
-                        className="text-xs text-gray-500 mb-3"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        SVG recommended. Square format, max 2MB.
-                      </p>
-                      <label
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-white/10"
-                        style={{
-                          backgroundColor: "#1a1a1a",
-                          border: "1px solid #333333",
-                          color: "#ffffff",
-                          fontFamily: "system-ui, Inter, sans-serif",
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        Upload Icon
-                        <input
-                          type="file"
-                          accept="image/svg+xml,image/png,image/jpeg,image/webp"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            
-                            const formData = new FormData();
-                            formData.append("file", file);
-                            
-                            try {
-                              const res = await fetch("/api/upload/client", {
-                                method: "POST",
-                                body: JSON.stringify({ filename: file.name, contentType: file.type }),
-                                headers: { "Content-Type": "application/json" },
-                              });
-                              
-                              if (res.ok) {
-                                const { url, uploadUrl } = await res.json();
-                                await fetch(uploadUrl, { method: "PUT", body: file });
-                                onSettingsChange({
-                                  ...workspaceSettings,
-                                  branding: { ...workspaceSettings.branding, workspaceIcon: url },
-                                });
-                              }
-                            } catch (error) {
-                              console.error("Upload failed:", error);
-                            }
-                          }}
-                        />
-                      </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Name</label>
+                    <input
+                      type="text"
+                      value={workspaceSettings.name}
+                      onChange={(e) => onSettingsChange({ ...workspaceSettings, name: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>ID</label>
+                    <div className="px-3 py-2 rounded-lg text-sm text-gray-500" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "monospace" }}>
+                      {workspaceSettings.id}
                     </div>
                   </div>
-
-                  {/* Wordmark / Logo */}
-                  <div className="flex items-start gap-6">
-                    <div>
-                      <label
-                        className="block text-sm text-gray-400 mb-2"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        Wordmark / Logo
-                      </label>
-                      <div
-                        className="w-48 h-16 rounded-xl flex items-center justify-center overflow-hidden"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}
-                      >
-                        {workspaceSettings.branding?.wordmark ? (
-                          <img
-                            src={workspaceSettings.branding.wordmark}
-                            alt="Wordmark"
-                            className="max-w-full max-h-full object-contain"
-                          />
-                        ) : (
-                          <span
-                            className="text-sm text-gray-500"
-                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                          >
-                            No wordmark
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1 pt-7">
-                      <p
-                        className="text-xs text-gray-500 mb-3"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        SVG recommended. Horizontal format, max 2MB.
-                      </p>
-                      <label
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-white/10"
-                        style={{
-                          backgroundColor: "#1a1a1a",
-                          border: "1px solid #333333",
-                          color: "#ffffff",
-                          fontFamily: "system-ui, Inter, sans-serif",
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        Upload Wordmark
-                        <input
-                          type="file"
-                          accept="image/svg+xml,image/png,image/jpeg,image/webp"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            
-                            try {
-                              const res = await fetch("/api/upload/client", {
-                                method: "POST",
-                                body: JSON.stringify({ filename: file.name, contentType: file.type }),
-                                headers: { "Content-Type": "application/json" },
-                              });
-                              
-                              if (res.ok) {
-                                const { url, uploadUrl } = await res.json();
-                                await fetch(uploadUrl, { method: "PUT", body: file });
-                                onSettingsChange({
-                                  ...workspaceSettings,
-                                  branding: { ...workspaceSettings.branding, wordmark: url },
-                                });
-                              }
-                            } catch (error) {
-                              console.error("Upload failed:", error);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Profile Picture */}
-                  <div className="flex items-start gap-6">
-                    <div>
-                      <label
-                        className="block text-sm text-gray-400 mb-2"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        Profile Picture
-                      </label>
-                      <div
-                        className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden"
-                        style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}
-                      >
-                        {workspaceSettings.branding?.profilePicture ? (
-                          <img
-                            src={workspaceSettings.branding.profilePicture}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <circle cx="16" cy="12" r="5" stroke="#666666" strokeWidth="2"/>
-                            <path d="M6 28C6 22.4772 10.4772 18 16 18C21.5228 18 26 22.4772 26 28" stroke="#666666" strokeWidth="2" strokeLinecap="round"/>
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1 pt-7">
-                      <p
-                        className="text-xs text-gray-500 mb-3"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        Your personal profile picture. Square image recommended.
-                      </p>
-                      <label
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-white/10"
-                        style={{
-                          backgroundColor: "#1a1a1a",
-                          border: "1px solid #333333",
-                          color: "#ffffff",
-                          fontFamily: "system-ui, Inter, sans-serif",
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        Upload Photo
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            
-                            try {
-                              const res = await fetch("/api/upload/client", {
-                                method: "POST",
-                                body: JSON.stringify({ filename: file.name, contentType: file.type }),
-                                headers: { "Content-Type": "application/json" },
-                              });
-                              
-                              if (res.ok) {
-                                const { url, uploadUrl } = await res.json();
-                                await fetch(uploadUrl, { method: "PUT", body: file });
-                                onSettingsChange({
-                                  ...workspaceSettings,
-                                  branding: { ...workspaceSettings.branding, profilePicture: url },
-                                });
-                              }
-                            } catch (error) {
-                              console.error("Upload failed:", error);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Description</label>
+                    <textarea
+                      value={workspaceSettings.description || ""}
+                      onChange={(e) => onSettingsChange({ ...workspaceSettings, description: e.target.value })}
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"
+                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Divider */}
-              <div className="border-t mb-8" style={{ borderColor: "#222222" }} />
-
-              {/* Other Settings Link */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowSettingsDialog(true)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/5 w-full text-left"
-                  style={{
-                    backgroundColor: "#1a1a1a",
-                    border: "1px solid #333333",
-                    color: "#ffffff",
-                    fontFamily: "system-ui, Inter, sans-serif",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M9 11.25C10.2426 11.25 11.25 10.2426 11.25 9C11.25 7.75736 10.2426 6.75 9 6.75C7.75736 6.75 6.75 7.75736 6.75 9C6.75 10.2426 7.75736 11.25 9 11.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              {/* Branding */}
+              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                    <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                    <circle cx="5.5" cy="5.5" r="1.5" fill="currentColor"/>
+                    <path d="M14 10L11 7L4 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <div className="flex-1">
-                    <div>All Workspace Settings</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Members, products, preferences, naming conventions</div>
+                  Branding
+                </h3>
+                <div className="grid grid-cols-3 gap-6">
+                  {/* Workspace Icon */}
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto rounded-xl flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}>
+                      {workspaceSettings.branding?.workspaceIcon ? (
+                        <img src={workspaceSettings.branding.workspaceIcon} alt="Icon" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl font-bold" style={{ color: "#F0FE00" }}>{workspaceSettings.name.charAt(0)}</span>
+                      )}
+                    </div>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#ffffff" }}>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Icon
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const res = await fetch("/api/upload/client", { method: "POST", body: JSON.stringify({ filename: file.name, contentType: file.type }), headers: { "Content-Type": "application/json" } }); if (res.ok) { const { url, uploadUrl } = await res.json(); await fetch(uploadUrl, { method: "PUT", body: file }); onSettingsChange({ ...workspaceSettings, branding: { ...workspaceSettings.branding, workspaceIcon: url } }); } } catch (error) { console.error("Upload failed:", error); } }} />
+                    </label>
+                    <div className="text-[10px] text-gray-500 mt-1">Square, max 2MB</div>
                   </div>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  {/* Wordmark */}
+                  <div className="text-center">
+                    <div className="w-32 h-16 mx-auto rounded-xl flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}>
+                      {workspaceSettings.branding?.wordmark ? (
+                        <img src={workspaceSettings.branding.wordmark} alt="Wordmark" className="max-w-full max-h-full object-contain" />
+                      ) : (
+                        <span className="text-xs text-gray-500">No wordmark</span>
+                      )}
+                    </div>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#ffffff" }}>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Wordmark
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const res = await fetch("/api/upload/client", { method: "POST", body: JSON.stringify({ filename: file.name, contentType: file.type }), headers: { "Content-Type": "application/json" } }); if (res.ok) { const { url, uploadUrl } = await res.json(); await fetch(uploadUrl, { method: "PUT", body: file }); onSettingsChange({ ...workspaceSettings, branding: { ...workspaceSettings.branding, wordmark: url } }); } } catch (error) { console.error("Upload failed:", error); } }} />
+                    </label>
+                    <div className="text-[10px] text-gray-500 mt-1">Horizontal, max 2MB</div>
+                  </div>
+                  {/* Profile */}
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}>
+                      {workspaceSettings.branding?.profilePicture ? (
+                        <img src={workspaceSettings.branding.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="12" r="5" stroke="#666666" strokeWidth="2"/><path d="M6 28C6 22.4772 10.4772 18 16 18C21.5228 18 26 22.4772 26 28" stroke="#666666" strokeWidth="2" strokeLinecap="round"/></svg>
+                      )}
+                    </div>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", color: "#ffffff" }}>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 10V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.3334 5.33333L8.00002 2L4.66669 5.33333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 2V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Photo
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; try { const res = await fetch("/api/upload/client", { method: "POST", body: JSON.stringify({ filename: file.name, contentType: file.type }), headers: { "Content-Type": "application/json" } }); if (res.ok) { const { url, uploadUrl } = await res.json(); await fetch(uploadUrl, { method: "PUT", body: file }); onSettingsChange({ ...workspaceSettings, branding: { ...workspaceSettings.branding, profilePicture: url } }); } } catch (error) { console.error("Upload failed:", error); } }} />
+                    </label>
+                    <div className="text-[10px] text-gray-500 mt-1">Square, max 2MB</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Team Members */}
+              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                    <path d="M11 14V12.6667C11 11.9594 10.719 11.2811 10.219 10.781C9.71896 10.281 9.04058 10 8.33333 10H3.33333C2.62609 10 1.94781 10.281 1.44772 10.781C0.947621 11.2811 0.666664 11.9594 0.666664 12.6667V14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="5.83333" cy="4.66667" r="2.66667" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M15.3333 14V12.6667C15.3329 12.0758 15.1362 11.5019 14.7742 11.0349C14.4122 10.5679 13.9054 10.2344 13.3333 10.0867" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M10.6667 2.08667C11.2403 2.23354 11.7487 2.56714 12.1118 3.03488C12.4748 3.50262 12.6719 4.07789 12.6719 4.67C12.6719 5.26211 12.4748 5.83738 12.1118 6.30512C11.7487 6.77286 11.2403 7.10646 10.6667 7.25333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                </button>
+                  Team Members
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {workspaceSettings.members.map((member) => (
+                    <div key={member.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white" style={{ backgroundColor: "#333333" }}>
+                        {member.initials}
+                      </div>
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{member.name}</span>
+                      <span className="text-xs text-gray-500">{member.role === "owner" ? "Owner" : member.role === "admin" ? "Admin" : member.role === "editor" ? "Editor" : "Viewer"}</span>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setShowSettingsDialog(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-white/10" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333", color: "#888888" }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3V11M3 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    Invite
+                  </button>
+                </div>
+              </div>
+
+              {/* Products */}
+              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                    <path d="M14 10V6C13.9997 5.76628 13.9405 5.53674 13.8278 5.33491C13.7152 5.13309 13.5528 4.96619 13.3556 4.85L8.66667 2.07222C8.46901 1.95578 8.24258 1.89448 8.01111 1.89448C7.77965 1.89448 7.55322 1.95578 7.35556 2.07222L2.66667 4.85C2.46946 4.96619 2.30708 5.13309 2.19444 5.33491C2.0818 5.53674 2.02251 5.76628 2.02222 6V10C2.02251 10.2337 2.0818 10.4633 2.19444 10.6651C2.30708 10.8669 2.46946 11.0338 2.66667 11.15L7.35556 13.9278C7.55322 14.0442 7.77965 14.1055 8.01111 14.1055C8.24258 14.1055 8.46901 14.0442 8.66667 13.9278L13.3556 11.15C13.5528 11.0338 13.7152 10.8669 13.8278 10.6651C13.9405 10.4633 13.9997 10.2337 14 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Products
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {workspaceSettings.products.map((product) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => {
+                        const updatedProducts = workspaceSettings.products.map(p => p.id === product.id ? { ...p, enabled: !p.enabled } : p);
+                        onSettingsChange({ ...workspaceSettings, products: updatedProducts });
+                      }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${product.enabled ? "ring-1 ring-white/20" : "opacity-50"}`}
+                      style={{ backgroundColor: "#1a1a1a" }}
+                    >
+                      <div className="w-3 h-3 rounded" style={{ backgroundColor: product.color }} />
+                      <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>{product.name}</span>
+                      <div className={`w-2 h-2 rounded-full ${product.enabled ? "bg-green-500" : "bg-gray-600"}`} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preferences */}
+              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+                <h3 className="text-white font-medium text-sm mb-4 flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                    <path d="M2.66667 4H13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2.66667 8H13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2.66667 12H13.3333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Preferences
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Default Product</label>
+                    <select
+                      value={workspaceSettings.preferences.defaultProduct}
+                      onChange={(e) => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, defaultProduct: e.target.value as any } })}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none"
+                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      {workspaceSettings.products.filter(p => p.enabled).map((product) => (
+                        <option key={product.id} value={product.id}>{product.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Default Status</label>
+                    <select
+                      value={workspaceSettings.preferences.defaultStatus}
+                      onChange={(e) => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, defaultStatus: e.target.value as any } })}
+                      className="w-full px-3 py-2 rounded-lg text-sm text-white focus:outline-none"
+                      style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333", fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="in-review">In Review</option>
+                      <option value="approved">Approved</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Auto-save</span>
+                    <button
+                      type="button"
+                      onClick={() => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, autoSave: !workspaceSettings.preferences.autoSave } })}
+                      className={`w-9 h-5 rounded-full transition-colors ${workspaceSettings.preferences.autoSave ? "bg-[#F0FE00]" : "bg-gray-600"}`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${workspaceSettings.preferences.autoSave ? "translate-x-4" : "translate-x-0.5"}`} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#1a1a1a" }}>
+                    <span className="text-sm text-white" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Show Grid</span>
+                    <button
+                      type="button"
+                      onClick={() => onSettingsChange({ ...workspaceSettings, preferences: { ...workspaceSettings.preferences, showGrid: !workspaceSettings.preferences.showGrid } })}
+                      className={`w-9 h-5 rounded-full transition-colors ${workspaceSettings.preferences.showGrid ? "bg-[#F0FE00]" : "bg-gray-600"}`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${workspaceSettings.preferences.showGrid ? "translate-x-4" : "translate-x-0.5"}`} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Naming Conventions - Link to Dialog for full editor */}
+              <div className="rounded-xl p-5" style={{ backgroundColor: "#141414", border: "1px solid #222222" }}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-white font-medium text-sm flex items-center gap-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                      <path d="M2 4H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 8H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 12H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Naming Conventions
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowSettingsDialog(true)}
+                    className="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    Edit
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </button>
+                </div>
+                <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: "#0a0a0a", border: "1px solid #222222" }}>
+                  <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Preview: </span>
+                  <span className="text-sm text-white font-mono">project_logo_v1<span className="text-gray-500">.fig</span></span>
+                </div>
               </div>
             </div>
           </div>
