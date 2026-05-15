@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
+import { upload } from "@vercel/blob/client";
 import {
   ReactFlowProvider,
   useNodesState,
@@ -1102,26 +1103,16 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         ));
 
         try {
-          // Use server-side upload (bypasses broken @vercel/blob/client library)
-          const formData = new FormData();
-          formData.append("file", file);
-
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
+          // Use client upload for direct-to-blob uploads (bypasses 4.5MB server limit)
+          const blob = await upload(file.name, file, {
+            access: "public",
+            handleUploadUrl: "/api/upload/client",
+            onUploadProgress: (progress) => {
+              setUploadProgress(prev => prev.map(p => 
+                p.id === uploadId ? { ...p, progress: Math.round(progress.percentage) } : p
+              ));
+            },
           });
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Upload failed with status ${response.status}`);
-          }
-
-          const result = await response.json();
-          
-          // Update progress to 95% after upload completes
-          setUploadProgress(prev => prev.map(p => 
-            p.id === uploadId ? { ...p, progress: 95 } : p
-          ));
 
           const isImage = extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
 
@@ -1129,12 +1120,12 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             fileName: file.name,
             extension: extension as FileExtension,
             uploadedFile: {
-              url: result.url,
-              pathname: result.pathname,
+              url: blob.url,
+              pathname: blob.pathname,
               size: file.size,
               uploadedAt: new Date().toISOString(),
             },
-            previewUrl: isImage ? result.url : undefined,
+            previewUrl: isImage ? blob.url : undefined,
           });
 
           // Mark as complete
