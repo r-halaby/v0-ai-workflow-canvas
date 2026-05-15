@@ -2,9 +2,9 @@
 
 import React, { useCallback, useRef, useMemo, useState, useEffect, createContext, useContext } from "react";
 
-// Context to share presentation mode state with nodes
-export const PresentationModeContext = createContext(false);
-export const usePresentationMode = () => useContext(PresentationModeContext);
+// Context to share which nodes are part of the presentation (have yellow borders)
+export const PresentationNodesContext = createContext<Set<string>>(new Set());
+export const usePresentationNodes = () => useContext(PresentationNodesContext);
 import {
   ReactFlow,
   Background,
@@ -472,6 +472,16 @@ const reactFlowInstance = useReactFlow();
     });
   }, [nodes, searchQuery]);
 
+  // Compute which nodes are part of the presentation (connected by presentation edges)
+  const presentationNodeIds = useMemo(() => {
+    const nodeIds = new Set<string>();
+    presentationEdges.forEach(edge => {
+      nodeIds.add(edge.source);
+      nodeIds.add(edge.target);
+    });
+    return nodeIds;
+  }, [presentationEdges]);
+
   // Combine regular edges with presentation edges
   const allEdges = useMemo(() => {
     const presentationEdgeIds = new Set(presentationEdges.map(e => e.id));
@@ -528,7 +538,7 @@ const reactFlowInstance = useReactFlow();
       onMouseMove={handleSelectionMove}
       onMouseUp={handleSelectionEnd}
     >
-      <PresentationModeContext.Provider value={presentationMode}>
+      <PresentationNodesContext.Provider value={presentationNodeIds}>
       <ReactFlow
         nodes={filteredNodes}
         edges={styledEdges}
@@ -627,7 +637,7 @@ onClick={(event) => {
           }}
         />
       </ReactFlow>
-      </PresentationModeContext.Provider>
+      </PresentationNodesContext.Provider>
 
       {/* Comment Pins Layer */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>

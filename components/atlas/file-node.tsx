@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { FileNodeData } from "@/lib/atlas-types";
 import { PRODUCT_COLORS } from "@/lib/atlas-types";
-import { usePresentationMode } from "./atlas-canvas";
+import { usePresentationNodes } from "./atlas-canvas";
 
 // Small inline SVG icons for file types
 const FileIcons: Record<string, React.ReactNode> = {
@@ -133,7 +133,8 @@ const DEFAULT_PREVIEWS: Record<string, string> = {
 
 export function FileNode({ id, data, selected }: NodeProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const presentationMode = usePresentationMode();
+  const presentationNodeIds = usePresentationNodes();
+  const isInPresentation = presentationNodeIds.has(id);
   const fileData = data as FileNodeData;
   
   const productColor = PRODUCT_COLORS[fileData.product] || "#666666";
@@ -170,7 +171,7 @@ export function FileNode({ id, data, selected }: NodeProps) {
         width: 220,
         transition: "all 0.2s ease",
         borderRadius: 12,
-        outline: selected ? "2px solid white" : (presentationMode ? "2px dashed #F0FE00" : "none"),
+        outline: selected ? "2px solid white" : (isInPresentation ? "2px dashed #F0FE00" : "none"),
         outlineOffset: 2,
       }}
     >
@@ -180,8 +181,8 @@ export function FileNode({ id, data, selected }: NodeProps) {
         position={Position.Left}
         className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
         style={{ 
-          background: presentationMode ? "#F0FE00" : "#1a1a1a", 
-          border: presentationMode ? "2px solid #F0FE00" : "2px solid #525252", 
+          background: isInPresentation ? "#F0FE00" : "#1a1a1a", 
+          border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252", 
           width: 12,
           height: 12,
         }}
@@ -359,8 +360,8 @@ export function FileNode({ id, data, selected }: NodeProps) {
         position={Position.Right}
         className="!opacity-0 group-hover:!opacity-100 transition-all !cursor-pointer"
         style={{ 
-          background: presentationMode ? "#F0FE00" : "#1a1a1a", 
-          border: presentationMode ? "2px solid #F0FE00" : "2px solid #525252", 
+          background: isInPresentation ? "#F0FE00" : "#1a1a1a", 
+          border: isInPresentation ? "2px solid #F0FE00" : "2px solid #525252", 
           width: 12,
           height: 12,
         }}
