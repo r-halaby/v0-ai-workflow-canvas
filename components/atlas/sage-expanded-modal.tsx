@@ -62,7 +62,7 @@ export function SageExpandedModal({
   }, [nodeId, nodePosition]);
 
   const { messages, sendMessage, status } = useChat({
-    id: `sage-expanded-${nodeId}`,
+    id: `sage-${nodeId}`, // Same ID as the node to share conversation state
     transport: new DefaultChatTransport({ api: "/api/sage" }),
     onToolCall: async ({ toolCall }) => {
       const args = toolCall.args as Record<string, unknown>;
@@ -152,16 +152,16 @@ export function SageExpandedModal({
 
   const getTitle = () => {
     switch (nodeType) {
-      case "sage-chatbot": return "Sage Assistant";
-      case "sage-overview": return "Project Overview";
-      case "sage-stakeholder": return "Stakeholder Analysis";
+      case "sageChatbot": return "Sage Assistant";
+      case "sageOverview": return "Project Overview";
+      case "stakeholder": return "Stakeholder Analysis";
       default: return "Sage";
     }
   };
 
   const getIcon = () => {
     switch (nodeType) {
-      case "sage-chatbot":
+      case "sageChatbot":
         return (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2">
             <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z" />
@@ -169,14 +169,14 @@ export function SageExpandedModal({
             <path d="M7 20.662V19c0-2.21 2.239-4 5-4s5 1.79 5 4v1.662" />
           </svg>
         );
-      case "sage-overview":
+      case "sageOverview":
         return (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2">
             <path d="M3 3v18h18" />
             <path d="M18 17l-5-5-4 4-3-3" />
           </svg>
         );
-      case "sage-stakeholder":
+      case "stakeholder":
         return (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0FE00" strokeWidth="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
