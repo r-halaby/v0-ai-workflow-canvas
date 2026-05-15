@@ -953,14 +953,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         ]);
       }
     } else {
-      // Exiting presentation mode - restore original nodes from groups
+      // Exiting presentation mode - restore original nodes and clear groups
       const groupNodes = nodes.filter(n => n.type === "presentationGroup");
       
       if (groupNodes.length > 0) {
-        // Collect all original nodes to restore and update stored group data
+        // Collect all original nodes to restore
         const nodesToRestore: AtlasNode[] = [];
         const groupNodeIds: string[] = [];
-        const updatedGroups: typeof presentationGroups = [];
         
         for (const groupNode of groupNodes) {
           groupNodeIds.push(groupNode.id);
@@ -971,16 +970,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             originalNodes?: Array<{ id: string; type: string; position: { x: number; y: number }; data: Record<string, unknown> }>;
           };
           
-          if (groupData.originalNodes && groupData.nodeIds) {
-            // Store updated group data (in case label was changed)
-            updatedGroups.push({
-              id: groupNode.id,
-              nodeIds: groupData.nodeIds,
-              label: groupData.label,
-              thumbnails: groupData.thumbnails || [],
-              originalNodes: groupData.originalNodes,
-            });
-            
+          if (groupData.originalNodes) {
             for (const original of groupData.originalNodes) {
               nodesToRestore.push({
                 id: original.id,
@@ -992,14 +982,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           }
         }
         
-        // Update stored groups with any label changes
-        setPresentationGroups(updatedGroups);
+        // Clear all presentation groups - they are dissolved when exiting
+        setPresentationGroups([]);
         
         // Remove group nodes and add back original nodes
         setNodes(nds => [
           ...nds.filter(n => !groupNodeIds.includes(n.id)),
           ...nodesToRestore,
         ]);
+      } else {
+        // No group nodes but might have stored groups - clear them too
+        setPresentationGroups([]);
       }
     }
   }, [nodes, setNodes, presentationGroups]);
