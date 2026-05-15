@@ -1,32 +1,13 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import type { SageChatbotNodeData, SageOverviewNodeData } from "@/lib/atlas-types";
+import type { UIMessage } from "@ai-sdk/react";
+
+import { getSageChatStore } from "./sage-chatbot-node";
 
 interface SageAction {
   action: string;
-  pills?: Array<{ label: string; color: string; index: number }>;
-  arrangement?: string;
-  title?: string;
-  content?: string;
-  projectType?: string;
   suggestion?: Array<{ label: string; color: string }>;
-}
-
-function getColorHex(colorName: string): string {
-  const colors: Record<string, string> = {
-    gray: "#e5e5e5",
-    blue: "#93c5fd",
-    green: "#86efac",
-    yellow: "#fde047",
-    orange: "#fdba74",
-    red: "#fca5a5",
-    purple: "#c4b5fd",
-    pink: "#f9a8d4",
-  };
-  return colors[colorName] || colorName;
 }
 
 interface SageExpandedModalProps {
@@ -34,8 +15,6 @@ interface SageExpandedModalProps {
   onClose: () => void;
   nodeId: string;
   nodeType: "sageChatbot" | "sageOverview" | "stakeholder";
-  nodeData: SageChatbotNodeData | SageOverviewNodeData;
-  nodePosition: { x: number; y: number };
 }
 
 export function SageExpandedModal({
@@ -43,58 +22,34 @@ export function SageExpandedModal({
   onClose,
   nodeId,
   nodeType,
-  nodeData,
-  nodePosition,
 }: SageExpandedModalProps) {
   const [inputValue, setInputValue] = useState("");
   const [pendingSuggestion, setPendingSuggestion] = useState<Array<{ label: string; color: string }> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Emit event for parent to handle actions
-  const emitSageAction = useCallback((action: SageAction) => {
-    window.dispatchEvent(new CustomEvent("sage:action", {
-      detail: {
-        action,
-        nodeId,
-        position: nodePosition,
-      },
-    }));
-  }, [nodeId, nodePosition]);
+  // Get shared chat state from the node's store
+  const [messages, setMessages] = useState<UIMessage[]>([]);
+  const [status, setStatus] = useState<string>("ready");
+  const sendMessageRef = useRef<((message: { text: string }) => Promise<void>) | null>(null);
 
-  const chatId = `sage-${nodeId}`;
-  console.log("[v0] SageExpandedModal using chatId:", chatId);
-  
-  const { messages, sendMessage, status } = useChat({
-    id: chatId, // Same ID as the node to share conversation state
-    transport: new DefaultChatTransport({ api: "/api/sage" }),
-    onToolCall: async ({ toolCall }) => {
-      const args = toolCall.args as Record<string, unknown>;
-      
-      if (toolCall.toolName === "createStatusPills") {
-        const pills = (args.pills as Array<{ label: string; color: string }>).map((pill, index) => ({
-          label: pill.label,
-          color: getColorHex(pill.color as string),
-          index,
-        }));
-        emitSageAction({
-          action: "createStatusPills",
-          pills,
-          arrangement: (args.arrangement as string) || "horizontal",
-        });
-      } else if (toolCall.toolName === "createTextNote") {
-        emitSageAction({
-          action: "createTextNote",
-          title: args.title as string,
-          content: args.content as string,
-        });
-      }
-    },
-  });
-
-  // Log messages for debugging
+  // Poll for updates from the shared store
   useEffect(() => {
-    console.log("[v0] SageExpandedModal messages:", messages.length, messages);
-  }, [messages]);
+    const updateFromStore = () => {
+      const store = getSageChatStore(nodeId);
+      if (store) {
+        setMessages(store.messages);
+        setStatus(store.status);
+        sendMessageRef.current = store.sendMessage;
+      }
+    };
+
+    // Initial load
+    updateFromStore();
+
+    // Poll for updates while modal is open
+    const interval = setInterval(updateFromStore, 100);
+    return () => clearInterval(interval);
+  }, [nodeId]);
 
   // Process tool results from messages to detect suggestions
   useEffect(() => {
@@ -126,28 +81,25 @@ export function SageExpandedModal({
       .join("");
   }, []);
 
-  const handleCreateFromSuggestion = useCallback(() => {
-    if (pendingSuggestion) {
-      emitSageAction({
-        action: "createStatusPills",
-        pills: pendingSuggestion.map((pill, index) => ({ ...pill, index })),
-        arrangement: "horizontal",
-      });
+  const handleCreateFromSuggestion = useCallback(async () => {
+    if (pendingSuggestion && sendMessageRef.current) {
+      // Send a confirmation message which will trigger the node to create pills
+      await sendMessageRef.current({ text: "Yes, add those statuses to my canvas" });
       setPendingSuggestion(null);
     }
-  }, [pendingSuggestion, emitSageAction]);
+  }, [pendingSuggestion]);
 
   const handleSend = useCallback(async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || !sendMessageRef.current) return;
     const messageToSend = inputValue;
     setInputValue("");
     try {
-      await sendMessage({ text: messageToSend });
+      await sendMessageRef.current({ text: messageToSend });
     } catch (error) {
       console.error("[v0] Error sending message:", error);
       setInputValue(messageToSend);
     }
-  }, [inputValue, isLoading, sendMessage]);
+  }, [inputValue, isLoading]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

@@ -1489,8 +1489,6 @@ presentationMode={presentationMode}
             onClose={() => setDetailModalNodeId(null)}
             nodeId={node.id}
             nodeType={node.type as "sageChatbot" | "sageOverview" | "stakeholder"}
-            nodeData={node.data}
-            nodePosition={node.position}
           />
         );
       })()}

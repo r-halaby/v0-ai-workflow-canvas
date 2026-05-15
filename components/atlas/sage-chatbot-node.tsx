@@ -1,10 +1,21 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { useChat } from "@ai-sdk/react";
+import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { SageChatbotNodeData } from "@/lib/atlas-types";
+
+// Global store for sharing chat state between node and modal
+const sageChatStores = new Map<string, {
+  messages: UIMessage[];
+  sendMessage: (message: { text: string }) => Promise<void>;
+  status: string;
+}>();
+
+export function getSageChatStore(nodeId: string) {
+  return sageChatStores.get(nodeId);
+}
 
 interface SageAction {
   action: string;
@@ -46,17 +57,13 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     }));
   }, [id, positionAbsoluteX, positionAbsoluteY]);
   
-  const chatId = `sage-${id}`;
-  console.log("[v0] SageChatbotNode using chatId:", chatId, "messages count:", "pending");
-  
   const { messages, sendMessage, status } = useChat({
-    id: chatId,
+    id: `sage-${id}`,
     transport: new DefaultChatTransport({ api: "/api/sage" }),
     onToolCall: async ({ toolCall }) => {
       const args = toolCall.args as Record<string, unknown>;
       
       if (toolCall.toolName === "createStatusPills") {
-        // createStatusPills is called - emit action with the pill configuration
         const pills = (args.pills as Array<{ label: string; color: string }>).map((pill, index) => ({
           label: pill.label,
           color: getColorHex(pill.color as string),
@@ -74,9 +81,16 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
           content: args.content as string,
         });
       }
-      // suggestWorkflow results are handled via the useEffect that processes message parts
     },
   });
+
+  // Store chat state in global store so modal can access it
+  useEffect(() => {
+    sageChatStores.set(id, { messages, sendMessage, status });
+    return () => {
+      // Don't delete on unmount - keep messages available for modal
+    };
+  }, [id, messages, sendMessage, status]);
   
   // Process tool results from messages to detect suggestions
   React.useEffect(() => {
