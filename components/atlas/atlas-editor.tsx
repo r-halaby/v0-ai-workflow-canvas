@@ -1394,7 +1394,7 @@ presentationMode={presentationMode}
   presentationMode={presentationMode}
   onPresentationModeChange={handlePresentationModeChange}
   onStartPresentation={handleStartPresentation}
-  presentationEdgeCount={presentationEdges.length}
+  presentationEdgeCount={new Set(presentationEdges.flatMap(e => [e.source, e.target])).size}
   />
 
         
