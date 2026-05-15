@@ -198,9 +198,8 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [expandedFilesProjects, setExpandedFilesProjects] = useState<Set<string>>(new Set());
   const [expandedFilesCanvases, setExpandedFilesCanvases] = useState<Set<string>>(new Set());
   const [showSageChat, setShowSageChat] = useState(false);
-  const [sageMessage, setSageMessage] = useState("");
+const [sageMessage, setSageMessage] = useState("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [settingsInitialTab, setSettingsInitialTab] = useState<"general" | "members" | "products" | "conventions">("general");
   const [frameworks, setFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
   const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
   const [viewingFramework, setViewingFramework] = useState<CanvasFramework | null>(null);
@@ -821,10 +820,7 @@ const deleteCanvas = (canvasId: string) => {
             {/* Member count */}
             <button
               type="button"
-              onClick={() => {
-                setSettingsInitialTab("members");
-                setShowSettingsDialog(true);
-              }}
+              onClick={() => setShowSettingsDialog(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
               style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
             >
@@ -838,10 +834,7 @@ const deleteCanvas = (canvasId: string) => {
             {/* Invite */}
             <button
               type="button"
-              onClick={() => {
-                setSettingsInitialTab("members");
-                setShowSettingsDialog(true);
-              }}
+              onClick={() => setShowSettingsDialog(true)}
               className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors hover:bg-white/10"
               style={{
                 backgroundColor: "#1a1a1a",
@@ -2849,7 +2842,6 @@ All Frameworks
         onClose={() => setShowSettingsDialog(false)}
         settings={workspaceSettings}
         onSettingsChange={onWorkspaceSettingsChange}
-        initialTab={settingsInitialTab}
       />
 
 {/* Framework Preview Modal */}
