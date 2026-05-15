@@ -109,14 +109,16 @@ export function CanvasSideToolbar({
 
       {/* Presentation Mode */}
       <div className="relative">
+        {/* Main presentation button */}
         <button
           type="button"
           onClick={() => {
             if (presentationMode) {
-              // If in build mode and has edges, show options
+              // If in build mode and has edges, start presentation
               if (presentationEdgeCount > 0) {
                 onStartPresentation();
               } else {
+                // No edges, just exit
                 onPresentationModeChange(false);
               }
             } else {
@@ -138,6 +140,21 @@ export function CanvasSideToolbar({
             <path d="M8 8L12 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </button>
+        
+        {/* Exit button when in presentation mode */}
+        {presentationMode && (
+          <button
+            type="button"
+            onClick={() => onPresentationModeChange(false)}
+            className="absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-[#121212] hover:scale-110 transition-transform"
+            style={{ backgroundColor: "#F0FE00" }}
+            title="Exit presentation builder"
+          >
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+              <path d="M6 2L2 6M2 2L6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        )}
         
         {/* Presentation edge count badge */}
         {presentationEdgeCount > 0 && presentationMode && (
