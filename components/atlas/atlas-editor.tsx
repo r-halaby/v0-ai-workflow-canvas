@@ -1023,8 +1023,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       
       const newNodes: AtlasNode[] = files.map((file, index) => {
         const label = file.fileName.replace(file.extension, "");
-        const previewImages = file.previewUrl ? [file.previewUrl] : undefined;
         const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
+        // Only use previewUrl for images - videos and other files should use default previews
+        const previewImages = isImage && file.previewUrl ? [file.previewUrl] : undefined;
         
         return {
           id: `file-${Date.now()}-${index}`,
@@ -1139,8 +1140,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         
         const newNodes: AtlasNode[] = uploadedResults.map((file, index) => {
           const label = file.fileName.replace(file.extension, "");
-          const previewImages = file.previewUrl ? [file.previewUrl] : undefined;
           const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
+          // Only use previewUrl for images - videos and other files should use default previews
+          const previewImages = isImage && file.previewUrl ? [file.previewUrl] : undefined;
           
           return {
             id: `file-${Date.now()}-${index}`,

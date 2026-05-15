@@ -230,28 +230,6 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
       >
         {/* Header buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-          {/* Generate Mockups button */}
-          <button
-            type="button"
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent("atlas:generate-mockup", {
-                detail: { nodeId: fileData.label, fileData }
-              }));
-            }}
-            className="px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors hover:bg-[#F0FE00]/20"
-            style={{ 
-              backgroundColor: "#F0FE0015", 
-              border: "1px solid #F0FE0040",
-              fontFamily: "system-ui, Inter, sans-serif"
-            }}
-            title="Generate Mockups"
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2L10 6L14 6.5L11 9.5L12 14L8 11.5L4 14L5 9.5L2 6.5L6 6L8 2Z" stroke="#F0FE00" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="text-xs font-medium" style={{ color: "#F0FE00" }}>Generate Mockups</span>
-          </button>
-          
           {/* Download button */}
           <button
             type="button"
@@ -298,6 +276,35 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
           >
             {fileData.label}
           </h2>
+
+          {/* Video Player - Only show for video files */}
+          {[".mp4", ".mov", ".avi", ".webm", ".mkv"].includes(fileData.fileExtension) && fileData.uploadedFile?.url && (
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              <div className="relative aspect-video">
+                <video
+                  src={fileData.uploadedFile.url}
+                  controls
+                  className="w-full h-full object-contain bg-black"
+                  style={{ maxHeight: "400px" }}
+                  playsInline
+                >
+                  <track kind="captions" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
+                <div className="flex items-center gap-2">
+                  <FileTypeIcon extension={fileData.fileExtension} />
+                  <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {fileData.fileName}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  {fileData.uploadedFile.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : ""}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Metadata Row */}
           <div className="grid grid-cols-4 gap-6 mb-8">
