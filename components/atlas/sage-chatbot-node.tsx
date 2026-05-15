@@ -46,8 +46,11 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     }));
   }, [id, positionAbsoluteX, positionAbsoluteY]);
   
+  const chatId = `sage-${id}`;
+  console.log("[v0] SageChatbotNode using chatId:", chatId, "messages count:", "pending");
+  
   const { messages, sendMessage, status } = useChat({
-    id: `sage-${id}`,
+    id: chatId,
     transport: new DefaultChatTransport({ api: "/api/sage" }),
     onToolCall: async ({ toolCall }) => {
       const args = toolCall.args as Record<string, unknown>;

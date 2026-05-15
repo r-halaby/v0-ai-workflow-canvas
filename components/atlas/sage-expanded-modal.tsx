@@ -61,8 +61,11 @@ export function SageExpandedModal({
     }));
   }, [nodeId, nodePosition]);
 
+  const chatId = `sage-${nodeId}`;
+  console.log("[v0] SageExpandedModal using chatId:", chatId);
+  
   const { messages, sendMessage, status } = useChat({
-    id: `sage-${nodeId}`, // Same ID as the node to share conversation state
+    id: chatId, // Same ID as the node to share conversation state
     transport: new DefaultChatTransport({ api: "/api/sage" }),
     onToolCall: async ({ toolCall }) => {
       const args = toolCall.args as Record<string, unknown>;
@@ -87,6 +90,11 @@ export function SageExpandedModal({
       }
     },
   });
+
+  // Log messages for debugging
+  useEffect(() => {
+    console.log("[v0] SageExpandedModal messages:", messages.length, messages);
+  }, [messages]);
 
   // Process tool results from messages to detect suggestions
   useEffect(() => {
