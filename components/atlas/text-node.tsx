@@ -234,25 +234,28 @@ export function TextNode({ id, data, selected }: NodeProps) {
             </button>
             {showColorPicker && (
               <div
-                className="absolute top-full left-0 mt-2 p-2 rounded-lg shadow-lg grid grid-cols-3 gap-1.5 z-50"
+                className="absolute top-full left-0 mt-2 p-3 rounded-lg shadow-lg z-50"
                 style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
               >
-                {TEXT_COLORS.map((color) => (
-                  <button
-                    key={color.value}
-                    type="button"
-                    onClick={() => {
-                      updateFormatting({ color: color.value });
-                      setShowColorPicker(false);
-                    }}
-                    className="w-7 h-7 rounded-full hover:scale-110 transition-transform"
-                    style={{
-                      backgroundColor: color.value,
-                      border: formatting.color === color.value ? "2px solid white" : "2px solid transparent",
-                    }}
-                    title={color.label}
-                  />
-                ))}
+                <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(3, 28px)" }}>
+                  {TEXT_COLORS.map((color) => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      onClick={() => {
+                        updateFormatting({ color: color.value });
+                        setShowColorPicker(false);
+                      }}
+                      className="w-7 h-7 rounded-full hover:scale-110 transition-transform flex-shrink-0"
+                      style={{
+                        backgroundColor: color.value,
+                        border: formatting.color === color.value ? "2px solid white" : "2px solid transparent",
+                        boxShadow: color.value === "#ffffff" ? "inset 0 0 0 1px rgba(0,0,0,0.1)" : "none",
+                      }}
+                      title={color.label}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
