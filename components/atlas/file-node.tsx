@@ -138,8 +138,9 @@ export function FileNode({ id, data, selected }: NodeProps) {
   const fileIcon = FileIcons[fileData.fileExtension] || FileIcons.default;
   const statusStyle = STATUS_BADGE_STYLES[fileData.status] || STATUS_BADGE_STYLES.draft;
   const statusLabel = STATUS_LABELS[fileData.status] || "Draft";
-  const taskCount = fileData.tasks?.length || 0;
-  const completedTasks = fileData.tasks?.filter(t => t.completed).length || 0;
+  const tasks = Array.isArray(fileData.tasks) ? fileData.tasks : [];
+  const taskCount = tasks.length;
+  const completedTasks = tasks.filter(t => t.completed).length;
 
   // File extensions that browsers cannot render as images (includes videos)
   const NON_RENDERABLE_EXTENSIONS = [".ai", ".psd", ".fig", ".sketch", ".xd", ".indd", ".pdf", ".mp4", ".mov", ".avi", ".webm", ".mkv"];
