@@ -1,10 +1,21 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { useChat } from "@ai-sdk/react";
+import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { SageChatbotNodeData } from "@/lib/atlas-types";
+
+// Global store for sharing chat state between node and modal
+const sageChatStores = new Map<string, {
+  messages: UIMessage[];
+  sendMessage: (message: { text: string }) => Promise<void>;
+  status: string;
+}>();
+
+export function getSageChatStore(nodeId: string) {
+  return sageChatStores.get(nodeId);
+}
 
 interface SageAction {
   action: string;
@@ -14,6 +25,20 @@ interface SageAction {
   content?: string;
   projectType?: string;
   suggestion?: Array<{ label: string; color: string }>;
+}
+
+function getColorHex(colorName: string): string {
+  const colors: Record<string, string> = {
+    gray: "#e5e5e5",
+    blue: "#93c5fd",
+    green: "#86efac",
+    yellow: "#fde047",
+    orange: "#fdba74",
+    red: "#fca5a5",
+    purple: "#c4b5fd",
+    pink: "#f9a8d4",
+  };
+  return colors[colorName] || colorName; // Return as-is if already hex
 }
 
 export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positionAbsoluteY }: NodeProps) {
@@ -36,20 +61,51 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     id: `sage-${id}`,
     transport: new DefaultChatTransport({ api: "/api/sage" }),
     onToolCall: async ({ toolCall }) => {
-      // Handle tool results from the AI
-      if (toolCall.dynamic) return; // Required for TypeScript type narrowing
+      const args = toolCall.args as Record<string, unknown>;
       
-      const result = toolCall.args as SageAction;
-      
-      if (result.action === "createStatusPills") {
-        emitSageAction(result);
-      } else if (result.action === "suggestWorkflow" && result.suggestion) {
-        setPendingSuggestion(result.suggestion);
-      } else if (result.action === "createTextNote") {
-        emitSageAction(result);
+      if (toolCall.toolName === "createStatusPills") {
+        const pills = (args.pills as Array<{ label: string; color: string }>).map((pill, index) => ({
+          label: pill.label,
+          color: getColorHex(pill.color as string),
+          index,
+        }));
+        emitSageAction({
+          action: "createStatusPills",
+          pills,
+          arrangement: (args.arrangement as string) || "horizontal",
+        });
+      } else if (toolCall.toolName === "createTextNote") {
+        emitSageAction({
+          action: "createTextNote",
+          title: args.title as string,
+          content: args.content as string,
+        });
       }
     },
   });
+
+  // Store chat state in global store so modal can access it
+  useEffect(() => {
+    sageChatStores.set(id, { messages, sendMessage, status });
+    return () => {
+      // Don't delete on unmount - keep messages available for modal
+    };
+  }, [id, messages, sendMessage, status]);
+  
+  // Process tool results from messages to detect suggestions
+  React.useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === "assistant" && lastMessage.parts) {
+      for (const part of lastMessage.parts) {
+        if (part.type === "tool-invocation" && part.toolInvocation?.state === "result") {
+          const result = part.toolInvocation.result as SageAction;
+          if (result?.action === "suggestWorkflow" && result.suggestion) {
+            setPendingSuggestion(result.suggestion);
+          }
+        }
+      }
+    }
+  }, [messages]);
   
   const isLoading = status === "streaming" || status === "submitted";
 
@@ -167,33 +223,46 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
           </div>
         )}
         
-        {/* Show pending suggestion with action button */}
+        {/* Show pending suggestion with action buttons */}
         {pendingSuggestion && (
-          <div className="mt-2 p-2 rounded-lg" style={{ backgroundColor: "#F0FE0015", border: "1px solid #F0FE0030" }}>
-            <div className="text-xs text-gray-400 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-              Suggested statuses:
+          <div className="mt-2 p-3 rounded-lg" style={{ backgroundColor: "#F0FE0015", border: "1px solid #F0FE0040" }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                Suggested Statuses
+              </div>
+              <button
+                onClick={() => setPendingSuggestion(null)}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
             </div>
-            <div className="flex flex-wrap gap-1 mb-2">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {pendingSuggestion.map((pill, i) => (
                 <span
                   key={i}
-                  className="px-2 py-0.5 rounded-full text-[10px] font-medium text-black"
-                  style={{ backgroundColor: pill.color }}
+                  className="px-2 py-1 rounded-full text-[10px] font-semibold"
+                  style={{ backgroundColor: pill.color, color: "#000" }}
                 >
                   {pill.label}
                 </span>
               ))}
             </div>
+            <div className="text-[10px] text-gray-400 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              Reply to modify, or click below to add to canvas
+            </div>
             <button
               onClick={handleCreateFromSuggestion}
-              className="w-full py-1.5 rounded text-xs font-medium transition-colors"
+              className="w-full py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
               style={{ 
                 backgroundColor: "#F0FE00", 
                 color: "#000",
                 fontFamily: "system-ui, Inter, sans-serif",
               }}
             >
-              Create these on canvas
+              Add to Canvas
             </button>
           </div>
         )}

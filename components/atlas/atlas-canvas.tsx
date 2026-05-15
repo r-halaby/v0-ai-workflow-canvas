@@ -539,7 +539,9 @@ const reactFlowInstance = useReactFlow();
           const target = event.target as HTMLElement;
           if (target.closest(".react-flow__handle")) return;
           
-          if (node.type === "file" && onNodeDoubleClick) {
+          // Handle file and sage nodes
+          const expandableTypes = ["file", "sageChatbot", "sageOverview", "stakeholder"];
+          if (expandableTypes.includes(node.type || "") && onNodeDoubleClick) {
             onNodeDoubleClick(node.id);
           }
         }}

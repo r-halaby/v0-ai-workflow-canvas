@@ -1,4 +1,4 @@
-import { streamText, tool, convertToModelMessages } from "ai";
+import { streamText, tool, convertToModelMessages, stepCountIs } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
@@ -8,14 +8,13 @@ export const maxDuration = 30;
 const sageTools = {
   createStatusPills: tool({
     description: "Create one or more status pill nodes on the canvas. Use this when the user asks you to create statuses, labels, tags, or workflow stages for their project.",
-    parameters: z.object({
+    inputSchema: z.object({
       pills: z.array(z.object({
         label: z.string().describe("The text label for the status pill"),
         color: z.enum(["gray", "blue", "green", "yellow", "orange", "red", "purple", "pink"])
           .describe("The color of the status pill"),
       })).describe("Array of status pills to create"),
       arrangement: z.enum(["horizontal", "vertical", "grid"])
-        .default("horizontal")
         .describe("How to arrange the pills on the canvas"),
     }),
     execute: async ({ pills, arrangement }) => {
@@ -27,13 +26,13 @@ const sageTools = {
           color: getColorHex(pill.color),
           index,
         })),
-        arrangement,
+        arrangement: arrangement || "horizontal",
       };
     },
   }),
   createTextNote: tool({
     description: "Create a text note on the canvas. Use this for adding descriptions, instructions, or documentation.",
-    parameters: z.object({
+    inputSchema: z.object({
       title: z.string().describe("The title of the note"),
       content: z.string().describe("The content/body of the note"),
     }),
@@ -47,7 +46,7 @@ const sageTools = {
   }),
   suggestWorkflow: tool({
     description: "Suggest a workflow or set of statuses for a project type. Use this when the user asks for suggestions or recommendations for organizing their project.",
-    parameters: z.object({
+    inputSchema: z.object({
       projectType: z.string().describe("The type of project (e.g., branding, web design, video production)"),
     }),
     execute: async ({ projectType }) => {
@@ -122,24 +121,36 @@ export async function POST(req: Request) {
     const { messages, context } = await req.json();
 
     // Build system prompt based on context
-    let systemPrompt = `You are Sage, an AI assistant for Atlas - a creative asset management and workflow platform. 
-You help users organize their creative projects, provide insights on their work, and answer questions about their assets.
+    let systemPrompt = `You are Sage, an AI assistant for Atlas - a creative asset management and workflow platform.
 
-Your personality:
-- Helpful and knowledgeable about creative workflows
-- Concise but thorough in explanations
-- Professional yet friendly tone
-- Focus on actionable advice
-- PROACTIVE: When users ask about creating statuses, workflows, or organizing their project, USE YOUR TOOLS to actually create elements on the canvas
+You are concise, professional, and friendly. You help users organize their creative projects.
 
-Your capabilities:
-- You can CREATE status pills on the canvas using the createStatusPills tool
-- You can CREATE text notes using the createTextNote tool
-- You can SUGGEST workflows for different project types using the suggestWorkflow tool
+## When user asks for statuses/workflow suggestions:
+1. DESCRIBE the statuses you recommend in your text response
+2. Ask if they'd like to modify any or add them to the canvas
 
-When a user asks you to create statuses for a project (like "create statuses for my branding project"), you should:
-1. First use suggestWorkflow to get appropriate statuses for that project type
-2. Then offer to create them, and if the user agrees (or if they explicitly asked to create), use createStatusPills to add them to the canvas
+## When user CONFIRMS (says "yes", "ok", "add them", "let's go", "looks good", "perfect", "sounds good"):
+IMMEDIATELY call the createStatusPills tool with the statuses you suggested. Do NOT describe them again or ask for confirmation again.
+
+## Example conversation:
+User: "create statuses for my branding project"
+You: "For your branding project, I suggest these statuses:
+- Discovery (blue) - Initial research and client meetings
+- Concepts (yellow) - Exploring creative directions  
+- Refinement (orange) - Iterating on chosen concept
+- Final (green) - Approved deliverables
+- Delivered (gray) - Project complete
+
+Would you like to modify any of these, or shall I add them to your canvas?"
+
+User: "ok lets add them"
+You: [CALL createStatusPills tool with: Discovery/blue, Concepts/yellow, Refinement/orange, Final/green, Delivered/gray]
+Then say: "Done! I've added the status pills to your canvas."
+
+## CRITICAL RULES:
+- When user confirms, you MUST call createStatusPills immediately
+- Do NOT ask "would you like me to add them?" after they already said yes
+- Use appropriate colors: blue for early stages, yellow/orange for middle, green for completion, gray for done/archived
 
 Current user: ${userId}
 `;
@@ -161,7 +172,7 @@ Current user: ${userId}
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: sageTools,
-      maxSteps: 3,
+      stopWhen: stepCountIs(5),
     });
 
     return result.toUIMessageStreamResponse();
