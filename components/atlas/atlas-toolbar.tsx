@@ -6,10 +6,10 @@ interface AtlasToolbarProps {
   canvasName?: string;
   onBack?: () => void;
   onCanvasNameChange?: (name: string) => void;
-  onSaveAsTemplate?: () => void;
+  onSaveAsFramework?: () => void;
 }
 
-export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange, onSaveAsTemplate }: AtlasToolbarProps) {
+export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange, onSaveAsFramework }: AtlasToolbarProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(canvasName || "");
   const [showMenu, setShowMenu] = useState(false);
@@ -118,7 +118,7 @@ export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange, onSaveAsT
                 <button
                   type="button"
                   onClick={() => {
-                    onSaveAsTemplate?.();
+                    onSaveAsFramework?.();
                     setShowMenu(false);
                   }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
@@ -128,7 +128,7 @@ export function AtlasToolbar({ canvasName, onBack, onCanvasNameChange, onSaveAsT
                     <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
                     <path d="M5.5 8H10.5M8 5.5V10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
-                  Save as Template
+                  Save as Framework
                 </button>
                 <div className="h-px mx-2 my-1" style={{ backgroundColor: "#333333" }} />
                 <button

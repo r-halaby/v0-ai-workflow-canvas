@@ -12,7 +12,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasTemplate } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -24,13 +24,13 @@ import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { MockupGeneratorDialog } from "./mockup-generator-dialog";
 import { MoodboardExpanded } from "./moodboard-expanded";
 import { PresentationViewer } from "./presentation-viewer";
-import { SaveTemplateDialog } from "./save-template-dialog";
+import { SaveFrameworkDialog } from "./save-template-dialog";
 import { AddNodeMenu } from "./add-node-menu";
 
 interface AtlasEditorProps {
   canvas: Canvas;
   onCanvasChange: (canvas: Canvas) => void;
-  onSaveTemplate?: (template: CanvasTemplate) => void;
+  onSaveFramework?: (framework: CanvasFramework) => void;
   onBack: () => void;
   workspaceSettings: WorkspaceSettings;
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
@@ -144,7 +144,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [selectedNode, setSelectedNode] = useState<AtlasNode | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
+  const [showSaveFrameworkDialog, setShowSaveFrameworkDialog] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Array<{
     id: string;
     fileName: string;
@@ -1303,7 +1303,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         canvasName={canvas.name}
         onBack={onBack}
         onCanvasNameChange={(name) => onCanvasChange({ ...canvas, name })}
-        onSaveAsTemplate={() => setShowSaveTemplateDialog(true)}
+        onSaveAsFramework={() => setShowSaveFrameworkDialog(true)}
       />
 
       <div className="flex-1 flex overflow-hidden relative" style={{ marginTop: 0 }}>
@@ -1428,21 +1428,21 @@ presentationMode={presentationMode}
         onClose={() => setShowSettingsDialog(false)}
         settings={workspaceSettings}
         onSettingsChange={onWorkspaceSettingsChange}
-        onMakeTemplate={() => {
+        onMakeFramework={() => {
           setShowSettingsDialog(false);
-          setShowSaveTemplateDialog(true);
+          setShowSaveFrameworkDialog(true);
         }}
       />
 
-      {/* Save as Template Dialog */}
-      <SaveTemplateDialog
-        open={showSaveTemplateDialog}
-        onClose={() => setShowSaveTemplateDialog(false)}
+      {/* Save as Framework Dialog */}
+      <SaveFrameworkDialog
+        open={showSaveFrameworkDialog}
+        onClose={() => setShowSaveFrameworkDialog(false)}
         canvas={canvas}
         currentUser={workspaceSettings.members[0]}
-        onSaveTemplate={(template) => {
-          onSaveTemplate?.(template);
-          setShowSaveTemplateDialog(false);
+        onSaveFramework={(framework) => {
+          onSaveFramework?.(framework);
+          setShowSaveFrameworkDialog(false);
         }}
       />
 

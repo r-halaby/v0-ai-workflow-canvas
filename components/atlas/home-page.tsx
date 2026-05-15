@@ -4,9 +4,9 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasTemplate, TemplateCategory, Project } from "@/lib/atlas-types";
+import type { Canvas, CanvasVisibility, WorkspaceSettings, AtlasNode, CanvasFramework, FrameworkCategory, Project } from "@/lib/atlas-types";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
-import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_TEMPLATES, TEMPLATE_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
+import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_FRAMEWORKS, FRAMEWORK_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
 import { CanvasPreview } from "./canvas-preview";
@@ -201,9 +201,9 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [sageMessage, setSageMessage] = useState("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<"general" | "members" | "products" | "conventions">("general");
-  const [templates, setTemplates] = useState<CanvasTemplate[]>(SAMPLE_TEMPLATES);
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | "all">("all");
-  const [viewingTemplate, setViewingTemplate] = useState<CanvasTemplate | null>(null);
+  const [frameworks, setFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
+  const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
+  const [viewingFramework, setViewingFramework] = useState<CanvasFramework | null>(null);
   const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
@@ -386,33 +386,33 @@ const deleteCanvas = (canvasId: string) => {
     setCanvasToDelete(null);
   };
 
-  const handleUpvoteTemplate = (templateId: string) => {
-    setTemplates(prev => prev.map(t => {
-      if (t.id !== templateId) return t;
-      const hasUpvoted = t.upvotedBy.includes(currentUserId);
+  const handleUpvoteFramework = (frameworkId: string) => {
+    setFrameworks(prev => prev.map(f => {
+      if (f.id !== frameworkId) return f;
+      const hasUpvoted = f.upvotedBy.includes(currentUserId);
       return {
-        ...t,
-        upvotes: hasUpvoted ? t.upvotes - 1 : t.upvotes + 1,
+        ...f,
+        upvotes: hasUpvoted ? f.upvotes - 1 : f.upvotes + 1,
         upvotedBy: hasUpvoted 
-          ? t.upvotedBy.filter(id => id !== currentUserId)
-          : [...t.upvotedBy, currentUserId],
+          ? f.upvotedBy.filter(id => id !== currentUserId)
+          : [...f.upvotedBy, currentUserId],
       };
     }));
   };
 
-  const handleOpenTemplate = (template: CanvasTemplate) => {
-    setViewingTemplate(template);
+  const handleOpenFramework = (framework: CanvasFramework) => {
+    setViewingFramework(framework);
   };
 
-  const handleDuplicateTemplate = (template: CanvasTemplate) => {
-    // Create a new canvas from the template
+  const handleDuplicateFramework = (framework: CanvasFramework) => {
+    // Create a new canvas from the framework
     const newCanvas: Canvas = {
       id: `canvas-${Date.now()}`,
-      name: `${template.name} (Copy)`,
-      description: template.description,
-      previewImage: template.previewImage,
-      nodes: template.nodes,
-      edges: template.edges,
+      name: `${framework.name} (Copy)`,
+      description: framework.description,
+      previewImage: framework.previewImage,
+      nodes: framework.nodes,
+      edges: framework.edges,
       comments: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -422,25 +422,25 @@ const deleteCanvas = (canvasId: string) => {
     };
     onCanvasesChange([...canvases, newCanvas]);
     // Increment download count
-    setTemplates(prev => prev.map(t => 
-      t.id === template.id ? { ...t, downloads: t.downloads + 1 } : t
+    setFrameworks(prev => prev.map(f => 
+      f.id === framework.id ? { ...f, downloads: f.downloads + 1 } : f
     ));
-    setViewingTemplate(null);
+    setViewingFramework(null);
     onOpenCanvas(newCanvas.id);
   };
 
-  const filteredTemplates = useMemo(() => {
-    return templates.filter(t => {
-      if (selectedCategory !== "all" && t.category !== selectedCategory) return false;
+  const filteredFrameworks = useMemo(() => {
+    return frameworks.filter(f => {
+      if (selectedCategory !== "all" && f.category !== selectedCategory) return false;
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        return t.name.toLowerCase().includes(query) || 
-               t.description.toLowerCase().includes(query) ||
-               t.tags.some(tag => tag.includes(query));
+        return f.name.toLowerCase().includes(query) || 
+               f.description.toLowerCase().includes(query) ||
+               f.tags.some(tag => tag.includes(query));
       }
       return true;
     }).sort((a, b) => b.upvotes - a.upvotes);
-  }, [templates, selectedCategory, searchQuery]);
+  }, [frameworks, selectedCategory, searchQuery]);
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -929,7 +929,7 @@ const deleteCanvas = (canvasId: string) => {
         </div>
 
         {activeView === "community" ? (
-          /* Community Templates View */
+          /* Community Frameworks View */
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Category Filter Bar */}
             <div className="px-6 py-4 flex items-center gap-3 overflow-x-auto" style={{ borderBottom: "1px solid #222222" }}>
@@ -947,9 +947,9 @@ const deleteCanvas = (canvasId: string) => {
                   fontFamily: "system-ui, Inter, sans-serif",
                 }}
               >
-                All Templates
-              </button>
-              {(Object.keys(TEMPLATE_CATEGORIES) as TemplateCategory[]).map((cat) => (
+All Frameworks
+                </button>
+                {(Object.keys(FRAMEWORK_CATEGORIES) as FrameworkCategory[]).map((cat) => (
                 <button
                   key={cat}
                   type="button"
@@ -965,14 +965,14 @@ const deleteCanvas = (canvasId: string) => {
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                 >
-                  {TEMPLATE_CATEGORIES[cat].label}
+                  {FRAMEWORK_CATEGORIES[cat].label}
                 </button>
               ))}
             </div>
 
-            {/* Templates Grid */}
-            <div className="flex-1 overflow-y-auto p-6">
-              {filteredTemplates.length === 0 ? (
+{/* Frameworks Grid */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  {filteredFrameworks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <div
                     className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center"
@@ -984,22 +984,22 @@ const deleteCanvas = (canvasId: string) => {
                     </svg>
                   </div>
                   <p className="text-gray-400 text-sm" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                    No templates found
+                    No frameworks found
                   </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {filteredTemplates.map((template) => {
-                    const hasUpvoted = template.upvotedBy.includes(currentUserId);
+                  {filteredFrameworks.map((framework) => {
+                    const hasUpvoted = framework.upvotedBy.includes(currentUserId);
                     return (
                       <div
-                        key={template.id}
+                        key={framework.id}
                         className="group rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
                         style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
                       >
                         {/* Preview */}
                         <div className="relative aspect-[16/10] overflow-hidden">
-                          <CanvasPreview nodes={template.nodes} />
+                          <CanvasPreview nodes={framework.nodes} />
                           {/* Category Badge */}
                           <div
                             className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-medium"
@@ -1009,7 +1009,7 @@ const deleteCanvas = (canvasId: string) => {
                               fontFamily: "system-ui, Inter, sans-serif",
                             }}
                           >
-                            {TEMPLATE_CATEGORIES[template.category].label}
+                            {FRAMEWORK_CATEGORIES[framework.category].label}
                           </div>
                         </div>
 
@@ -1019,42 +1019,42 @@ const deleteCanvas = (canvasId: string) => {
                             className="text-white font-semibold text-base mb-1 truncate"
                             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                           >
-                            {template.name}
+{framework.name}
                           </h3>
                           <p
-                            className="text-gray-400 text-sm mb-3 line-clamp-2"
+                            className="text-gray-400 text-sm line-clamp-2"
                             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                           >
-                            {template.description}
+                            {framework.description}
                           </p>
 
                           {/* Creator */}
                           <div className="flex items-center gap-2 mb-3">
-                            {template.createdBy.avatar ? (
-                              <img
-                                src={template.createdBy.avatar}
-                                alt={template.createdBy.name}
-                                className="w-6 h-6 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium"
-                                style={{ backgroundColor: "#333333", color: "#ffffff" }}
-                              >
-                                {template.createdBy.initials}
-                              </div>
-                            )}
+                            <div
+                              className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden"
+                              style={{ backgroundColor: "#E2FF66" }}
+                            >
+                              {framework.createdBy.avatar ? (
+                                <img
+                                  src={framework.createdBy.avatar}
+                                  alt={framework.createdBy.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-xs font-medium" style={{ color: "#121212" }}>
+                                  {framework.createdBy.initials}
+                                </span>
+                              )}
+                            </div>
                             <span
                               className="text-sm text-gray-400"
                               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                             >
-                              {template.createdBy.name}
+                              {framework.createdBy.name}
                             </span>
                           </div>
-
-                          {/* Tags */}
-                          <div className="flex flex-wrap gap-1.5 mb-4">
-                            {template.tags.slice(0, 3).map((tag) => (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {framework.tags.slice(0, 3).map((tag) => (
                               <span
                                 key={tag}
                                 className="px-2 py-0.5 rounded text-xs"
@@ -1075,7 +1075,7 @@ const deleteCanvas = (canvasId: string) => {
                               {/* Upvote Button */}
                               <button
                                 type="button"
-                                onClick={() => handleUpvoteTemplate(template.id)}
+                                onClick={() => handleUpvoteFramework(framework.id)}
                                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors ${
                                   hasUpvoted 
                                     ? "text-[#F0FE00]" 
@@ -1096,7 +1096,7 @@ const deleteCanvas = (canvasId: string) => {
                                     strokeLinejoin="round"
                                   />
                                 </svg>
-                                {template.upvotes}
+                                {framework.upvotes}
                               </button>
 
                               {/* Downloads */}
@@ -1108,14 +1108,14 @@ const deleteCanvas = (canvasId: string) => {
                                   <path d="M7 2V9M7 9L4 6M7 9L10 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                                   <path d="M2 11H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                                 </svg>
-                                {template.downloads}
+                                {framework.downloads}
                               </div>
                             </div>
 
-                            {/* Open Template Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenTemplate(template)}
+{/* Open Framework Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenFramework(framework)}
                               className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90"
                               style={{
                                 backgroundColor: "#F0FE00",
@@ -2590,13 +2590,13 @@ const deleteCanvas = (canvasId: string) => {
         initialTab={settingsInitialTab}
       />
 
-      {/* Template Preview Modal */}
-      {viewingTemplate && (
+{/* Framework Preview Modal */}
+        {viewingFramework && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            onClick={() => setViewingTemplate(null)}
+            onClick={() => setViewingFramework(null)}
           />
           
           {/* Modal */}
@@ -2607,10 +2607,10 @@ const deleteCanvas = (canvasId: string) => {
             {/* Header */}
             <div className="flex items-center justify-between p-5" style={{ borderBottom: "1px solid #222222" }}>
               <div className="flex items-center gap-4">
-                {viewingTemplate.createdBy.avatar ? (
+                {viewingFramework.createdBy.avatar ? (
                   <img
-                    src={viewingTemplate.createdBy.avatar}
-                    alt={viewingTemplate.createdBy.name}
+                    src={viewingFramework.createdBy.avatar}
+                    alt={viewingFramework.createdBy.name}
                     className="w-10 h-10 rounded-full object-cover"
                   />
                 ) : (
@@ -2618,7 +2618,7 @@ const deleteCanvas = (canvasId: string) => {
                     className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium"
                     style={{ backgroundColor: "#333333", color: "#ffffff" }}
                   >
-                    {viewingTemplate.createdBy.initials}
+                    {viewingFramework.createdBy.initials}
                   </div>
                 )}
                 <div>
@@ -2626,19 +2626,19 @@ const deleteCanvas = (canvasId: string) => {
                     className="text-white font-semibold text-lg"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    {viewingTemplate.name}
+                    {viewingFramework.name}
                   </h2>
                   <p
                     className="text-gray-400 text-sm"
                     style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                   >
-                    by {viewingTemplate.createdBy.name}
+                    by {viewingFramework.createdBy.name}
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setViewingTemplate(null)}
+                onClick={() => setViewingFramework(null)}
                 className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2649,7 +2649,7 @@ const deleteCanvas = (canvasId: string) => {
 
 {/* Preview Area */}
               <div className="flex-1 overflow-hidden relative min-h-[300px]">
-                <CanvasPreview nodes={viewingTemplate.nodes} />
+                <CanvasPreview nodes={viewingFramework.nodes} />
 
               {/* Duplicate Banner */}
               <div 
@@ -2674,7 +2674,7 @@ const deleteCanvas = (canvasId: string) => {
                         className="text-white text-sm font-medium"
                         style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                       >
-                        Want to edit this template?
+                        Want to edit this framework?
                       </p>
                       <p
                         className="text-gray-400 text-xs"
@@ -2686,7 +2686,7 @@ const deleteCanvas = (canvasId: string) => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleDuplicateTemplate(viewingTemplate)}
+                    onClick={() => handleDuplicateFramework(viewingFramework)}
                     className="px-4 py-2.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90 flex items-center gap-2 flex-shrink-0"
                     style={{
                       backgroundColor: "#F0FE00",
@@ -2709,12 +2709,12 @@ const deleteCanvas = (canvasId: string) => {
                 className="text-gray-300 text-sm mb-4"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                {viewingTemplate.description}
+                {viewingFramework.description}
               </p>
               
               <div className="flex items-center justify-between">
                 <div className="flex flex-wrap gap-2">
-                  {viewingTemplate.tags.map((tag) => (
+                  {viewingFramework.tags.map((tag) => (
                     <span
                       key={tag}
                       className="px-2.5 py-1 rounded-lg text-xs"
@@ -2744,7 +2744,7 @@ const deleteCanvas = (canvasId: string) => {
                         strokeLinejoin="round"
                       />
                     </svg>
-                    {viewingTemplate.upvotes} upvotes
+                    {viewingFramework.upvotes} upvotes
                   </div>
                   <div
                     className="flex items-center gap-1.5 text-sm text-gray-400"
@@ -2754,7 +2754,7 @@ const deleteCanvas = (canvasId: string) => {
                       <path d="M7 2V9M7 9L4 6M7 9L10 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M2 11H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                     </svg>
-                    {viewingTemplate.downloads} downloads
+                    {viewingFramework.downloads} downloads
                   </div>
                 </div>
               </div>

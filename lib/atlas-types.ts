@@ -728,19 +728,19 @@ export const INITIAL_COMMENTS: CanvasComment[] = [
   },
 ];
 
-// Template category types
-export type TemplateCategory = "workflow" | "branding" | "marketing" | "social" | "presentation" | "other";
+// Framework category types
+export type FrameworkCategory = "workflow" | "branding" | "marketing" | "social" | "presentation" | "other";
 
-// Template visibility type
-export type TemplateVisibility = "private" | "workspace" | "community";
+// Framework visibility type
+export type FrameworkVisibility = "private" | "workspace" | "community";
 
-// Template interface
-export interface CanvasTemplate {
+// Framework interface
+export interface CanvasFramework {
   id: string;
   name: string;
   description: string;
-  category: TemplateCategory;
-  visibility: TemplateVisibility;
+  category: FrameworkCategory;
+  visibility: FrameworkVisibility;
   previewImage?: string;
   nodes: AtlasNode[];
   edges: Edge[];
@@ -752,8 +752,8 @@ export interface CanvasTemplate {
   tags: string[];
 }
 
-// Template categories with labels
-export const TEMPLATE_CATEGORIES: Record<TemplateCategory, { label: string; icon: string }> = {
+// Framework categories with labels
+export const FRAMEWORK_CATEGORIES: Record<FrameworkCategory, { label: string; icon: string }> = {
   workflow: { label: "Workflow", icon: "flow" },
   branding: { label: "Branding", icon: "palette" },
   marketing: { label: "Marketing", icon: "megaphone" },
@@ -762,10 +762,10 @@ export const TEMPLATE_CATEGORIES: Record<TemplateCategory, { label: string; icon
   other: { label: "Other", icon: "grid" },
 };
 
-// Sample community templates
-export const SAMPLE_TEMPLATES: CanvasTemplate[] = [
+// Sample community frameworks
+export const SAMPLE_FRAMEWORKS: CanvasFramework[] = [
   {
-    id: "template-1",
+    id: "framework-1",
     name: "Brand Identity Kit",
     description: "Complete brand identity workflow with logo variations, color palettes, and typography guidelines.",
     category: "branding",
@@ -787,9 +787,9 @@ export const SAMPLE_TEMPLATES: CanvasTemplate[] = [
     tags: ["branding", "identity", "logo", "colors"],
   },
   {
-    id: "template-2",
+    id: "framework-2",
     name: "Social Campaign Planner",
-    description: "Plan and organize your social media campaigns with this visual workflow template.",
+    description: "Plan and organize your social media campaigns with this visual workflow framework.",
     category: "social",
     previewImage: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=400&fit=crop",
     nodes: [],
@@ -809,7 +809,7 @@ export const SAMPLE_TEMPLATES: CanvasTemplate[] = [
     tags: ["social", "campaign", "planning", "content"],
   },
   {
-    id: "template-3",
+    id: "framework-3",
     name: "Product Launch Workflow",
     description: "End-to-end product launch planning with milestones, assets, and team coordination.",
     category: "workflow",
@@ -831,9 +831,9 @@ export const SAMPLE_TEMPLATES: CanvasTemplate[] = [
     tags: ["launch", "product", "workflow", "planning"],
   },
   {
-    id: "template-4",
-    name: "Marketing Brief Template",
-    description: "Structured creative brief template for marketing campaigns with stakeholder sections.",
+    id: "framework-4",
+    name: "Marketing Brief Framework",
+    description: "Structured creative brief framework for marketing campaigns with stakeholder sections.",
     category: "marketing",
     previewImage: "https://images.unsplash.com/photo-1553028826-f4804a6dba3b?w=600&h=400&fit=crop",
     nodes: [],
@@ -853,7 +853,7 @@ export const SAMPLE_TEMPLATES: CanvasTemplate[] = [
     tags: ["brief", "marketing", "creative", "campaign"],
   },
   {
-    id: "template-5",
+    id: "framework-5",
     name: "Pitch Deck Builder",
     description: "Visual canvas for building compelling pitch decks with story flow and slide planning.",
     category: "presentation",
