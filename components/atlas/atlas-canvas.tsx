@@ -577,7 +577,7 @@ onClick={(event) => {
         nodesConnectable
         elementsSelectable
         selectionOnDrag={false}
-        panOnScroll={false}
+        panOnScroll={true}
         fitView
         fitViewOptions={{
           padding: 0.3,
