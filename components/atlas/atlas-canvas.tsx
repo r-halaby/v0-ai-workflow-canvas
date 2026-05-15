@@ -9,6 +9,7 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  useViewport,
   type Connection,
   type Edge,
   type NodeTypes,
@@ -137,8 +138,9 @@ export function AtlasCanvas({
   const isDraggingConnectionRef = useRef(false);
   const [isDraggingConnection, setIsDraggingConnection] = useState(false);
   const [draggingFromNodeId, setDraggingFromNodeId] = useState<string | null>(null);
-  const reactFlowInstance = useReactFlow();
-
+const reactFlowInstance = useReactFlow();
+  const viewport = useViewport();
+  
   // Listen for handle click events from nodes
   useEffect(() => {
     const handleHandleClick = (e: CustomEvent<{ nodeId: string; handleType: string; position: { x: number; y: number } }>) => {
@@ -559,18 +561,17 @@ export function AtlasCanvas({
           };
           onDoubleClick(canvasPosition, screenPosition);
         }}
-        onClick={(event) => {
-          if (!commentMode) return;
-          const bounds = reactFlowWrapper.current?.getBoundingClientRect();
-          if (!bounds) return;
-          const target = event.target as HTMLElement;
-          if (target.closest(".react-flow__node") || target.closest("[data-comment-id]")) return;
-          const position = {
-            x: event.clientX - bounds.left,
-            y: event.clientY - bounds.top,
-          };
-          onCanvasClick(position);
-        }}
+onClick={(event) => {
+        if (!commentMode) return;
+        const target = event.target as HTMLElement;
+        if (target.closest(".react-flow__node") || target.closest("[data-comment-id]")) return;
+        // Convert screen coordinates to flow coordinates
+        const flowPosition = reactFlowInstance.screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        onCanvasClick(flowPosition);
+      }}
         nodeTypes={nodeTypes}
         nodesDraggable
         nodesConnectable
@@ -623,22 +624,61 @@ export function AtlasCanvas({
       {/* Comment Pins Layer */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
         <div className="relative w-full h-full">
-          {comments.map((comment) => (
-            <div key={comment.id} className="pointer-events-auto" style={{ position: "absolute", left: comment.position.x, top: comment.position.y }}>
-              <CommentPin
-                comment={comment}
-                isSelected={selectedCommentId === comment.id}
-                onSelect={() => onCommentSelect(comment.id)}
-                onUpdate={onCommentUpdate}
-                onDelete={() => onCommentDelete(comment.id)}
-                currentUser={currentUser}
-              />
-            </div>
-          ))}
+          {comments.map((comment) => {
+            // Calculate position - if attached to a node, use node position + offset
+            let basePosition = comment.position;
+            
+            if (comment.nodeId) {
+              const attachedNode = nodes.find(n => n.id === comment.nodeId);
+              if (attachedNode) {
+                // Position relative to the node
+                basePosition = {
+                  x: attachedNode.position.x + (comment.position.x || 0),
+                  y: attachedNode.position.y + (comment.position.y || 0),
+                };
+              }
+            }
+            
+            // Transform from flow coordinates to screen coordinates using viewport
+            const screenX = basePosition.x * viewport.zoom + viewport.x;
+            const screenY = basePosition.y * viewport.zoom + viewport.y;
+            
+            return (
+              <div 
+                key={comment.id} 
+                className="pointer-events-auto" 
+                style={{ 
+                  position: "absolute", 
+                  left: screenX, 
+                  top: screenY,
+                  transform: `scale(${Math.min(1, viewport.zoom + 0.2)})`,
+                  transformOrigin: "center center",
+                }}
+              >
+                <CommentPin
+                  comment={comment}
+                  isSelected={selectedCommentId === comment.id}
+                  onSelect={() => onCommentSelect(comment.id)}
+                  onUpdate={onCommentUpdate}
+                  onDelete={() => onCommentDelete(comment.id)}
+                  currentUser={currentUser}
+                />
+              </div>
+            );
+          })}
 
           {/* New comment input */}
           {newCommentPosition && (
-            <div className="pointer-events-auto" style={{ position: "absolute", left: newCommentPosition.x, top: newCommentPosition.y }}>
+            <div 
+              className="pointer-events-auto" 
+              style={{ 
+                position: "absolute", 
+                left: newCommentPosition.x * viewport.zoom + viewport.x, 
+                top: newCommentPosition.y * viewport.zoom + viewport.y,
+                transform: `scale(${Math.min(1, viewport.zoom + 0.2)})`,
+                transformOrigin: "center center",
+              }}
+            >
               <NewCommentInput
                 position={{ x: 0, y: 0 }}
                 onSubmit={(content) => onCommentAdd(content, newCommentPosition)}
