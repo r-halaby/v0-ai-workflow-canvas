@@ -48,7 +48,7 @@ interface WorkspaceSettingsProps {
   settings: WorkspaceSettings;
   onSettingsChange: (settings: WorkspaceSettings) => void;
   initialTab?: SettingsTab;
-  onMakeTemplate?: () => void;
+  onMakeFramework?: () => void;
 }
 
 const ROLE_LABELS: Record<MemberRole, string> = {
@@ -64,7 +64,7 @@ export function WorkspaceSettingsDialog({
   settings,
   onSettingsChange,
   initialTab = "general",
-  onMakeTemplate,
+  onMakeFramework,
 }: WorkspaceSettingsProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   
@@ -417,7 +417,7 @@ export function WorkspaceSettingsDialog({
                 </div>
 
                 {/* Canvas Actions */}
-                {onMakeTemplate && (
+                {onMakeFramework && (
                   <div>
                     <h3
                       className="text-white font-semibold text-base mb-4"
@@ -428,7 +428,7 @@ export function WorkspaceSettingsDialog({
                     <div className="space-y-3">
                       <button
                         type="button"
-                        onClick={onMakeTemplate}
+                        onClick={onMakeFramework}
                         className="w-full flex items-center gap-4 px-4 py-3.5 rounded-lg transition-colors hover:bg-white/5 text-left"
                         style={{
                           backgroundColor: "#1a1a1a",
@@ -449,13 +449,13 @@ export function WorkspaceSettingsDialog({
                             className="text-sm font-medium text-white"
                             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                           >
-                            Make Template
+                            Make Framework
                           </div>
                           <div
                             className="text-xs text-gray-500"
                             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                           >
-                            Save this canvas as a reusable template
+                            Save this canvas as a reusable framework
                           </div>
                         </div>
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-500">

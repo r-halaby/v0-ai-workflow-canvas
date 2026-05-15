@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import type { Canvas, CanvasTemplate, TemplateCategory, WorkspaceMember } from "@/lib/atlas-types";
-import { TEMPLATE_CATEGORIES } from "@/lib/atlas-types";
+import type { Canvas, CanvasFramework, FrameworkCategory, WorkspaceMember } from "@/lib/atlas-types";
+import { FRAMEWORK_CATEGORIES } from "@/lib/atlas-types";
 
-type TemplateVisibility = "private" | "workspace" | "community";
+type FrameworkVisibility = "private" | "workspace" | "community";
 
-const VISIBILITY_OPTIONS: { id: TemplateVisibility; label: string; description: string; icon: React.ReactNode }[] = [
+const VISIBILITY_OPTIONS: { id: FrameworkVisibility; label: string; description: string; icon: React.ReactNode }[] = [
   {
     id: "private",
     label: "Just Me",
@@ -45,25 +45,25 @@ const VISIBILITY_OPTIONS: { id: TemplateVisibility; label: string; description: 
   },
 ];
 
-interface SaveTemplateDialogProps {
+interface SaveFrameworkDialogProps {
   open: boolean;
   onClose: () => void;
   canvas: Canvas;
   currentUser: WorkspaceMember;
-  onSaveTemplate: (template: CanvasTemplate) => void;
+  onSaveFramework: (framework: CanvasFramework) => void;
 }
 
-export function SaveTemplateDialog({
+export function SaveFrameworkDialog({
   open,
   onClose,
   canvas,
   currentUser,
-  onSaveTemplate,
-}: SaveTemplateDialogProps) {
+  onSaveFramework,
+}: SaveFrameworkDialogProps) {
   const [name, setName] = useState(canvas.name);
   const [description, setDescription] = useState(canvas.description || "");
-  const [category, setCategory] = useState<TemplateCategory>("workflow");
-  const [visibility, setVisibility] = useState<TemplateVisibility>("private");
+  const [category, setCategory] = useState<FrameworkCategory>("workflow");
+  const [visibility, setVisibility] = useState<FrameworkVisibility>("private");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -94,8 +94,8 @@ export function SaveTemplateDialog({
 
     setIsSaving(true);
 
-    const template: CanvasTemplate = {
-      id: `template-${Date.now()}`,
+    const framework: CanvasFramework = {
+      id: `framework-${Date.now()}`,
       name: name.trim(),
       description: description.trim(),
       category,
@@ -114,7 +114,7 @@ export function SaveTemplateDialog({
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    onSaveTemplate(template);
+    onSaveFramework(framework);
     setIsSaving(false);
     onClose();
   };
@@ -149,13 +149,13 @@ export function SaveTemplateDialog({
                 className="text-lg font-semibold text-white"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                Save as Template
+                Save as Framework
               </h2>
               <p
                 className="text-sm text-gray-400"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
               >
-                Create a reusable template from this canvas
+                Create a reusable framework from this canvas
               </p>
             </div>
           </div>
@@ -178,13 +178,13 @@ export function SaveTemplateDialog({
               className="block text-sm font-medium text-gray-300 mb-2"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              Template Name
+              Framework Name
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter template name"
+              placeholder="Enter framework name"
               className="w-full px-4 py-2.5 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/50"
               style={{
                 backgroundColor: "#252525",
@@ -205,7 +205,7 @@ export function SaveTemplateDialog({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what this template is for..."
+              placeholder="Describe what this framework is for..."
               rows={3}
               className="w-full px-4 py-2.5 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F0FE00]/50 resize-none"
               style={{
@@ -222,7 +222,7 @@ export function SaveTemplateDialog({
               className="block text-sm font-medium text-gray-300 mb-2"
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
-              Who can access this template?
+              Who can access this framework?
             </label>
             <div className="space-y-2">
               {VISIBILITY_OPTIONS.map((option) => (
@@ -281,7 +281,7 @@ export function SaveTemplateDialog({
               Category
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {(Object.keys(TEMPLATE_CATEGORIES) as TemplateCategory[]).map((cat) => (
+              {(Object.keys(FRAMEWORK_CATEGORIES) as FrameworkCategory[]).map((cat) => (
                 <button
                   key={cat}
                   type="button"
@@ -297,7 +297,7 @@ export function SaveTemplateDialog({
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                 >
-                  {TEMPLATE_CATEGORIES[cat].label}
+                  {FRAMEWORK_CATEGORIES[cat].label}
                 </button>
               ))}
             </div>
@@ -386,10 +386,10 @@ export function SaveTemplateDialog({
               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             >
               {visibility === "community" 
-                ? `Your template will include ${canvas.nodes.length} nodes and be attributed to you in the community.`
+                ? `Your framework will include ${canvas.nodes.length} nodes and be attributed to you in the community.`
                 : visibility === "workspace"
-                ? `Your template will include ${canvas.nodes.length} nodes and be available to your workspace members.`
-                : `Your template will include ${canvas.nodes.length} nodes and be saved to your private templates.`
+                ? `Your framework will include ${canvas.nodes.length} nodes and be available to your workspace members.`
+                : `Your framework will include ${canvas.nodes.length} nodes and be saved to your private frameworks.`
               }
             </p>
           </div>
@@ -432,7 +432,7 @@ export function SaveTemplateDialog({
                   <path d="M14 10V13C14 13.552 13.552 14 13 14H3C2.448 14 2 13.552 2 13V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                {visibility === "community" ? "Publish Template" : "Save Template"}
+                {visibility === "community" ? "Publish Framework" : "Save Framework"}
               </>
             )}
           </button>
