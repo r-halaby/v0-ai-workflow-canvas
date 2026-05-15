@@ -50,6 +50,7 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     id: `sage-${id}`,
     transport: new DefaultChatTransport({ api: "/api/sage" }),
     onToolCall: async ({ toolCall }) => {
+      console.log("[v0] Sage onToolCall:", toolCall.toolName, toolCall.args);
       const args = toolCall.args as Record<string, unknown>;
       
       if (toolCall.toolName === "createStatusPills") {
@@ -78,12 +79,18 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
   // Process tool results from messages to detect suggestions
   React.useEffect(() => {
     const lastMessage = messages[messages.length - 1];
+    console.log("[v0] Sage messages changed, last:", lastMessage?.role, lastMessage?.parts?.map((p: { type: string }) => p.type));
     if (lastMessage?.role === "assistant" && lastMessage.parts) {
       for (const part of lastMessage.parts) {
-        if (part.type === "tool-invocation" && part.toolInvocation?.state === "result") {
-          const result = part.toolInvocation.result as SageAction;
-          if (result?.action === "suggestWorkflow" && result.suggestion) {
-            setPendingSuggestion(result.suggestion);
+        if (part.type === "tool-invocation") {
+          console.log("[v0] Found tool-invocation:", part.toolInvocation?.toolName, part.toolInvocation?.state);
+          if (part.toolInvocation?.state === "result") {
+            const result = part.toolInvocation.result as SageAction;
+            console.log("[v0] Tool result:", result);
+            if (result?.action === "suggestWorkflow" && result.suggestion) {
+              console.log("[v0] Setting pending suggestion:", result.suggestion);
+              setPendingSuggestion(result.suggestion);
+            }
           }
         }
       }
