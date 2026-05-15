@@ -112,8 +112,8 @@ importers:
         specifier: ^2.105.4
         version: 2.105.4
       '@vercel/blob':
-        specifier: ^2.3.3
-        version: 2.3.3
+        specifier: 2.3.4-c199a29-20260515173441
+        version: 2.3.4-c199a29-20260515173441
       '@xyflow/react':
         specifier: ^12.10.0
         version: 12.10.0(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1537,8 +1537,8 @@ packages:
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
 
-  '@vercel/blob@2.3.3':
-    resolution: {integrity: sha512-MtD7VLo6hU07eHR7bmk5SIMD290q574UaNYTe46qeyRT+hWrCy26CoAqfd7PnIefVXvRehRZBzukxuTO9iGTVg==}
+  '@vercel/blob@2.3.4-c199a29-20260515173441':
+    resolution: {integrity: sha512-gZjRAqlSc/o1BohJYqaZZ983fs/BeIBN+bZFNhX/XuCo0SF8ovcq5+ZUjBCWpnUhQ+GdED5Ae2EJ28QvQSzu4g==}
     engines: {node: '>=20.0.0'}
 
   '@vercel/oidc@3.1.0':
@@ -3966,7 +3966,7 @@ snapshots:
 
   '@ungap/structured-clone@1.3.0': {}
 
-  '@vercel/blob@2.3.3':
+  '@vercel/blob@2.3.4-c199a29-20260515173441':
     dependencies:
       async-retry: 1.3.3
       is-buffer: 2.0.5

@@ -1103,9 +1103,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         ));
 
         try {
-          // Use client upload for direct-to-blob uploads (bypasses 4MB API limit)
+          // Use client upload for direct-to-blob uploads (bypasses 4.5MB server limit)
           const blob = await upload(file.name, file, {
-            access: "private",
+            access: "public",
             handleUploadUrl: "/api/upload/client",
             onUploadProgress: (progress) => {
               setUploadProgress(prev => prev.map(p => 
@@ -1115,18 +1115,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           });
 
           const isImage = extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
-          const servedUrl = `/api/file?pathname=${encodeURIComponent(blob.pathname)}`;
 
           uploadedResults.push({
             fileName: file.name,
             extension: extension as FileExtension,
             uploadedFile: {
-              url: servedUrl,
+              url: blob.url,
               pathname: blob.pathname,
               size: file.size,
               uploadedAt: new Date().toISOString(),
             },
-            previewUrl: isImage ? servedUrl : undefined,
+            previewUrl: isImage ? blob.url : undefined,
           });
 
           // Mark as complete

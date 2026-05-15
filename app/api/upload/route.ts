@@ -56,11 +56,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Vercel Blob (private store)
+    // Upload to Vercel Blob (public store)
     const userPrefix = user?.id || "anonymous";
     const contentType = EXTENSION_TO_MIME[extension] || file.type || "application/octet-stream";
     const blob = await put(`atlas/${userPrefix}/${Date.now()}-${fileName}`, file, {
-      access: "private",
+      access: "public",
       contentType,
     });
 

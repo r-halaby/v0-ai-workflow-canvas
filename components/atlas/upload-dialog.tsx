@@ -177,20 +177,19 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
           idx === i ? { ...f, status: "complete" as const, progress: 100, result } : f
         ));
 
-        // For private blobs, use the /api/file route to serve files
+        // For public blobs, use the direct URL
         const isImage = result.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
-        const servedUrl = `/api/file?pathname=${encodeURIComponent(result.pathname)}`;
         
         uploadedResults.push({
           fileName: result.fileName,
           extension: result.extension as FileExtension,
           uploadedFile: {
-            url: servedUrl, // Use the file serving route for private blobs
+            url: result.url, // Public blobs are directly accessible
             pathname: result.pathname,
             size: result.size,
             uploadedAt: result.uploadedAt,
           },
-          previewUrl: isImage ? servedUrl : undefined,
+          previewUrl: isImage ? result.url : undefined,
         });
       } catch (error) {
         setFiles(prev => prev.map((f, idx) => 
