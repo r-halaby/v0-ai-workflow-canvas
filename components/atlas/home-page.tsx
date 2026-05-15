@@ -1709,11 +1709,48 @@ const deleteCanvas = (canvasId: string) => {
 
                   {/* Info */}
                   <div className="p-3">
-                    <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      {canvas.name}
+                    <div className="flex items-center justify-between">
+                      <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {canvas.name}
+                      </div>
+                      {/* Collaborator Avatars */}
+                      {canvas.collaborators && canvas.collaborators.length > 0 && (
+                        <div className="flex -space-x-1.5 ml-2 flex-shrink-0">
+                          {canvas.collaborators.slice(0, 3).map((collaborator) => (
+                            <div
+                              key={collaborator.id}
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]"
+                              style={{
+                                backgroundColor: collaborator.avatar ? "transparent" : "#333333",
+                                color: "#ffffff",
+                                fontFamily: "system-ui, Inter, sans-serif",
+                              }}
+                              title={collaborator.name}
+                            >
+                              {collaborator.avatar ? (
+                                <img src={collaborator.avatar} alt={collaborator.name} className="w-full h-full rounded-full object-cover" />
+                              ) : (
+                                collaborator.initials
+                              )}
+                            </div>
+                          ))}
+                          {canvas.collaborators.length > 3 && (
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]"
+                              style={{
+                                backgroundColor: "#252525",
+                                color: "#888888",
+                                fontFamily: "system-ui, Inter, sans-serif",
+                              }}
+                            >
+                              +{canvas.collaborators.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-gray-500 text-xs mt-0.5" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      Edited {formatDate(canvas.updatedAt)} by {canvas.createdBy.name.split(" ")[0]} {canvas.createdBy.name.split(" ")[1]?.charAt(0)}
+                    <div className="text-gray-500 text-xs mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      {formatDate(canvas.updatedAt)}
                     </div>
                   </div>
                 </div>
@@ -1803,11 +1840,48 @@ const deleteCanvas = (canvasId: string) => {
 
                   {/* Info */}
                   <div className="p-3">
-                    <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      {canvas.name}
+                    <div className="flex items-center justify-between">
+                      <div className="text-white font-medium text-sm truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {canvas.name}
+                      </div>
+                      {/* Collaborator Avatars */}
+                      {canvas.collaborators && canvas.collaborators.length > 0 && (
+                        <div className="flex -space-x-1.5 ml-2 flex-shrink-0">
+                          {canvas.collaborators.slice(0, 3).map((collaborator) => (
+                            <div
+                              key={collaborator.id}
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]"
+                              style={{
+                                backgroundColor: collaborator.avatar ? "transparent" : "#333333",
+                                color: "#ffffff",
+                                fontFamily: "system-ui, Inter, sans-serif",
+                              }}
+                              title={collaborator.name}
+                            >
+                              {collaborator.avatar ? (
+                                <img src={collaborator.avatar} alt={collaborator.name} className="w-full h-full rounded-full object-cover" />
+                              ) : (
+                                collaborator.initials
+                              )}
+                            </div>
+                          ))}
+                          {canvas.collaborators.length > 3 && (
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-medium ring-1 ring-[#1a1a1a]"
+                              style={{
+                                backgroundColor: "#252525",
+                                color: "#888888",
+                                fontFamily: "system-ui, Inter, sans-serif",
+                              }}
+                            >
+                              +{canvas.collaborators.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="text-gray-500 text-xs mt-1" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      Edited {formatDate(canvas.updatedAt)} by {canvas.createdBy.name.split(" ")[0]} {canvas.createdBy.name.split(" ")[1]?.charAt(0)}
+                      {formatDate(canvas.updatedAt)}
                     </div>
                   </div>
                 </div>
