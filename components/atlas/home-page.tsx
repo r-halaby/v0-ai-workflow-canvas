@@ -1499,19 +1499,19 @@ const deleteCanvas = (canvasId: string) => {
                     
                     {/* Ribbon squares */}
                     <div className="flex gap-1 pt-6">
-                      {/* Week 1 - mostly smooth */}
+                      {/* Week 1 - mostly smooth (past - dimmed) */}
                       {[...Array(7)].map((_, i) => (
                         <div
                           key={`w1-${i}`}
-                          className="flex-1 h-8 rounded"
+                          className="flex-1 h-8 rounded opacity-40"
                           style={{ backgroundColor: i < 5 ? "#4ADE80" : i === 5 ? "#FCD34D" : "#FB923C" }}
                         />
                       ))}
-                      {/* Week 2 - mixed */}
+                      {/* Week 2 - mixed (past - dimmed) */}
                       {[...Array(7)].map((_, i) => (
                         <div
                           key={`w2-${i}`}
-                          className="flex-1 h-8 rounded relative"
+                          className="flex-1 h-8 rounded relative opacity-40"
                           style={{ backgroundColor: i < 2 ? "#FCD34D" : i < 4 ? "#FB923C" : i === 4 ? "#F87171" : "#FB923C" }}
                         >
                           {i === 2 && (
@@ -1529,7 +1529,7 @@ const deleteCanvas = (canvasId: string) => {
                       {[...Array(7)].map((_, i) => (
                         <div
                           key={`w3-${i}`}
-                          className={`flex-1 h-8 rounded relative ${i >= 4 ? "opacity-40" : ""}`}
+                          className={`flex-1 h-8 rounded relative ${i !== 3 ? "opacity-40" : "ring-2 ring-white ring-offset-1 ring-offset-[#141414]"}`}
                           style={{ backgroundColor: i < 2 ? "#FB923C" : i === 2 ? "#FCD34D" : i === 3 ? "#4ADE80" : "#FCD34D" }}
                         >
                           {i === 3 && (
