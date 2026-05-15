@@ -34,9 +34,15 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
         onNodesChange={onNodesChange}
         nodeTypes={nodeTypes}
         fitView
+        fitViewOptions={{
+          padding: 0.3,
+          maxZoom: 1,
+        }}
         minZoom={0.1}
-        maxZoom={1.5}
-        defaultViewport={{ x: 50, y: 50, zoom: 0.6 }}
+        maxZoom={4}
+        panOnDrag
+        zoomOnScroll
+        zoomOnPinch
         proOptions={{ hideAttribution: true }}
       >
         <Background color="#1a1a1a" gap={20} />

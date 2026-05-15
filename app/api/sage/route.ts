@@ -1,4 +1,4 @@
-import { streamText, tool } from "ai";
+import { streamText, tool, convertToModelMessages } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
@@ -159,12 +159,12 @@ Current user: ${userId}
     const result = streamText({
       model: "anthropic/claude-sonnet-4-20250514",
       system: systemPrompt,
-      messages,
+      messages: await convertToModelMessages(messages),
       tools: sageTools,
       maxSteps: 3,
     });
 
-    return result.toDataStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("Sage API error:", error);
     return new Response(

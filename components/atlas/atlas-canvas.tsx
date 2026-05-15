@@ -580,10 +580,12 @@ export function AtlasCanvas({
         fitView
         fitViewOptions={{
           padding: 0.3,
-          maxZoom: 0.85,
+          maxZoom: 1,
         }}
         snapToGrid
         snapGrid={[16, 16]}
+        minZoom={0.1}
+        maxZoom={4}
         defaultEdgeOptions={{
           type: "default",
           style: { strokeWidth: 2, stroke: "#52525b", strokeDasharray: "5 5" },

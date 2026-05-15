@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import type { SageChatbotNodeData } from "@/lib/atlas-types";
 
 interface SageAction {
@@ -31,16 +32,13 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     }));
   }, [id, positionAbsoluteX, positionAbsoluteY]);
   
-  const { messages, append, isLoading } = useChat({
-    api: "/api/sage",
+  const { messages, sendMessage, status } = useChat({
     id: `sage-${id}`,
-    initialMessages: nodeData.messages?.map(m => ({
-      id: m.id,
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })) || [],
+    transport: new DefaultChatTransport({ api: "/api/sage" }),
     onToolCall: async ({ toolCall }) => {
       // Handle tool results from the AI
+      if (toolCall.dynamic) return; // Required for TypeScript type narrowing
+      
       const result = toolCall.args as SageAction;
       
       if (result.action === "createStatusPills") {
@@ -52,6 +50,17 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
       }
     },
   });
+  
+  const isLoading = status === "streaming" || status === "submitted";
+
+  // Helper to extract text from UIMessage parts (AI SDK 6 format)
+  const getMessageText = useCallback((msg: typeof messages[0]): string => {
+    if (!msg.parts || !Array.isArray(msg.parts)) return "";
+    return msg.parts
+      .filter((p): p is { type: "text"; text: string } => p.type === "text")
+      .map((p) => p.text)
+      .join("");
+  }, []);
 
   // Handle creating pills from a suggestion
   const handleCreateFromSuggestion = useCallback(() => {
@@ -65,17 +74,33 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
     }
   }, [pendingSuggestion, emitSageAction]);
 
-  const handleSend = useCallback(() => {
-    if (!inputValue.trim() || isLoading) return;
-    append({ role: "user", content: inputValue });
+  const handleSend = useCallback(async () => {
+    if (!inputValue.trim() || isLoading) {
+      return;
+    }
+    const messageToSend = inputValue;
     setInputValue("");
-  }, [inputValue, isLoading, append]);
+    try {
+      // In AI SDK 6, sendMessage takes { text } not { content }
+      await sendMessage({ text: messageToSend });
+    } catch (error) {
+      console.error("[v0] Error sending message:", error);
+      setInputValue(messageToSend); // Restore input on error
+    }
+  }, [inputValue, isLoading, sendMessage]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    e.stopPropagation();
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
+  }, [handleSend]);
+
+  const handleButtonClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    handleSend();
   }, [handleSend]);
 
   return (
@@ -111,22 +136,26 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
       {/* Messages */}
       <div className="p-2 space-y-2 max-h-[180px] overflow-y-auto">
         {messages.length > 0 ? (
-          messages.slice(-4).map((msg) => (
-            <div
-              key={msg.id}
-              className={`text-xs px-2 py-1.5 rounded-lg ${
-                msg.role === "user"
-                  ? "bg-white/5 text-gray-300 ml-4"
-                  : "text-gray-400 mr-4"
-              }`}
-              style={{
-                backgroundColor: msg.role === "assistant" ? "#F0FE0010" : undefined,
-                fontFamily: "system-ui, Inter, sans-serif",
-              }}
-            >
-              {msg.content.length > 120 ? msg.content.slice(0, 120) + "..." : msg.content}
-            </div>
-          ))
+          messages.slice(-4).map((msg) => {
+            const text = getMessageText(msg);
+            if (!text) return null;
+            return (
+              <div
+                key={msg.id}
+                className={`text-xs px-2 py-1.5 rounded-lg ${
+                  msg.role === "user"
+                    ? "bg-white/5 text-gray-300 ml-4"
+                    : "text-gray-400 mr-4"
+                }`}
+                style={{
+                  backgroundColor: msg.role === "assistant" ? "#F0FE0010" : undefined,
+                  fontFamily: "system-ui, Inter, sans-serif",
+                }}
+              >
+                {text.length > 120 ? text.slice(0, 120) + "..." : text}
+              </div>
+            );
+          })
         ) : (
           <div className="text-xs text-gray-500 text-center py-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
             Ask Sage to create statuses, suggest workflows, or help organize your project
@@ -171,20 +200,26 @@ export function SageChatbotNode({ id, data, selected, positionAbsoluteX, positio
       </div>
 
       {/* Input */}
-      <div className="p-2 border-t" style={{ borderColor: "#F0FE0020" }}>
+      <div className="p-2 border-t nodrag" style={{ borderColor: "#F0FE0020" }}>
         <div className="flex items-center gap-2">
           <input
             type="text"
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => {
+              e.stopPropagation();
+              setInputValue(e.target.value);
+            }}
             onKeyDown={handleKeyDown}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             placeholder="Ask Sage..."
-            className="flex-1 bg-white/5 text-xs text-white placeholder-gray-500 px-2 py-1.5 rounded-md outline-none"
+            className="flex-1 bg-white/5 text-xs text-white placeholder-gray-500 px-2 py-1.5 rounded-md outline-none nowheel nopan"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
             disabled={isLoading}
           />
           <button
-            onClick={handleSend}
+            type="button"
+            onClick={handleButtonClick}
             disabled={isLoading || !inputValue.trim()}
             className="p-1.5 rounded-md hover:bg-white/10 transition-colors disabled:opacity-50"
             style={{ color: "#F0FE00" }}
