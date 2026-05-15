@@ -9,6 +9,7 @@ import { WorkspaceSettingsDialog } from "./workspace-settings";
 import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_TEMPLATES, TEMPLATE_CATEGORIES, PROJECT_COLORS } from "@/lib/atlas-types";
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
+import { CanvasPreview } from "./canvas-preview";
 import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "favorites" | "workspace" | "private";
@@ -995,22 +996,9 @@ const deleteCanvas = (canvasId: string) => {
                         className="group rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
                         style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
                       >
-                        {/* Preview Image */}
+                        {/* Preview */}
                         <div className="relative aspect-[16/10] overflow-hidden">
-                          {template.previewImage ? (
-                            <img
-                              src={template.previewImage}
-                              alt={template.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#1a1a1a" }}>
-                              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="8" y="8" width="32" height="32" rx="4" stroke="#333333" strokeWidth="2"/>
-                                <path d="M16 24H32M24 16V32" stroke="#333333" strokeWidth="2" strokeLinecap="round"/>
-                              </svg>
-                            </div>
-                          )}
+                          <CanvasPreview nodes={template.nodes} />
                           {/* Category Badge */}
                           <div
                             className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-medium"
@@ -1685,27 +1673,9 @@ const deleteCanvas = (canvasId: string) => {
                   style={{ backgroundColor: "#1a1a1a" }}
                   onClick={() => onOpenCanvas(canvas.id)}
                 >
-                  {/* Preview Image */}
+                  {/* Canvas Preview */}
                   <div className="aspect-[16/10] overflow-hidden relative">
-                    {canvas.previewImage ? (
-                      <img
-                        src={canvas.previewImage}
-                        alt={canvas.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{ backgroundColor: "#252525" }}
-                      >
-                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect x="8" y="8" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
-                          <rect x="26" y="8" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
-                          <rect x="8" y="26" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
-                          <rect x="26" y="26" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
-                        </svg>
-                      </div>
-                    )}
+                    <CanvasPreview nodes={canvas.nodes} />
                     {/* Action buttons */}
                     <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
                       <button
@@ -1798,24 +1768,8 @@ const deleteCanvas = (canvasId: string) => {
                   style={{ backgroundColor: "#141414", border: "1px solid #222222" }}
                 >
                   {/* Preview */}
-                  <div className="aspect-video relative overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
-                    {canvas.previewImage ? (
-                      <img
-                        src={canvas.previewImage}
-                        alt={canvas.name}
-                        className="w-full h-full object-cover"
-                        crossOrigin="anonymous"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect x="8" y="8" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
-                          <rect x="26" y="8" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
-                          <rect x="8" y="26" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
-                          <rect x="26" y="26" width="14" height="14" rx="2" stroke="#444444" strokeWidth="2"/>
-                        </svg>
-                      </div>
-                    )}
+                  <div className="aspect-video relative overflow-hidden">
+                    <CanvasPreview nodes={canvas.nodes} />
                     {/* Action buttons */}
                     <div className="absolute top-2 right-2 flex gap-1 transition-opacity opacity-0 group-hover:opacity-100">
                       <button
@@ -2437,22 +2391,9 @@ const deleteCanvas = (canvasId: string) => {
               </button>
             </div>
 
-            {/* Preview Area */}
-            <div className="flex-1 overflow-hidden relative">
-              {viewingTemplate.previewImage ? (
-                <img
-                  src={viewingTemplate.previewImage}
-                  alt={viewingTemplate.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center min-h-[300px]" style={{ backgroundColor: "#1a1a1a" }}>
-                  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="12" y="12" width="56" height="56" rx="6" stroke="#333333" strokeWidth="2"/>
-                    <path d="M28 40H52M40 28V52" stroke="#333333" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                </div>
-              )}
+{/* Preview Area */}
+              <div className="flex-1 overflow-hidden relative min-h-[300px]">
+                <CanvasPreview nodes={viewingTemplate.nodes} />
 
               {/* Duplicate Banner */}
               <div 
