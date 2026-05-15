@@ -1497,63 +1497,74 @@ const deleteCanvas = (canvasId: string) => {
                       </div>
                     </div>
                     
-                    {/* Ribbon squares */}
-                    <div className="flex gap-1 pt-6">
-                      {/* Week 1 - mostly smooth (past - dimmed) */}
-                      {[...Array(7)].map((_, i) => (
-                        <div
-                          key={`w1-${i}`}
-                          className="flex-1 h-8 rounded opacity-40"
-                          style={{ backgroundColor: i < 5 ? "#4ADE80" : i === 5 ? "#FCD34D" : "#FB923C" }}
-                        />
-                      ))}
-                      {/* Week 2 - mixed (past - dimmed) */}
-                      {[...Array(7)].map((_, i) => (
-                        <div
-                          key={`w2-${i}`}
-                          className="flex-1 h-8 rounded relative opacity-40"
-                          style={{ backgroundColor: i < 2 ? "#FCD34D" : i < 4 ? "#FB923C" : i === 4 ? "#F87171" : "#FB923C" }}
-                        >
-                          {i === 2 && (
-                            <span className="absolute inset-0 flex items-center justify-center text-xs">$</span>
-                          )}
-                          {i === 3 && (
-                            <svg className="absolute inset-0 m-auto" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <circle cx="6" cy="6" r="4" stroke="#000" strokeWidth="1.5"/>
-                              <path d="M6 4V6.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                          )}
+                    {/* Ribbon data for each day */}
+                  {(() => {
+                    // Sample data for 28 days - design agency scenarios
+                    const ribbonDays = [
+                      // Week 1 (14-20 days ago)
+                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"] },
+                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"] },
+                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"] },
+                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"] },
+                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"] },
+                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"] },
+                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"] },
+                      // Week 2 (7-13 days ago)
+                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"] },
+                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"] },
+                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"] },
+                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"] },
+                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"] },
+                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"] },
+                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"] },
+                      // Week 3 - Current week (today is index 17, which is day 4 of week 3)
+                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"] },
+                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"] },
+                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"] },
+                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"] }, // TODAY
+                      { status: "minor", title: "Review Scheduled", description: "Client presentation scheduled for tomorrow", tags: ["Prepared", "Confident"] },
+                      { status: "minor", title: "Handoff Prep", description: "Preparing final deliverables package", tags: ["In Progress", "On Schedule"] },
+                      { status: "smooth", title: "Wrap Up", description: "Project retrospective and documentation", tags: ["Closing", "Learnings"] },
+                      // Week 4 - Future (projected)
+                      { status: "minor", title: "New Brief", description: "Phase 2 briefing with expanded scope", tags: ["Upcoming", "Planning"] },
+                      { status: "moderate", title: "Resource Planning", description: "Team allocation for next sprint", tags: ["Scheduling", "TBD"] },
+                      { status: "minor", title: "Vendor Kickoff", description: "Motion graphics vendor onboarding", tags: ["New Partner", "Setup"] },
+                      { status: "moderate", title: "Budget Review", description: "Q3 budget allocation meeting", tags: ["Financial", "Review"] },
+                      { status: "minor", title: "Training Day", description: "New design system workshop", tags: ["Learning", "Team"] },
+                      { status: "smooth", title: "Sprint Start", description: "Phase 2 development begins", tags: ["Fresh Start", "Energized"] },
+                      { status: "smooth", title: "Check-in", description: "Weekly client sync scheduled", tags: ["Routine", "Aligned"] },
+                    ];
+
+                    const statusColors: Record<string, string> = {
+                      smooth: "#4ADE80",
+                      minor: "#FCD34D", 
+                      moderate: "#FB923C",
+                      high: "#F87171"
+                    };
+
+                    const todayIndex = 17; // Day 4 of Week 3
+                    const todayData = ribbonDays[todayIndex];
+
+                    return (
+                      <>
+                        {/* Ribbon squares */}
+                        <div className="flex gap-1 pt-6">
+                          {ribbonDays.map((day, i) => (
+                            <div
+                              key={`day-${i}`}
+                              className={`flex-1 h-8 rounded relative cursor-pointer transition-all hover:opacity-70 ${
+                                i === todayIndex 
+                                  ? "ring-2 ring-white ring-offset-1 ring-offset-[#141414]" 
+                                  : "opacity-40"
+                              }`}
+                              style={{ backgroundColor: statusColors[day.status] }}
+                              title={`${day.title}: ${day.description}`}
+                            />
+                          ))}
                         </div>
-                      ))}
-                      {/* Week 3 - current week with today marker */}
-                      {[...Array(7)].map((_, i) => (
-                        <div
-                          key={`w3-${i}`}
-                          className={`flex-1 h-8 rounded relative ${i !== 3 ? "opacity-40" : "ring-2 ring-white ring-offset-1 ring-offset-[#141414]"}`}
-                          style={{ backgroundColor: i < 2 ? "#FB923C" : i === 2 ? "#FCD34D" : i === 3 ? "#4ADE80" : "#FCD34D" }}
-                        >
-                          {i === 3 && (
-                            <svg className="absolute inset-0 m-auto" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M2 6C3 4 5 8 6 6C7 4 9 8 10 6" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                          )}
-                          {i === 4 && (
-                            <svg className="absolute inset-0 m-auto" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <circle cx="6" cy="6" r="4" stroke="#000" strokeWidth="1.5"/>
-                              <path d="M6 4V6.5" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                          )}
-                        </div>
-                      ))}
-                      {/* Week 4 - future (dimmed) */}
-                      {[...Array(7)].map((_, i) => (
-                        <div
-                          key={`w4-${i}`}
-                          className="flex-1 h-8 rounded opacity-40"
-                          style={{ backgroundColor: i % 2 === 0 ? "#FCD34D" : "#FB923C" }}
-                        />
-                      ))}
-                    </div>
+                      </> 
+                    );
+                  })()}
                   </div>
 
                   {/* Week labels - dynamic dates */}
@@ -1575,72 +1586,162 @@ const deleteCanvas = (canvasId: string) => {
                   })()}
 
                   {/* Today's Detail Card */}
-                  <div
-                    className="rounded-lg p-4"
-                    style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div
-                          className="text-xs font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                        >
-                          Today
-                        </div>
-                        <div
-                          className="text-sm text-gray-400 mb-3"
-                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                        >
-                          All systems running smoothly
-                        </div>
+                  {(() => {
+                    const ribbonDays = [
+                      // Week 1 (14-20 days ago)
+                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"] },
+                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"] },
+                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"] },
+                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"] },
+                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"] },
+                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"] },
+                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"] },
+                      // Week 2 (7-13 days ago)
+                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"] },
+                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"] },
+                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"] },
+                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"] },
+                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"] },
+                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"] },
+                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"] },
+                      // Week 3 - Current week
+                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"] },
+                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"] },
+                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"] },
+                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"] }, // TODAY
+                      { status: "minor", title: "Review Scheduled", description: "Client presentation scheduled for tomorrow", tags: ["Prepared", "Confident"] },
+                      { status: "minor", title: "Handoff Prep", description: "Preparing final deliverables package", tags: ["In Progress", "On Schedule"] },
+                      { status: "smooth", title: "Wrap Up", description: "Project retrospective and documentation", tags: ["Closing", "Learnings"] },
+                      // Week 4 - Future
+                      { status: "minor", title: "New Brief", description: "Phase 2 briefing with expanded scope", tags: ["Upcoming", "Planning"] },
+                      { status: "moderate", title: "Resource Planning", description: "Team allocation for next sprint", tags: ["Scheduling", "TBD"] },
+                      { status: "minor", title: "Vendor Kickoff", description: "Motion graphics vendor onboarding", tags: ["New Partner", "Setup"] },
+                      { status: "moderate", title: "Budget Review", description: "Q3 budget allocation meeting", tags: ["Financial", "Review"] },
+                      { status: "minor", title: "Training Day", description: "New design system workshop", tags: ["Learning", "Team"] },
+                      { status: "smooth", title: "Sprint Start", description: "Phase 2 development begins", tags: ["Fresh Start", "Energized"] },
+                      { status: "smooth", title: "Check-in", description: "Weekly client sync scheduled", tags: ["Routine", "Aligned"] },
+                    ];
 
-                        {/* Status */}
-                        <div className="flex items-start gap-2 mb-3">
-                          <svg className="mt-0.5 text-green-400" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    const todayIndex = 17;
+                    const todayData = ribbonDays[todayIndex];
+
+                    const statusConfig: Record<string, { color: string; bgColor: string; icon: React.ReactNode; phaseText: string }> = {
+                      smooth: {
+                        color: "#4ADE80",
+                        bgColor: "rgba(74, 222, 128, 0.2)",
+                        icon: (
+                          <svg className="mt-0.5" style={{ color: "#4ADE80" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
                             <path d="M5.5 8L7 9.5L10.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
+                        ),
+                        phaseText: "Active"
+                      },
+                      minor: {
+                        color: "#FCD34D",
+                        bgColor: "rgba(252, 211, 77, 0.2)",
+                        icon: (
+                          <svg className="mt-0.5" style={{ color: "#FCD34D" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                            <path d="M8 5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+                          </svg>
+                        ),
+                        phaseText: "Monitoring"
+                      },
+                      moderate: {
+                        color: "#FB923C",
+                        bgColor: "rgba(251, 146, 60, 0.2)",
+                        icon: (
+                          <svg className="mt-0.5" style={{ color: "#FB923C" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                            <path d="M8 6V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+                          </svg>
+                        ),
+                        phaseText: "Attention Needed"
+                      },
+                      high: {
+                        color: "#F87171",
+                        bgColor: "rgba(248, 113, 113, 0.2)",
+                        icon: (
+                          <svg className="mt-0.5" style={{ color: "#F87171" }} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                            <path d="M8 5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+                          </svg>
+                        ),
+                        phaseText: "Phase Halted"
+                      }
+                    };
+
+                    const config = statusConfig[todayData.status];
+
+                    return (
+                      <div
+                        className="rounded-lg p-4"
+                        style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                      >
+                        <div className="flex items-start justify-between">
                           <div>
                             <div
-                              className="text-green-400 font-medium text-sm"
+                              className="text-xs font-medium text-gray-500 mb-1"
                               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                             >
-                              No Blockers
+                              Today
                             </div>
                             <div
-                              className="text-white text-sm mt-0.5"
+                              className="text-sm text-gray-400 mb-3"
                               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                             >
-                              All client engagements progressing on schedule
+                              {todayData.status === "smooth" ? "All systems running smoothly" : 
+                               todayData.status === "minor" ? "Minor issues being addressed" :
+                               todayData.status === "moderate" ? "Moderate disruptions" : "Critical issues detected"}
+                            </div>
+
+                            {/* Status */}
+                            <div className="flex items-start gap-2 mb-3">
+                              {config.icon}
+                              <div>
+                                <div
+                                  className="font-medium text-sm"
+                                  style={{ color: config.color, fontFamily: "system-ui, Inter, sans-serif" }}
+                                >
+                                  {todayData.title}
+                                </div>
+                                <div
+                                  className="text-white text-sm mt-0.5"
+                                  style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                >
+                                  {todayData.description}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Tags */}
+                            <div className="flex items-center gap-2">
+                              {todayData.tags.map((tag, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2 py-1 rounded text-xs font-medium"
+                                  style={{ backgroundColor: config.bgColor, color: config.color }}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
                             </div>
                           </div>
-                        </div>
 
-                        {/* Tags */}
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="px-2 py-1 rounded text-xs font-medium"
-                            style={{ backgroundColor: "rgba(74, 222, 128, 0.2)", color: "#4ADE80" }}
+                          <div
+                            className="text-sm text-gray-400"
+                            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                           >
-                            On Track
-                          </span>
-                          <span
-                            className="px-2 py-1 rounded text-xs font-medium"
-                            style={{ backgroundColor: "rgba(74, 222, 128, 0.2)", color: "#4ADE80" }}
-                          >
-                            No Issues
-                          </span>
+                            {config.phaseText}
+                          </div>
                         </div>
                       </div>
-
-                      <div
-                        className="text-sm text-gray-400"
-                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-                      >
-                        Active
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
               </div>
 
