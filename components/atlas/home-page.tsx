@@ -1591,28 +1591,27 @@ const deleteCanvas = (canvasId: string) => {
                           className="text-sm text-gray-400 mb-3"
                           style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                         >
-                          Moderate disruptions
+                          All systems running smoothly
                         </div>
 
-                        {/* Blocker */}
+                        {/* Status */}
                         <div className="flex items-start gap-2 mb-3">
-                          <svg className="mt-0.5 text-red-400" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <svg className="mt-0.5 text-green-400" width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-                            <path d="M8 5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+                            <path d="M5.5 8L7 9.5L10.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                           <div>
                             <div
-                              className="text-red-400 font-medium text-sm"
+                              className="text-green-400 font-medium text-sm"
                               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                             >
-                              Critical Blocker
+                              No Blockers
                             </div>
                             <div
                               className="text-white text-sm mt-0.5"
                               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                             >
-                              Stakeholder Approval Delayed - Out of Office
+                              All client engagements progressing on schedule
                             </div>
                           </div>
                         </div>
@@ -1621,15 +1620,15 @@ const deleteCanvas = (canvasId: string) => {
                         <div className="flex items-center gap-2">
                           <span
                             className="px-2 py-1 rounded text-xs font-medium"
-                            style={{ backgroundColor: "rgba(248, 113, 113, 0.2)", color: "#F87171" }}
+                            style={{ backgroundColor: "rgba(74, 222, 128, 0.2)", color: "#4ADE80" }}
                           >
-                            Blocker
+                            On Track
                           </span>
                           <span
                             className="px-2 py-1 rounded text-xs font-medium"
-                            style={{ backgroundColor: "rgba(248, 113, 113, 0.2)", color: "#F87171" }}
+                            style={{ backgroundColor: "rgba(74, 222, 128, 0.2)", color: "#4ADE80" }}
                           >
-                            High Severity
+                            No Issues
                           </span>
                         </div>
                       </div>
@@ -1638,7 +1637,7 @@ const deleteCanvas = (canvasId: string) => {
                         className="text-sm text-gray-400"
                         style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                       >
-                        Phase Halted
+                        Active
                       </div>
                     </div>
                   </div>
