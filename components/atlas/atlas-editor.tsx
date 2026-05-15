@@ -26,6 +26,7 @@ import { MoodboardExpanded } from "./moodboard-expanded";
 import { PresentationViewer } from "./presentation-viewer";
 import { SaveFrameworkDialog } from "./save-template-dialog";
 import { AddNodeMenu } from "./add-node-menu";
+import { SageExpandedModal } from "./sage-expanded-modal";
 
 interface AtlasEditorProps {
   canvas: Canvas;
@@ -1473,6 +1474,23 @@ presentationMode={presentationMode}
                   : n
               ));
             }}
+          />
+        );
+      })()}
+
+      {/* Sage Expanded Modal */}
+      {detailModalNodeId && (() => {
+        const node = nodes.find(n => n.id === detailModalNodeId);
+        const sageTypes = ["sage-chatbot", "sage-overview", "sage-stakeholder"];
+        if (!node || !sageTypes.includes(node.type || "")) return null;
+        return (
+          <SageExpandedModal
+            isOpen={true}
+            onClose={() => setDetailModalNodeId(null)}
+            nodeId={node.id}
+            nodeType={node.type as "sage-chatbot" | "sage-overview" | "sage-stakeholder"}
+            nodeData={node.data}
+            nodePosition={node.position}
           />
         );
       })()}
