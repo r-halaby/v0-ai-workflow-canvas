@@ -965,7 +965,7 @@ All Frameworks
                     fontFamily: "system-ui, Inter, sans-serif",
                   }}
                 >
-                  {TEMPLATE_CATEGORIES[cat].label}
+                  {FRAMEWORK_CATEGORIES[cat].label}
                 </button>
               ))}
             </div>
