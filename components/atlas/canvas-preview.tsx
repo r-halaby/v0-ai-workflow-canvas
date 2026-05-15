@@ -95,56 +95,24 @@ export function CanvasPreview({ nodes, className = "" }: CanvasPreviewProps) {
   if (!nodes || nodes.length === 0) {
     return (
       <div
-        className={`w-full h-full flex items-center justify-center ${className}`}
+        className={`w-full h-full relative overflow-hidden ${className}`}
         style={{ backgroundColor: "#0a0a0a" }}
       >
-        <div className="text-center">
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="mx-auto mb-2 opacity-30"
-          >
-            <rect
-              x="3"
-              y="3"
-              width="7"
-              height="7"
-              rx="1"
-              stroke="#666666"
-              strokeWidth="1.5"
-            />
-            <rect
-              x="14"
-              y="3"
-              width="7"
-              height="7"
-              rx="1"
-              stroke="#666666"
-              strokeWidth="1.5"
-            />
-            <rect
-              x="3"
-              y="14"
-              width="7"
-              height="7"
-              rx="1"
-              stroke="#666666"
-              strokeWidth="1.5"
-            />
-            <rect
-              x="14"
-              y="14"
-              width="7"
-              height="7"
-              rx="1"
-              stroke="#666666"
-              strokeWidth="1.5"
-            />
-          </svg>
+        {/* Grid pattern background - same as actual canvas */}
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, #222222 1px, transparent 1px),
+              linear-gradient(to bottom, #222222 1px, transparent 1px)
+            `,
+            backgroundSize: "16px 16px",
+          }}
+        />
+        {/* Empty canvas text overlay */}
+        <div className="absolute inset-0 flex items-center justify-center">
           <span
-            className="text-xs text-gray-600"
+            className="text-xs text-gray-500 tracking-wide"
             style={{ fontFamily: "system-ui, Inter, sans-serif" }}
           >
             Empty canvas
