@@ -205,6 +205,7 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
   const [viewingFramework, setViewingFramework] = useState<CanvasFramework | null>(null);
   const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
+  const [ribbonViewMode, setRibbonViewMode] = useState<"ribbon" | "calendar">("ribbon");
   const currentUserId = workspaceSettings.members[0]?.id || "user-1";
 
   // Combine all workspace nodes with canvas grouping
@@ -1465,27 +1466,73 @@ All Frameworks
                         7 active client engagements
                       </p>
                     </div>
-                    {/* Legend */}
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#4ADE80" }} />
-                        <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Smooth</span>
+                    {/* Legend and View Toggle */}
+                    <div className="flex items-center gap-6">
+                      {/* Legend */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#4ADE80" }} />
+                          <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Smooth</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FCD34D" }} />
+                          <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Minor</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FB923C" }} />
+                          <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Moderate</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#F87171" }} />
+                          <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>High</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FCD34D" }} />
-                        <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Minor</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FB923C" }} />
-                        <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>Moderate</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#F87171" }} />
-                        <span className="text-xs text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>High</span>
+                      
+                      {/* View Toggle */}
+                      <div className="flex items-center rounded-lg p-0.5" style={{ backgroundColor: "#1a1a1a" }}>
+                        <button
+                          type="button"
+                          onClick={() => setRibbonViewMode("ribbon")}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            ribbonViewMode === "ribbon" 
+                              ? "bg-[#2a2a2a] text-white" 
+                              : "text-gray-500 hover:text-gray-300"
+                          }`}
+                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                            <rect x="1" y="4" width="14" height="2" rx="0.5" fill="currentColor" opacity="0.4"/>
+                            <rect x="1" y="7" width="14" height="2" rx="0.5" fill="currentColor"/>
+                            <rect x="1" y="10" width="14" height="2" rx="0.5" fill="currentColor" opacity="0.4"/>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRibbonViewMode("calendar")}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            ribbonViewMode === "calendar" 
+                              ? "bg-[#2a2a2a] text-white" 
+                              : "text-gray-500 hover:text-gray-300"
+                          }`}
+                          style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                            <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.25" fill="none"/>
+                            <path d="M2 6h12" stroke="currentColor" strokeWidth="1.25"/>
+                            <path d="M5 1.5v3M11 1.5v3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
+                            <rect x="4" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+                            <rect x="7" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+                            <rect x="10" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+                            <rect x="4" y="11" width="2" height="2" rx="0.5" fill="currentColor" opacity="0.5"/>
+                            <rect x="7" y="11" width="2" height="2" rx="0.5" fill="currentColor" opacity="0.5"/>
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   </div>
 
+                  {ribbonViewMode === "ribbon" ? (
+                  <>
                   {/* Timeline Ribbon */}
                   <div className="relative mb-3">
                     {/* Today marker */}
@@ -1813,6 +1860,221 @@ All Frameworks
                       </div>
                     );
                   })()}
+                  </>
+                  ) : (
+                  /* Calendar View */
+                  (() => {
+                    const today = new Date();
+                    const todayIndex = 17;
+                    
+                    // Same ribbon data for calendar view
+                    const ribbonDays = [
+                      { status: "smooth", title: "All Clear", description: "Brand strategy kickoff completed successfully", tags: ["On Track", "Client Happy"], isFuture: false },
+                      { status: "smooth", title: "Milestone Hit", description: "Logo concepts delivered on time", tags: ["Delivered", "Approved"], isFuture: false },
+                      { status: "smooth", title: "Great Feedback", description: "Client loved initial moodboards", tags: ["Positive Review", "Moving Forward"], isFuture: false },
+                      { status: "smooth", title: "Team Aligned", description: "Internal design review went smoothly", tags: ["Aligned", "No Revisions"], isFuture: false },
+                      { status: "smooth", title: "Assets Ready", description: "Photography assets received from vendor", tags: ["Complete", "High Quality"], isFuture: false },
+                      { status: "minor", title: "Small Delay", description: "Font licensing taking longer than expected", tags: ["Pending", "Low Priority"], isFuture: false },
+                      { status: "moderate", title: "Revision Request", description: "Client requested color palette changes", tags: ["In Progress", "2nd Round"], isFuture: false },
+                      { status: "minor", title: "Feedback Pending", description: "Awaiting client sign-off on typography", tags: ["Waiting", "Follow Up"], isFuture: false },
+                      { status: "minor", title: "Resource Shuffle", description: "Designer reassigned from another project", tags: ["Adjusting", "On Track"], isFuture: false },
+                      { status: "moderate", title: "Budget Discussion", description: "Scope creep requiring additional budget approval", tags: ["Negotiating", "Pending"], isFuture: false },
+                      { status: "moderate", title: "Timeline Slip", description: "Print vendor delayed delivery by 2 days", tags: ["Delayed", "External"], isFuture: false },
+                      { status: "high", title: "Critical Blocker", description: "Stakeholder approval delayed - Executive out of office", tags: ["Blocked", "Escalated"], isFuture: false },
+                      { status: "moderate", title: "Technical Issue", description: "File compatibility issues with client systems", tags: ["Resolving", "IT Support"], isFuture: false },
+                      { status: "moderate", title: "Rework Needed", description: "Brand guidelines require additional sections", tags: ["Extra Work", "Scoped"], isFuture: false },
+                      { status: "moderate", title: "Late Feedback", description: "Client review comments came in after deadline", tags: ["Catching Up", "Overtime"], isFuture: false },
+                      { status: "moderate", title: "Asset Gap", description: "Missing product photos for catalog", tags: ["Sourcing", "Urgent"], isFuture: false },
+                      { status: "minor", title: "Minor Tweak", description: "Small adjustments to icon set requested", tags: ["Quick Fix", "Easy"], isFuture: false },
+                      { status: "smooth", title: "All Clear", description: "Final presentations approved by creative director", tags: ["Approved", "Ready"], isFuture: false },
+                      { status: "minor", title: "Client Presentation Due", description: "Final brand presentation scheduled", tags: ["Scheduled", "Risk: Scope Creep"], isFuture: true },
+                      { status: "minor", title: "Deliverables Deadline", description: "Final asset package due", tags: ["At Risk", "Tight Timeline"], isFuture: true },
+                      { status: "smooth", title: "Buffer Day", description: "No major deliverables", tags: ["Flexible", "Catch-up"], isFuture: true },
+                      { status: "minor", title: "Phase 2 Kickoff", description: "New phase begins", tags: ["Pending Approval", "Planning"], isFuture: true },
+                      { status: "moderate", title: "Resource Conflict", description: "Lead designer scheduled on overlapping project", tags: ["Overbooked", "Need Coverage"], isFuture: true },
+                      { status: "minor", title: "Vendor Dependency", description: "Motion graphics delivery expected", tags: ["External", "Monitoring"], isFuture: true },
+                      { status: "moderate", title: "Budget Review", description: "Q3 allocation meeting", tags: ["Financial Risk", "Pending"], isFuture: true },
+                      { status: "minor", title: "Team Training", description: "New design system workshop", tags: ["Reduced Capacity", "Investment"], isFuture: true },
+                      { status: "smooth", title: "Sprint Planning", description: "Phase 2 sprint begins", tags: ["Optimistic", "Dependent"], isFuture: true },
+                      { status: "smooth", title: "Client Sync", description: "Weekly check-in", tags: ["Routine", "Communication"], isFuture: true },
+                    ];
+                    
+                    const statusColors: Record<string, string> = {
+                      smooth: "#4ADE80",
+                      minor: "#FCD34D",
+                      moderate: "#FB923C",
+                      high: "#F87171"
+                    };
+                    
+                    // Get start of the 4-week period (today - 17 days to align with ribbon)
+                    const startDate = new Date(today);
+                    startDate.setDate(today.getDate() - todayIndex);
+                    
+                    // Find the Monday of that week
+                    const dayOfWeek = startDate.getDay();
+                    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                    const calendarStart = new Date(startDate);
+                    calendarStart.setDate(startDate.getDate() + mondayOffset);
+                    
+                    // Generate 5 weeks of calendar data
+                    const weeks: { date: Date; dayIndex: number | null; day: typeof ribbonDays[0] | null }[][] = [];
+                    let currentDate = new Date(calendarStart);
+                    
+                    for (let week = 0; week < 5; week++) {
+                      const weekDays: { date: Date; dayIndex: number | null; day: typeof ribbonDays[0] | null }[] = [];
+                      for (let d = 0; d < 7; d++) {
+                        const diffFromStart = Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                        const dayIndex = diffFromStart >= 0 && diffFromStart < 28 ? diffFromStart : null;
+                        weekDays.push({
+                          date: new Date(currentDate),
+                          dayIndex,
+                          day: dayIndex !== null ? ribbonDays[dayIndex] : null
+                        });
+                        currentDate.setDate(currentDate.getDate() + 1);
+                      }
+                      weeks.push(weekDays);
+                    }
+                    
+                    const monthYear = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    
+                    return (
+                      <div className="space-y-4">
+                        {/* Month header */}
+                        <div className="text-center mb-4">
+                          <span className="text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            {monthYear}
+                          </span>
+                        </div>
+                        
+                        {/* Calendar grid */}
+                        <div className="rounded-lg overflow-hidden" style={{ backgroundColor: "#1a1a1a" }}>
+                          {/* Day headers */}
+                          <div className="grid grid-cols-7 gap-px" style={{ backgroundColor: "#2a2a2a" }}>
+                            {weekDays.map((day) => (
+                              <div
+                                key={day}
+                                className="p-2 text-center text-xs font-medium text-gray-500"
+                                style={{ backgroundColor: "#1a1a1a", fontFamily: "system-ui, Inter, sans-serif" }}
+                              >
+                                {day}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Calendar cells */}
+                          <div className="grid grid-cols-7 gap-px" style={{ backgroundColor: "#2a2a2a" }}>
+                            {weeks.flat().map((cell, i) => {
+                              const isToday = cell.date.toDateString() === today.toDateString();
+                              const isSelected = cell.dayIndex === selectedRibbonDay;
+                              const hasData = cell.day !== null;
+                              
+                              return (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => cell.dayIndex !== null && setSelectedRibbonDay(cell.dayIndex)}
+                                  disabled={!hasData}
+                                  className={`relative p-2 min-h-[72px] text-left transition-all ${
+                                    hasData ? "cursor-pointer hover:bg-[#252525]" : "cursor-default opacity-50"
+                                  } ${isSelected ? "ring-2 ring-inset ring-white" : ""}`}
+                                  style={{ backgroundColor: "#1a1a1a" }}
+                                >
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span
+                                      className={`text-xs ${isToday ? "bg-white text-black px-1.5 py-0.5 rounded-full font-medium" : "text-gray-400"}`}
+                                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                    >
+                                      {cell.date.getDate()}
+                                    </span>
+                                    {hasData && (
+                                      <div
+                                        className="w-2 h-2 rounded-full"
+                                        style={{ backgroundColor: statusColors[cell.day!.status] }}
+                                      />
+                                    )}
+                                  </div>
+                                  {hasData && (
+                                    <div
+                                      className="text-[10px] text-gray-500 line-clamp-2 leading-tight"
+                                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                    >
+                                      {cell.day!.title}
+                                    </div>
+                                  )}
+                                  {cell.day?.isFuture && (
+                                    <div className="absolute bottom-1 right-1">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-purple-500 opacity-60" />
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        
+                        {/* Selected day detail card (same as ribbon view) */}
+                        {(() => {
+                          const selectedDay = ribbonDays[selectedRibbonDay];
+                          const daysFromToday = selectedRibbonDay - todayIndex;
+                          const selectedDate = new Date();
+                          selectedDate.setDate(selectedDate.getDate() + daysFromToday);
+                          const formattedDate = selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                          
+                          const statusConfig: Record<string, { color: string; bgColor: string }> = {
+                            smooth: { color: "#4ADE80", bgColor: "rgba(74, 222, 128, 0.2)" },
+                            minor: { color: "#FCD34D", bgColor: "rgba(252, 211, 77, 0.2)" },
+                            moderate: { color: "#FB923C", bgColor: "rgba(251, 146, 60, 0.2)" },
+                            high: { color: "#F87171", bgColor: "rgba(248, 113, 113, 0.2)" }
+                          };
+                          
+                          const config = statusConfig[selectedDay.status];
+                          const isSelectedToday = selectedRibbonDay === todayIndex;
+                          
+                          let dateLabel = formattedDate;
+                          if (isSelectedToday) dateLabel = "Today";
+                          else if (daysFromToday === -1) dateLabel = "Yesterday";
+                          else if (daysFromToday === 1) dateLabel = "Tomorrow";
+                          
+                          return (
+                            <div
+                              className="rounded-lg p-4 mt-4"
+                              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                            >
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-xs font-medium text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                  {dateLabel}
+                                </span>
+                                {selectedDay.isFuture && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: "rgba(147, 51, 234, 0.2)", color: "#A855F7" }}>
+                                    Forecast
+                                  </span>
+                                )}
+                              </div>
+                              <div className="font-medium text-sm mb-1" style={{ color: config.color, fontFamily: "system-ui, Inter, sans-serif" }}>
+                                {selectedDay.title}
+                              </div>
+                              <div className="text-white text-sm mb-3" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                                {selectedDay.description}
+                              </div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {selectedDay.tags.map((tag, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-2 py-1 rounded text-xs font-medium"
+                                    style={{ backgroundColor: config.bgColor, color: config.color }}
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })()
+                  )}
                 </div>
               </div>
 
