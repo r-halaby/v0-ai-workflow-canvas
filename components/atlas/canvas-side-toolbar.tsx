@@ -5,7 +5,7 @@ import { AddNodeMenu } from "./add-node-menu";
 
 interface CanvasSideToolbarProps {
   onAddStatusPill: () => void;
-  onAddTextNode: (textType: "brief" | "note" | "description") => void;
+  onAddTextNode: () => void;
   onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
   onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => void;
   onUploadFile: (files: FileList) => void;

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 interface AddNodeMenuProps {
   onAddStatusPill: () => void;
-  onAddTextNode: (textType: "brief" | "note" | "description") => void;
+  onAddTextNode: () => void;
   onAddSageNode: (sageType: "chatbot" | "overview" | "stakeholder") => void;
   onAddOperationalNode: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth") => void;
   onUploadFile: (files: FileList) => void;
@@ -118,36 +118,31 @@ export function AddNodeMenu({
         </div>
 
         <div className="menu-content" style={{ padding: "4px 0" }}>
-          {/* Text */}
+          {/* Text - Direct action, no submenu */}
           <button
             type="button"
-            onClick={() => setActiveSubmenu(activeSubmenu === "text" ? null : "text")}
+            onClick={() => { onAddTextNode(); onClose(); }}
             style={{
               width: "100%",
               padding: "8px 12px",
               textAlign: "left",
               fontSize: 14,
               color: "#d1d5db",
-              backgroundColor: activeSubmenu === "text" ? "rgba(255,255,255,0.1)" : "transparent",
+              backgroundColor: "transparent",
               border: "none",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
+              gap: 8,
               ...fontStyle,
             }}
           >
-            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#3B82F620", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 4H12M2 7H10M2 10H8" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              Text
-            </span>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: activeSubmenu === "text" ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>
-              <path d="M4.5 3L7.5 6L4.5 9" stroke="#888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: "#ffffff20", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                <path d="M3 4H13M5 8H11M4 12H12" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            Text
           </button>
 
           {/* Divider */}
@@ -332,68 +327,12 @@ Generate
             width: 160,
             position: "fixed",
             left: menuPosition.x + (sourceHandlePosition === "left" ? -180 : 180) + 8,
-            top: menuPosition.y + (activeSubmenu === "text" ? 40 : activeSubmenu === "sage" ? 130 : 185),
+            top: menuPosition.y + (activeSubmenu === "sage" ? 90 : activeSubmenu === "ops" ? 145 : 200),
             zIndex: 51,
             boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
             padding: "4px 0",
           }}
         >
-          {activeSubmenu === "text" && (
-            <>
-              <button
-                type="button"
-                onClick={() => { console.log("[v0] Brief text node clicked"); onAddTextNode("brief"); onClose(); }}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  textAlign: "left",
-                  fontSize: 13,
-                  color: "#d1d5db",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  ...fontStyle,
-                }}
-              >
-                Creative Brief
-              </button>
-              <button
-                type="button"
-                onClick={() => { onAddTextNode("note"); onClose(); }}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  textAlign: "left",
-                  fontSize: 13,
-                  color: "#d1d5db",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  ...fontStyle,
-                }}
-              >
-                Note
-              </button>
-              <button
-                type="button"
-                onClick={() => { onAddTextNode("description"); onClose(); }}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  textAlign: "left",
-                  fontSize: 13,
-                  color: "#d1d5db",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  ...fontStyle,
-                }}
-              >
-                Description
-              </button>
-            </>
-          )}
-
           {activeSubmenu === "sage" && (
             <>
               <button

@@ -4,66 +4,128 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Handle, Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import type { TextNodeData } from "@/lib/atlas-types";
 
-const TEXT_TYPE_CONFIG = {
-  brief: {
-    label: "Creative Brief",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <rect x="2" y="2" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M4.5 5H9.5M4.5 7H9.5M4.5 9H7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      </svg>
-    ),
-    accentColor: "#3B82F6",
-  },
-  note: {
-    label: "Note",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <path d="M8 2H3C2.44772 2 2 2.44772 2 3V11C2 11.5523 2.44772 12 3 12H11C11.5523 12 12 11.5523 12 11V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M12 2L7 7V9H9L14 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(-2, 0)"/>
-      </svg>
-    ),
-    accentColor: "#F59E0B",
-  },
-  description: {
-    label: "Description",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <path d="M2 4H12M2 7H10M2 10H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-    accentColor: "#8B5CF6",
-  },
-};
+// Text size options
+const TEXT_SIZES = [
+  { value: "small", label: "Small", fontSize: 14, lineHeight: 1.4 },
+  { value: "medium", label: "Medium", fontSize: 18, lineHeight: 1.5 },
+  { value: "large", label: "Large", fontSize: 24, lineHeight: 1.4 },
+  { value: "xlarge", label: "X-Large", fontSize: 32, lineHeight: 1.3 },
+];
+
+// Color options
+const TEXT_COLORS = [
+  { value: "#ffffff", label: "White" },
+  { value: "#F0FE00", label: "Yellow" },
+  { value: "#3B82F6", label: "Blue" },
+  { value: "#10B981", label: "Green" },
+  { value: "#F59E0B", label: "Orange" },
+  { value: "#EF4444", label: "Red" },
+  { value: "#8B5CF6", label: "Purple" },
+  { value: "#EC4899", label: "Pink" },
+  { value: "#6B7280", label: "Gray" },
+];
+
+// Font options
+const FONT_OPTIONS = [
+  { value: "sans", label: "Aa", fontFamily: "system-ui, Inter, sans-serif" },
+  { value: "serif", label: "Aa", fontFamily: "Georgia, serif" },
+  { value: "mono", label: "Aa", fontFamily: "ui-monospace, monospace" },
+];
+
+// Alignment options
+const ALIGN_OPTIONS = [
+  { value: "left", icon: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2 3H14M2 6.5H10M2 10H14M2 13.5H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )},
+  { value: "center", icon: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2 3H14M4 6.5H12M2 10H14M5 13.5H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )},
+  { value: "right", icon: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2 3H14M6 6.5H14M2 10H14M8 13.5H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )},
+];
+
+interface TextFormatting {
+  color: string;
+  font: string;
+  size: string;
+  bold: boolean;
+  strikethrough: boolean;
+  align: string;
+}
 
 export function TextNode({ id, data, selected }: NodeProps) {
   const textData = data as TextNodeData;
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(textData.label);
-  const [editContent, setEditContent] = useState(textData.content);
-  const titleInputRef = useRef<HTMLInputElement>(null);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const [editContent, setEditContent] = useState(textData.content || textData.label);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showFontPicker, setShowFontPicker] = useState(false);
+  const [showSizePicker, setShowSizePicker] = useState(false);
+  const [showAlignPicker, setShowAlignPicker] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const { setNodes } = useReactFlow();
 
-  const config = TEXT_TYPE_CONFIG[textData.textType] || TEXT_TYPE_CONFIG.note;
+  // Get formatting from data or use defaults
+  const [formatting, setFormatting] = useState<TextFormatting>({
+    color: (textData as any).formatting?.color || "#ffffff",
+    font: (textData as any).formatting?.font || "sans",
+    size: (textData as any).formatting?.size || "medium",
+    bold: (textData as any).formatting?.bold || false,
+    strikethrough: (textData as any).formatting?.strikethrough || false,
+    align: (textData as any).formatting?.align || "left",
+  });
+
+  const currentSize = TEXT_SIZES.find(s => s.value === formatting.size) || TEXT_SIZES[1];
+  const currentFont = FONT_OPTIONS.find(f => f.value === formatting.font) || FONT_OPTIONS[0];
 
   useEffect(() => {
-    if (isEditing && titleInputRef.current) {
-      titleInputRef.current.focus();
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
     }
   }, [isEditing]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [editContent, isEditing, formatting]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+        setShowColorPicker(false);
+        setShowFontPicker(false);
+        setShowSizePicker(false);
+        setShowAlignPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSave = useCallback(() => {
     setNodes((nds) =>
       nds.map((node) => {
-        if (node.data === data) {
+        if (node.id === id) {
           return {
             ...node,
             data: {
               ...node.data,
-              label: editTitle.trim() || "Untitled",
+              label: editContent.trim() || "Text",
               content: editContent,
+              formatting,
               lastModified: new Date().toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -76,32 +138,45 @@ export function TextNode({ id, data, selected }: NodeProps) {
       })
     );
     setIsEditing(false);
-  }, [data, editTitle, editContent, setNodes]);
+  }, [id, editContent, formatting, setNodes]);
+
+  const updateFormatting = useCallback((updates: Partial<TextFormatting>) => {
+    const newFormatting = { ...formatting, ...updates };
+    setFormatting(newFormatting);
+    // Save formatting immediately
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              formatting: newFormatting,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [id, formatting, setNodes]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
-      setEditTitle(textData.label);
-      setEditContent(textData.content);
+      setEditContent(textData.content || textData.label);
       setIsEditing(false);
     }
   };
 
-  // Auto-resize textarea
-  useEffect(() => {
-    if (contentRef.current) {
-      contentRef.current.style.height = "auto";
-      contentRef.current.style.height = `${contentRef.current.scrollHeight}px`;
-    }
-  }, [editContent, isEditing]);
+  const showToolbar = selected || isEditing;
 
   return (
     <div
-      className="group cursor-move"
+      className="group relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onDoubleClick={() => setIsEditing(true)}
     >
-      {/* Connection Handles - visible on hover */}
+      {/* Connection Handles */}
       <Handle
         type="target"
         position={Position.Left}
@@ -112,17 +187,6 @@ export function TextNode({ id, data, selected }: NodeProps) {
           width: 12,
           height: 12,
           opacity: isHovered ? 1 : 0,
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          const rect = e.currentTarget.getBoundingClientRect();
-          window.dispatchEvent(new CustomEvent("atlas:handle-click", {
-            detail: { 
-              nodeId: id,
-              handleType: "target",
-              position: { x: rect.left, y: rect.top + rect.height / 2 }
-            }
-          }));
         }}
       />
       <Handle
@@ -136,146 +200,264 @@ export function TextNode({ id, data, selected }: NodeProps) {
           height: 12,
           opacity: isHovered ? 1 : 0,
         }}
-        onClick={(e) => {
-          e.stopPropagation();
-          const rect = e.currentTarget.getBoundingClientRect();
-          window.dispatchEvent(new CustomEvent("atlas:handle-click", {
-            detail: { 
-              nodeId: id,
-              handleType: "source",
-              position: { x: rect.right, y: rect.top + rect.height / 2 }
-            }
-          }));
-        }}
       />
 
-      {/* Main Card */}
-      <div
-        className="rounded-xl overflow-hidden transition-all duration-200"
-        style={{
-          backgroundColor: "#141414",
-          border: "1px solid #2a2a2a",
-          outline: selected ? "2px solid white" : "none",
-          outlineOffset: 2,
-          width: 280,
-          minHeight: isEditing ? 200 : isHovered ? 160 : 100,
-        }}
-      >
-        {/* Header */}
+      {/* FigJam-style Formatting Toolbar */}
+      {showToolbar && (
         <div
-          className="flex items-center gap-2 px-3 py-2"
-          style={{ borderBottom: "1px solid #2a2a2a" }}
-        >
-          <div
-            className="w-6 h-6 rounded flex items-center justify-center"
-            style={{ backgroundColor: `${config.accentColor}20`, color: config.accentColor }}
-          >
-            {config.icon}
-          </div>
-          
-          {isEditing ? (
-            <input
-              ref={titleInputRef}
-              type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="nodrag flex-1 text-sm font-medium text-white bg-transparent border-none focus:outline-none"
-              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-              placeholder="Title..."
-            />
-          ) : (
-            <span
-              className="flex-1 text-sm font-medium text-white truncate"
-              style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-            >
-              {textData.label}
-            </span>
-          )}
-          
-          <span
-            className="text-xs px-1.5 py-0.5 rounded"
-            style={{
-              backgroundColor: `${config.accentColor}20`,
-              color: config.accentColor,
-              fontFamily: "system-ui, Inter, sans-serif",
-            }}
-          >
-            {config.label}
-          </span>
-        </div>
-
-        {/* Content */}
-        <div className="p-3">
-          {isEditing ? (
-            <textarea
-              ref={contentRef}
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onBlur={handleSave}
-              className="nodrag w-full text-sm text-gray-300 bg-transparent border-none focus:outline-none resize-none"
-              style={{
-                fontFamily: "system-ui, Inter, sans-serif",
-                minHeight: 80,
-              }}
-              placeholder="Write your content here..."
-            />
-          ) : (
-            <p
-              className="text-sm text-gray-400 transition-all duration-200"
-              style={{
-                fontFamily: "system-ui, Inter, sans-serif",
-                display: "-webkit-box",
-                WebkitLineClamp: isHovered ? 6 : 3,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-            >
-              {textData.content || "Double-click to add content..."}
-            </p>
-          )}
-        </div>
-
-        {/* Footer - shows on hover */}
-        <div
-          className="flex items-center justify-between px-3 py-2 transition-all duration-200"
+          ref={toolbarRef}
+          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-lg z-50"
           style={{
-            borderTop: "1px solid #2a2a2a",
-            opacity: isHovered || isEditing ? 1 : 0,
-            height: isHovered || isEditing ? "auto" : 0,
-            padding: isHovered || isEditing ? undefined : 0,
-            overflow: "hidden",
+            backgroundColor: "#1a1a1a",
+            border: "1px solid #333333",
           }}
         >
-          <span
-            className="text-xs text-gray-500"
-            style={{ fontFamily: "system-ui, Inter, sans-serif" }}
-          >
-            {textData.lastModified}
-          </span>
-          
-          {textData.author && (
-            <div
-              className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium text-white"
-              style={{ backgroundColor: textData.author.avatarColor || "#666666" }}
-              title={textData.author.name}
+          {/* Color Picker */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowColorPicker(!showColorPicker);
+                setShowFontPicker(false);
+                setShowSizePicker(false);
+                setShowAlignPicker(false);
+              }}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
             >
-              {textData.author.name.split(" ").map(n => n[0]).join("")}
-            </div>
-          )}
-        </div>
+              <div
+                className="w-5 h-5 rounded-full border-2"
+                style={{ backgroundColor: formatting.color, borderColor: formatting.color === "#ffffff" ? "#666" : formatting.color }}
+              />
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400">
+                <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showColorPicker && (
+              <div
+                className="absolute top-full left-0 mt-2 p-2 rounded-lg shadow-lg grid grid-cols-3 gap-1.5 z-50"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+              >
+                {TEXT_COLORS.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => {
+                      updateFormatting({ color: color.value });
+                      setShowColorPicker(false);
+                    }}
+                    className="w-7 h-7 rounded-full hover:scale-110 transition-transform"
+                    style={{
+                      backgroundColor: color.value,
+                      border: formatting.color === color.value ? "2px solid white" : "2px solid transparent",
+                    }}
+                    title={color.label}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Edit hint */}
-        {isEditing && (
-          <div
-            className="px-3 py-1.5 text-xs text-gray-500 text-center"
+          {/* Divider */}
+          <div className="w-px h-6 bg-gray-600 mx-1" />
+
+          {/* Font Picker */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowFontPicker(!showFontPicker);
+                setShowColorPicker(false);
+                setShowSizePicker(false);
+                setShowAlignPicker(false);
+              }}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-white"
+              style={{ fontFamily: currentFont.fontFamily }}
+            >
+              <span className="text-sm font-medium">Aa</span>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400">
+                <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showFontPicker && (
+              <div
+                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[120px] z-50"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+              >
+                {FONT_OPTIONS.map((font) => (
+                  <button
+                    key={font.value}
+                    type="button"
+                    onClick={() => {
+                      updateFormatting({ font: font.value });
+                      setShowFontPicker(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-white/10 transition-colors ${formatting.font === font.value ? "text-white" : "text-gray-400"}`}
+                    style={{ fontFamily: font.fontFamily }}
+                  >
+                    {font.value === "sans" ? "Sans-serif" : font.value === "serif" ? "Serif" : "Monospace"}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Size Picker */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowSizePicker(!showSizePicker);
+                setShowColorPicker(false);
+                setShowFontPicker(false);
+                setShowAlignPicker(false);
+              }}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-white min-w-[80px]"
+            >
+              <span className="text-sm">{currentSize.label}</span>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400 ml-auto">
+                <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showSizePicker && (
+              <div
+                className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-lg min-w-[100px] z-50"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+              >
+                {TEXT_SIZES.map((size) => (
+                  <button
+                    key={size.value}
+                    type="button"
+                    onClick={() => {
+                      updateFormatting({ size: size.value });
+                      setShowSizePicker(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-white/10 transition-colors ${formatting.size === size.value ? "text-white" : "text-gray-400"}`}
+                  >
+                    {size.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="w-px h-6 bg-gray-600 mx-1" />
+
+          {/* Bold */}
+          <button
+            type="button"
+            onClick={() => updateFormatting({ bold: !formatting.bold })}
+            className={`p-2 rounded-lg transition-colors ${formatting.bold ? "bg-white/20 text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"}`}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3.5 2.5H8C9.38071 2.5 10.5 3.61929 10.5 5C10.5 6.38071 9.38071 7.5 8 7.5H3.5V2.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3.5 7.5H9C10.3807 7.5 11.5 8.61929 11.5 10C11.5 11.3807 10.3807 12.5 9 12.5H3.5V7.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Strikethrough */}
+          <button
+            type="button"
+            onClick={() => updateFormatting({ strikethrough: !formatting.strikethrough })}
+            className={`p-2 rounded-lg transition-colors ${formatting.strikethrough ? "bg-white/20 text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"}`}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M9.5 3.5C9.5 3.5 8.5 2.5 7 2.5C5.5 2.5 4 3.5 4 5C4 6 4.5 6.5 6 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M4.5 10.5C4.5 10.5 5.5 11.5 7 11.5C8.5 11.5 10 10.5 10 9C10 8 9.5 7.5 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-6 bg-gray-600 mx-1" />
+
+          {/* Alignment */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowAlignPicker(!showAlignPicker);
+                setShowColorPicker(false);
+                setShowFontPicker(false);
+                setShowSizePicker(false);
+              }}
+              className="flex items-center gap-1 p-2 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+            >
+              {ALIGN_OPTIONS.find(a => a.value === formatting.align)?.icon}
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="text-gray-400">
+                <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showAlignPicker && (
+              <div
+                className="absolute top-full right-0 mt-2 flex gap-1 p-1.5 rounded-lg shadow-lg z-50"
+                style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
+              >
+                {ALIGN_OPTIONS.map((align) => (
+                  <button
+                    key={align.value}
+                    type="button"
+                    onClick={() => {
+                      updateFormatting({ align: align.value });
+                      setShowAlignPicker(false);
+                    }}
+                    className={`p-2 rounded-lg transition-colors ${formatting.align === align.value ? "bg-white/20 text-white" : "text-gray-400 hover:bg-white/10 hover:text-white"}`}
+                  >
+                    {align.icon}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Text Content */}
+      <div
+        className="cursor-text transition-all duration-200"
+        style={{
+          minWidth: 100,
+          maxWidth: 400,
+          outline: selected ? "2px solid white" : "none",
+          outlineOffset: 4,
+          borderRadius: 4,
+        }}
+      >
+        {isEditing ? (
+          <textarea
+            ref={textareaRef}
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSave}
+            className="nodrag w-full bg-transparent border-none focus:outline-none resize-none"
             style={{
-              backgroundColor: "#1a1a1a",
-              fontFamily: "system-ui, Inter, sans-serif",
+              color: formatting.color,
+              fontFamily: currentFont.fontFamily,
+              fontSize: currentSize.fontSize,
+              lineHeight: currentSize.lineHeight,
+              fontWeight: formatting.bold ? 700 : 400,
+              textDecoration: formatting.strikethrough ? "line-through" : "none",
+              textAlign: formatting.align as any,
+              minHeight: 30,
+            }}
+            placeholder="Type something..."
+          />
+        ) : (
+          <div
+            className="whitespace-pre-wrap break-words"
+            style={{
+              color: formatting.color,
+              fontFamily: currentFont.fontFamily,
+              fontSize: currentSize.fontSize,
+              lineHeight: currentSize.lineHeight,
+              fontWeight: formatting.bold ? 700 : 400,
+              textDecoration: formatting.strikethrough ? "line-through" : "none",
+              textAlign: formatting.align as any,
+              minHeight: 30,
             }}
           >
-            Click outside to save, Esc to cancel
+            {editContent || "Double-click to edit"}
           </div>
         )}
       </div>
