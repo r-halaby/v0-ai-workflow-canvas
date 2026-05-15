@@ -316,10 +316,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           type: "text",
           position: { x: position.x + 320, y: position.y },
           data: {
-            textType: "note",
-            title: action.title,
+            label: action.title,
             content: action.content || "",
             lastModified: new Date().toISOString(),
+            formatting: {
+              color: "#ffffff",
+              font: "sans",
+              size: "medium",
+              bold: false,
+              strikethrough: false,
+              align: "left",
+            },
           },
         };
         setNodes((nds) => [...nds, newNode]);
@@ -506,19 +513,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   }, [nodes.length, setNodes, setEdges]);
 
   const handleAddTextNode = useCallback(
-    (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => {
+    (position?: { x: number; y: number }, sourceNodeId?: string) => {
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
       });
-
-      const typeLabels = {
-        brief: "Creative Brief",
-        note: "Note",
-        description: "Description",
-      };
 
       const nodeId = `text-${Date.now()}`;
       const nodePosition = position || { x: 150 + nodes.length * 30, y: 100 + nodes.length * 20 };
@@ -528,10 +529,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         type: "text",
         position: nodePosition,
         data: {
-          label: typeLabels[textType],
+          label: "Text",
           content: "",
-          textType,
           lastModified: formattedDate,
+          formatting: {
+            color: "#ffffff",
+            font: "sans",
+            size: "medium",
+            bold: false,
+            strikethrough: false,
+            align: "left",
+          },
         },
       };
       setNodes((nds) => [...nds, newNode]);
@@ -1178,9 +1186,9 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     closeDoubleClickMenu();
   }, [doubleClickPosition, handleAddStatusPill, closeDoubleClickMenu]);
 
-  const handleDoubleClickAddTextNode = useCallback((textType: "brief" | "note" | "description") => {
+  const handleDoubleClickAddTextNode = useCallback(() => {
     if (doubleClickPosition) {
-      handleAddTextNode(textType, doubleClickPosition);
+      handleAddTextNode(doubleClickPosition);
     }
     closeDoubleClickMenu();
   }, [doubleClickPosition, handleAddTextNode, closeDoubleClickMenu]);
@@ -1364,8 +1372,8 @@ presentationMode={presentationMode}
   />
 
 <CanvasSideToolbar
-  onAddStatusPill={handleAddStatusPill}
-  onAddTextNode={handleAddTextNode}
+        onAddStatusPill={handleAddStatusPill}
+        onAddTextNode={() => handleAddTextNode()}
   onAddSageNode={handleAddSageNode}
   onAddOperationalNode={handleAddOperationalNode}
   onUploadFile={(files) => handleFileDrop(files, { x: 400, y: 300 })}

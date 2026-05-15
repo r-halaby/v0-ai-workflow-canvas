@@ -76,7 +76,7 @@ interface AtlasCanvasProps {
   onFileDrop?: (files: FileList, position: { x: number; y: number }) => void;
   onUploadFile?: (files: FileList, position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddStatusPill?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
-  onAddTextNode?: (textType: "brief" | "note" | "description", position?: { x: number; y: number }, sourceNodeId?: string) => void;
+  onAddTextNode?: (position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddSageNode?: (sageType: "chatbot" | "overview" | "stakeholder", position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onAddOperationalNode?: (opType: "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth", position?: { x: number; y: number }, sourceNodeId?: string) => void;
   onOpenAIGenerate?: (type: "mockup" | "collateral") => void;
@@ -269,9 +269,9 @@ const reactFlowInstance = useReactFlow();
     setHandleMenu(null);
   }, [handleMenu, onAddStatusPill]);
 
-  const handleMenuAddTextNode = useCallback((textType: "brief" | "note" | "description") => {
+  const handleMenuAddTextNode = useCallback(() => {
     if (handleMenu && onAddTextNode) {
-      onAddTextNode(textType, handleMenu.canvasPosition, handleMenu.sourceNodeId);
+      onAddTextNode(handleMenu.canvasPosition, handleMenu.sourceNodeId);
     }
     setHandleMenu(null);
   }, [handleMenu, onAddTextNode]);

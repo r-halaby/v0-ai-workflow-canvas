@@ -256,11 +256,22 @@ export interface FileNodeData {
   blockers?: number; // Number of blockers
 }
 
-// Text node data interface (for briefs, notes, etc.)
+// Text formatting options
+export interface TextFormatting {
+  color: string;
+  font: "sans" | "serif" | "mono";
+  size: "small" | "medium" | "large" | "xlarge";
+  bold: boolean;
+  strikethrough: boolean;
+  align: "left" | "center" | "right";
+}
+
+// Text node data interface (simplified single text element)
 export interface TextNodeData {
   label: string;
   content: string;
-  textType: "brief" | "note" | "description";
+  textType?: "brief" | "note" | "description"; // Optional for backwards compat
+  formatting?: TextFormatting;
   lastModified: string;
   author?: WorkspaceMember;
 }
