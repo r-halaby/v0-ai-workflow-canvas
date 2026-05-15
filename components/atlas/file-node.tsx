@@ -141,8 +141,8 @@ export function FileNode({ id, data, selected }: NodeProps) {
   const taskCount = fileData.tasks?.length || 0;
   const completedTasks = fileData.tasks?.filter(t => t.completed).length || 0;
 
-  // File extensions that browsers cannot render as images
-  const NON_RENDERABLE_EXTENSIONS = [".ai", ".psd", ".fig", ".sketch", ".xd", ".indd", ".pdf"];
+  // File extensions that browsers cannot render as images (includes videos)
+  const NON_RENDERABLE_EXTENSIONS = [".ai", ".psd", ".fig", ".sketch", ".xd", ".indd", ".pdf", ".mp4", ".mov", ".avi", ".webm", ".mkv"];
   const isNonRenderable = NON_RENDERABLE_EXTENSIONS.includes(fileData.fileExtension);
   
   // Get preview image - use first preview image, uploaded file (only if renderable), or default
