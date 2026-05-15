@@ -1108,6 +1108,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           });
 
           const isImage = extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
+          const isVideo = extension.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
 
           uploadedResults.push({
             fileName: file.name,
@@ -1119,6 +1120,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               uploadedAt: new Date().toISOString(),
             },
             previewUrl: isImage ? blob.url : undefined,
+            isVideo: !!isVideo,
           });
 
           // Mark as complete
@@ -1155,8 +1157,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               product: "atlas" as const,
               status: "draft" as const,
               fileExtension: file.extension,
-              fileType: isImage ? "image" : "document",
-              fileCategory: isImage ? "image" : "document",
+              fileType: isImage ? "image" : (file.isVideo ? "video" : "document"),
+              fileCategory: isImage ? "image" : (file.isVideo ? "video" : "document"),
               lastModified: "Updated just now",
               uploadedFile: file.uploadedFile,
               previewImages,
