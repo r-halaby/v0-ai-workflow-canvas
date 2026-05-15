@@ -1,4 +1,4 @@
-import { streamText, tool, convertToModelMessages } from "ai";
+import { streamText, tool, convertToModelMessages, stepCountIs } from "ai";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
@@ -8,14 +8,13 @@ export const maxDuration = 30;
 const sageTools = {
   createStatusPills: tool({
     description: "Create one or more status pill nodes on the canvas. Use this when the user asks you to create statuses, labels, tags, or workflow stages for their project.",
-    parameters: z.object({
+    inputSchema: z.object({
       pills: z.array(z.object({
         label: z.string().describe("The text label for the status pill"),
         color: z.enum(["gray", "blue", "green", "yellow", "orange", "red", "purple", "pink"])
           .describe("The color of the status pill"),
       })).describe("Array of status pills to create"),
       arrangement: z.enum(["horizontal", "vertical", "grid"])
-        .default("horizontal")
         .describe("How to arrange the pills on the canvas"),
     }),
     execute: async ({ pills, arrangement }) => {
@@ -27,13 +26,13 @@ const sageTools = {
           color: getColorHex(pill.color),
           index,
         })),
-        arrangement,
+        arrangement: arrangement || "horizontal",
       };
     },
   }),
   createTextNote: tool({
     description: "Create a text note on the canvas. Use this for adding descriptions, instructions, or documentation.",
-    parameters: z.object({
+    inputSchema: z.object({
       title: z.string().describe("The title of the note"),
       content: z.string().describe("The content/body of the note"),
     }),
@@ -47,7 +46,7 @@ const sageTools = {
   }),
   suggestWorkflow: tool({
     description: "Suggest a workflow or set of statuses for a project type. Use this when the user asks for suggestions or recommendations for organizing their project.",
-    parameters: z.object({
+    inputSchema: z.object({
       projectType: z.string().describe("The type of project (e.g., branding, web design, video production)"),
     }),
     execute: async ({ projectType }) => {
@@ -168,7 +167,7 @@ Current user: ${userId}
       system: systemPrompt,
       messages: await convertToModelMessages(messages),
       tools: sageTools,
-      maxSteps: 3,
+      stopWhen: stepCountIs(5),
     });
 
     return result.toUIMessageStreamResponse();
