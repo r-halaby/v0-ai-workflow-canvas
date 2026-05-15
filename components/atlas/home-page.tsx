@@ -1030,24 +1030,29 @@ All Frameworks
 
                           {/* Creator */}
                           <div className="flex items-center gap-2 mb-3">
-{framework.createdBy.avatar ? (
-                            <img
-                              src={framework.createdBy.avatar}
-                              alt={framework.createdBy.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-xs font-medium" style={{ color: "#121212" }}>
-                              {framework.createdBy.initials}
-                            </span>
-                          )}
+                            <div
+                              className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden"
+                              style={{ backgroundColor: "#E2FF66" }}
+                            >
+                              {framework.createdBy.avatar ? (
+                                <img
+                                  src={framework.createdBy.avatar}
+                                  alt={framework.createdBy.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-xs font-medium" style={{ color: "#121212" }}>
+                                  {framework.createdBy.initials}
+                                </span>
+                              )}
+                            </div>
                             <span
                               className="text-sm text-gray-400"
                               style={{ fontFamily: "system-ui, Inter, sans-serif" }}
                             >
-{framework.createdBy.name}
-                          </span>
-                        </div>
+                              {framework.createdBy.name}
+                            </span>
+                          </div>
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {framework.tags.slice(0, 3).map((tag) => (
                               <span
