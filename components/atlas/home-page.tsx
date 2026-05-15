@@ -1556,13 +1556,23 @@ const deleteCanvas = (canvasId: string) => {
                     </div>
                   </div>
 
-                  {/* Week labels */}
-                  <div className="flex text-xs text-gray-500 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                    <div className="flex-1">Week 1</div>
-                    <div className="flex-1 text-center">Week 2</div>
-                    <div className="flex-1 text-center">Week 3</div>
-                    <div className="flex-1 text-right">Week 4</div>
-                  </div>
+                  {/* Week labels - dynamic dates */}
+                  {(() => {
+                    const today = new Date();
+                    const formatWeekDate = (weeksOffset: number) => {
+                      const date = new Date(today);
+                      date.setDate(today.getDate() + (weeksOffset * 7));
+                      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    };
+                    return (
+                      <div className="flex text-xs text-gray-500 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        <div className="flex-1">{formatWeekDate(-2)}</div>
+                        <div className="flex-1 text-center">{formatWeekDate(-1)}</div>
+                        <div className="flex-1 text-center">{formatWeekDate(0)}</div>
+                        <div className="flex-1 text-right">{formatWeekDate(1)}</div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Today's Detail Card */}
                   <div
