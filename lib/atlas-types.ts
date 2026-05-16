@@ -403,6 +403,217 @@ export interface MoodboardNodeData {
   freeformPositions?: Record<string, MoodboardImagePosition>; // imageId -> position
 }
 
+// ============================================================================
+// SAGE DATA MODEL - Project Intelligence & Reasoning
+// ============================================================================
+
+// Feedback classification using Discern taxonomy
+export type FeedbackType = 
+  | "aesthetic-preference"      // Subjective visual/style preferences
+  | "functional-requirement"    // Objective functionality needs
+  | "strategic-direction"       // Business/brand strategy guidance
+  | "technical-constraint"      // Technical limitations or requirements
+  | "clarification-request"     // Questions needing more info
+  | "approval"                  // Explicit sign-off
+  | "revision-request";         // Request to modify existing work
+
+// Actor types for audit trail
+export type SageActor = "user" | "sage" | "system";
+
+// Project Intent - The guiding north star for a project
+export interface ProjectIntent {
+  id: string;
+  projectId: string;          // References Canvas.id
+  statement: string;          // Current intent statement
+  createdAt: string;
+  updatedAt: string;
+  actor: SageActor;
+  revisionHistory: IntentRevision[];
+}
+
+export interface IntentRevision {
+  id: string;
+  statement: string;
+  createdAt: string;
+  actor: SageActor;
+  reason?: string;            // Why the intent was updated
+}
+
+// Decision Log - Immutable record of project decisions
+export interface Decision {
+  id: string;
+  projectId: string;
+  decision: string;           // What was decided
+  rationale: string;          // Why it was decided
+  actor: SageActor;
+  createdAt: string;
+  relatedFeedbackIds?: string[];  // Links to feedback that informed this decision
+  tags?: string[];
+}
+
+// Feedback Record - Classified stakeholder input
+export interface FeedbackRecord {
+  id: string;
+  projectId: string;
+  rawInput: string;           // Original feedback text
+  type: FeedbackType;         // Classified type
+  actionabilityScore: number; // 0-100 score of how actionable the feedback is
+  conflictFlag: boolean;      // Whether this conflicts with other feedback
+  conflictsWith?: string[];   // IDs of conflicting feedback
+  reviewerRole: string;       // Role of the person who gave feedback
+  revisionId?: string;        // Which project revision this applies to
+  source: "stakeholder" | "client" | "internal" | "sage";
+  createdAt: string;
+  resolvedAt?: string;        // When/if the feedback was addressed
+  resolution?: string;        // How it was resolved
+}
+
+// Drift Score - Measures alignment with original intent
+export interface DriftRecord {
+  id: string;
+  projectId: string;
+  score: number;              // 0-100 alignment score (100 = perfectly aligned)
+  delta: number;              // Change since last calculation
+  calculatedAt: string;
+  revisionId?: string;
+  factors: DriftFactor[];     // What contributed to the score
+}
+
+export interface DriftFactor {
+  name: string;
+  weight: number;
+  score: number;
+  description: string;
+}
+
+// Status Set - Predefined workflow statuses by project type
+export type ProjectType = 
+  | "brand-identity"
+  | "editorial"
+  | "product-design"
+  | "environmental"
+  | "motion"
+  | "web-design"
+  | "packaging"
+  | "custom";
+
+export interface StatusSet {
+  id: string;
+  projectId: string;
+  projectType: ProjectType;
+  statuses: StatusDefinition[];
+  createdAt: string;
+  createdBy: SageActor;
+}
+
+export interface StatusDefinition {
+  id: string;
+  label: string;
+  color: string;
+  order: number;
+  description?: string;
+}
+
+// Predefined status workflows by project type
+export const STATUS_WORKFLOWS: Record<ProjectType, StatusDefinition[]> = {
+  "brand-identity": [
+    { id: "bi-1", label: "Discovery", color: "#93c5fd", order: 0, description: "Research and stakeholder interviews" },
+    { id: "bi-2", label: "Strategy", color: "#c4b5fd", order: 1, description: "Brand positioning and messaging" },
+    { id: "bi-3", label: "Concepts", color: "#fde047", order: 2, description: "Initial creative directions" },
+    { id: "bi-4", label: "Refinement", color: "#fdba74", order: 3, description: "Iterating on chosen direction" },
+    { id: "bi-5", label: "Final", color: "#86efac", order: 4, description: "Approved deliverables" },
+    { id: "bi-6", label: "Delivered", color: "#e5e5e5", order: 5, description: "Handoff complete" },
+  ],
+  "editorial": [
+    { id: "ed-1", label: "Brief", color: "#93c5fd", order: 0 },
+    { id: "ed-2", label: "Outline", color: "#c4b5fd", order: 1 },
+    { id: "ed-3", label: "Draft", color: "#fde047", order: 2 },
+    { id: "ed-4", label: "Review", color: "#fdba74", order: 3 },
+    { id: "ed-5", label: "Revisions", color: "#fca5a5", order: 4 },
+    { id: "ed-6", label: "Published", color: "#86efac", order: 5 },
+  ],
+  "product-design": [
+    { id: "pd-1", label: "Research", color: "#93c5fd", order: 0 },
+    { id: "pd-2", label: "Wireframes", color: "#c4b5fd", order: 1 },
+    { id: "pd-3", label: "Mockups", color: "#fde047", order: 2 },
+    { id: "pd-4", label: "Prototype", color: "#fdba74", order: 3 },
+    { id: "pd-5", label: "Testing", color: "#fca5a5", order: 4 },
+    { id: "pd-6", label: "Development", color: "#86efac", order: 5 },
+  ],
+  "environmental": [
+    { id: "ev-1", label: "Site Analysis", color: "#93c5fd", order: 0 },
+    { id: "ev-2", label: "Concept", color: "#c4b5fd", order: 1 },
+    { id: "ev-3", label: "Schematic", color: "#fde047", order: 2 },
+    { id: "ev-4", label: "Development", color: "#fdba74", order: 3 },
+    { id: "ev-5", label: "Documentation", color: "#fca5a5", order: 4 },
+    { id: "ev-6", label: "Installation", color: "#86efac", order: 5 },
+  ],
+  "motion": [
+    { id: "mo-1", label: "Pre-production", color: "#93c5fd", order: 0 },
+    { id: "mo-2", label: "Storyboard", color: "#c4b5fd", order: 1 },
+    { id: "mo-3", label: "Animatic", color: "#fde047", order: 2 },
+    { id: "mo-4", label: "Animation", color: "#fdba74", order: 3 },
+    { id: "mo-5", label: "Review", color: "#fca5a5", order: 4 },
+    { id: "mo-6", label: "Final Render", color: "#86efac", order: 5 },
+  ],
+  "web-design": [
+    { id: "wd-1", label: "Discovery", color: "#93c5fd", order: 0 },
+    { id: "wd-2", label: "Wireframes", color: "#c4b5fd", order: 1 },
+    { id: "wd-3", label: "Design", color: "#fde047", order: 2 },
+    { id: "wd-4", label: "Development", color: "#fdba74", order: 3 },
+    { id: "wd-5", label: "QA", color: "#fca5a5", order: 4 },
+    { id: "wd-6", label: "Launch", color: "#86efac", order: 5 },
+  ],
+  "packaging": [
+    { id: "pk-1", label: "Brief", color: "#93c5fd", order: 0 },
+    { id: "pk-2", label: "Concepts", color: "#c4b5fd", order: 1 },
+    { id: "pk-3", label: "Refinement", color: "#fde047", order: 2 },
+    { id: "pk-4", label: "Dielines", color: "#fdba74", order: 3 },
+    { id: "pk-5", label: "Proofing", color: "#fca5a5", order: 4 },
+    { id: "pk-6", label: "Production", color: "#86efac", order: 5 },
+  ],
+  "custom": [
+    { id: "cu-1", label: "To Do", color: "#e5e5e5", order: 0 },
+    { id: "cu-2", label: "In Progress", color: "#93c5fd", order: 1 },
+    { id: "cu-3", label: "Review", color: "#fde047", order: 2 },
+    { id: "cu-4", label: "Done", color: "#86efac", order: 3 },
+  ],
+};
+
+// Sage Project State - Aggregated project intelligence
+export interface SageProjectState {
+  projectId: string;
+  intent: ProjectIntent | null;
+  decisions: Decision[];
+  feedback: FeedbackRecord[];
+  driftHistory: DriftRecord[];
+  statusSet: StatusSet | null;
+  currentDriftScore: number;
+  unresolvedFeedbackCount: number;
+  conflictCount: number;
+  lastUpdated: string;
+}
+
+// Health status derived from Sage metrics
+export type SageHealthStatus = "healthy" | "needs-attention" | "at-risk" | "critical";
+
+export function calculateHealthStatus(state: SageProjectState): SageHealthStatus {
+  const { currentDriftScore, unresolvedFeedbackCount, conflictCount } = state;
+  
+  if (conflictCount > 3 || currentDriftScore < 40) return "critical";
+  if (conflictCount > 1 || currentDriftScore < 60 || unresolvedFeedbackCount > 5) return "at-risk";
+  if (unresolvedFeedbackCount > 2 || currentDriftScore < 80) return "needs-attention";
+  return "healthy";
+}
+
+// Color mapping for health status
+export const HEALTH_STATUS_COLORS: Record<SageHealthStatus, string> = {
+  "healthy": "#86efac",
+  "needs-attention": "#fde047",
+  "at-risk": "#fdba74",
+  "critical": "#fca5a5",
+};
+
 // Atlas node type
 export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard";
 
