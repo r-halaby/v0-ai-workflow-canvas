@@ -1130,7 +1130,7 @@ All Frameworks
                           </div>
 
                           {/* Stats & Actions */}
-                          <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center justify-between gap-4 mt-3">
                             <div className="flex items-center gap-4">
                               {/* Upvote Button */}
                               <button
