@@ -179,9 +179,11 @@ interface HomePageProps {
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
   canvases: Canvas[];
   onCanvasesChange: (canvases: Canvas[]) => void;
+  frameworks?: CanvasFramework[];
+  onFrameworksChange?: (frameworks: CanvasFramework[]) => void;
 }
 
-export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange }: HomePageProps) {
+export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
@@ -200,7 +202,10 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [showSageChat, setShowSageChat] = useState(false);
 const [sageMessage, setSageMessage] = useState("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [frameworks, setFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
+  // Use external frameworks if provided, otherwise use local state
+  const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
+  const frameworks = externalFrameworks ?? localFrameworks;
+  const setFrameworks = onFrameworksChange ?? setLocalFrameworks;
   const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
   const [viewingFramework, setViewingFramework] = useState<CanvasFramework | null>(null);
   const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
