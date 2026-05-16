@@ -1173,7 +1173,7 @@ All Frameworks
                             </div>
 
 {/* Actions */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 ml-auto">
                               {/* Delete Button - only show for user's own frameworks */}
                               {framework.createdBy.id === currentUserId && onRemoveFramework && (
                                 <button
