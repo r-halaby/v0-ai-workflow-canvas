@@ -65,13 +65,11 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
       }
 
       const result = await response.json();
-      console.log("[v0] API response:", result);
       
       if (result.images && result.images.length > 0) {
-        console.log("[v0] Dispatching atlas:mockups-generated with", result.images.length, "images");
-        // Convert base64 images to data URLs
-        const mockups = result.images.map((img: { base64: string; mediaType: string }, index: number) => ({
-          imageUrl: `data:${img.mediaType};base64,${img.base64}`,
+        // Handle both URL format (fal.ai) and base64 format (legacy)
+        const mockups = result.images.map((img: { url?: string; base64?: string; mediaType?: string }, index: number) => ({
+          imageUrl: img.url || `data:${img.mediaType};base64,${img.base64}`,
           name: `${nodeData.sourceFileName} - ${prompt.slice(0, 25)}${prompt.length > 25 ? "..." : ""} (${index + 1})`,
         }));
         
@@ -85,7 +83,6 @@ function AIPromptNodeComponent({ id, data }: NodeProps) {
           }
         }));
       } else {
-        console.log("[v0] No images in result:", result);
         setError("No images were generated");
         setIsGenerating(false);
       }
