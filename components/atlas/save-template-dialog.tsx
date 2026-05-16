@@ -114,11 +114,7 @@ export function SaveFrameworkDialog({
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    if (onSaveFramework) {
-      onSaveFramework(framework);
-    } else {
-      console.log("[v0] Framework saved:", framework.name, framework);
-    }
+    onSaveFramework(framework);
     setIsSaving(false);
     onClose();
   };

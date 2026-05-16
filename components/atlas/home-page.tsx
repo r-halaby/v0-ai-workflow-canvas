@@ -469,7 +469,7 @@ const deleteCanvas = (canvasId: string) => {
                 <img
                   src={workspaceSettings.branding.workspaceIcon}
                   alt={workspaceSettings.name}
-                  className="max-w-full max-h-full object-contain p-0.5"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 workspaceSettings.name.charAt(0)
@@ -1205,7 +1205,7 @@ All Frameworks
                   <div className="text-center">
                     <div className="w-16 h-16 mx-auto rounded-xl flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}>
                       {workspaceSettings.branding?.workspaceIcon ? (
-                        <img src={workspaceSettings.branding.workspaceIcon} alt="Icon" className="max-w-full max-h-full object-contain p-1" />
+                        <img src={workspaceSettings.branding.workspaceIcon} alt="Icon" className="max-w-full max-h-full object-contain" />
                       ) : (
                         <span className="text-xl font-bold" style={{ color: "#F0FE00" }}>{workspaceSettings.name.charAt(0)}</span>
                       )}
@@ -1237,7 +1237,7 @@ All Frameworks
                   <div className="text-center">
                     <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}>
                       {workspaceSettings.branding?.profilePicture ? (
-                        <img src={workspaceSettings.branding.profilePicture} alt="Profile" className="max-w-full max-h-full object-contain p-1" />
+                        <img src={workspaceSettings.branding.profilePicture} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
                         <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="12" r="5" stroke="#666666" strokeWidth="2"/><path d="M6 28C6 22.4772 10.4772 18 16 18C21.5228 18 26 22.4772 26 28" stroke="#666666" strokeWidth="2" strokeLinecap="round"/></svg>
                       )}
