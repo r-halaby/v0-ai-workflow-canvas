@@ -138,7 +138,7 @@ function findFreePositions(
   return positions;
 }
 
-function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveTemplate }: AtlasEditorProps) {
+function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, onWorkspaceSettingsChange, onSaveFramework }: AtlasEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<AtlasNode>(canvas.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(canvas.edges);
   const [comments, setComments] = useState<CanvasComment[]>(canvas.comments || []);
