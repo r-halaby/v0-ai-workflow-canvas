@@ -409,12 +409,21 @@ export interface MoodboardNodeData {
   }[];
   isExpanded: boolean;
   createdAt: string;
-  freeformPositions?: Record<string, MoodboardImagePosition>; // imageId -> position
-}
-
-// ============================================================================
-// SAGE DATA MODEL - Project Intelligence & Reasoning
-// ============================================================================
+freeformPositions?: Record<string, MoodboardImagePosition>; // imageId -> position
+  }
+  
+  // Mockup image node data - AI-generated mockup images
+  export interface MockupImageNodeData {
+    label: string;
+    imageUrl: string;
+    sourceFileName?: string;
+    prompt?: string;
+    generatedAt: string;
+  }
+  
+  // ============================================================================
+  // SAGE DATA MODEL - Project Intelligence & Reasoning
+  // ============================================================================
 
 // Feedback classification using Discern taxonomy
 export type FeedbackType = 
@@ -624,10 +633,10 @@ export const HEALTH_STATUS_COLORS: Record<SageHealthStatus, string> = {
 };
 
 // Atlas node type
-export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard";
+export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard" | "mockupImage";
 
 // Atlas workflow node - using generic data for multiple node types
-export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | Record<string, unknown>, AtlasNodeType>;
+export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | MockupImageNodeData | Record<string, unknown>, AtlasNodeType>;
 
 // Filter state
 export interface FilterState {

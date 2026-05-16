@@ -21,7 +21,7 @@ import { FileDetailModal } from "./file-detail-modal";
 import { UploadDialog } from "./upload-dialog";
 import { UploadProgress } from "./upload-progress";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
-import { MockupGeneratorDialog } from "./mockup-generator-dialog";
+import { InlineMockupPrompt } from "./inline-mockup-prompt";
 import { MoodboardExpanded } from "./moodboard-expanded";
 import { PresentationViewer } from "./presentation-viewer";
 import { SaveFrameworkDialog } from "./save-template-dialog";
@@ -165,6 +165,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
   // Mockup generator state
   const [mockupSourceFile, setMockupSourceFile] = useState<FileNodeData | null>(null);
+  const [mockupPromptPosition, setMockupPromptPosition] = useState<{ x: number; y: number } | null>(null);
 
   // Moodboard state
   const [expandedMoodboardId, setExpandedMoodboardId] = useState<string | null>(null);
@@ -210,8 +211,15 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
   // Listen for mockup generation events from file nodes
   useEffect(() => {
-    const handleMockupEvent = (e: CustomEvent<{ nodeId: string; fileData: FileNodeData }>) => {
+    const handleMockupEvent = (e: CustomEvent<{ nodeId: string; fileData: FileNodeData; screenPosition?: { x: number; y: number } }>) => {
       setMockupSourceFile(e.detail.fileData);
+      // Position the prompt near where the user clicked
+      if (e.detail.screenPosition) {
+        setMockupPromptPosition(e.detail.screenPosition);
+      } else {
+        // Fallback to center of screen
+        setMockupPromptPosition({ x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 100 });
+      }
     };
 
     window.addEventListener("atlas:generate-mockup", handleMockupEvent as EventListener);
@@ -223,28 +231,32 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   // Handle creating nodes from generated mockups
   const handleCreateMockupNodes = useCallback(
     (mockups: Array<{ imageUrl: string; name: string }>) => {
+      // Find source node position if available
+      const sourceNode = mockupSourceFile ? nodes.find(n => 
+        n.type === "file" && (n.data as FileNodeData).label === mockupSourceFile.label
+      ) : null;
+      
+      const baseX = sourceNode ? sourceNode.position.x + 280 : 300;
+      const baseY = sourceNode ? sourceNode.position.y : 200;
+      
       const newNodes: AtlasNode[] = mockups.map((mockup, index) => ({
         id: `mockup-${Date.now()}-${index}`,
-        type: "file" as const,
+        type: "mockupImage" as const,
         position: { 
-          x: 300 + (nodes.length + index) * 30, 
-          y: 200 + (nodes.length + index) * 20 
+          x: baseX + (index * 260), 
+          y: baseY 
         },
         data: {
           label: mockup.name,
-          fileName: `${mockup.name}.png`,
-          product: "atlas" as const,
-          status: "draft" as const,
-          fileExtension: ".png" as const,
-          lastModified: "Generated just now",
-          previewImages: [mockup.imageUrl],
-          tasks: [],
+          imageUrl: mockup.imageUrl,
+          sourceFileName: mockupSourceFile?.fileName,
+          generatedAt: "Just now",
         },
       }));
 
       setNodes((nds) => [...nds, ...newNodes]);
     },
-    [nodes.length, setNodes]
+    [nodes, mockupSourceFile, setNodes]
   );
 
   // Current user (first member for demo)
@@ -1380,19 +1392,20 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     closeDoubleClickMenu();
   }, [doubleClickPosition, handleFileDrop, closeDoubleClickMenu]);
 
-  const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collateral") => {
-    if (type === "mockup") {
-      const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
-      if (fileNode) {
-        setMockupSourceFile(fileNode.data as FileNodeData);
-      } else {
-        alert("Please upload an image first to generate mockups from.");
-      }
-    } else if (type === "collateral") {
-      alert("Collateral generation coming soon!");
-    }
-    closeDoubleClickMenu();
-  }, [nodes, closeDoubleClickMenu]);
+const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collateral") => {
+  if (type === "mockup") {
+  const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
+  if (fileNode) {
+  setMockupSourceFile(fileNode.data as FileNodeData);
+  setMockupPromptPosition(doubleClickMenuScreenPosition || { x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 100 });
+  } else {
+  alert("Please upload an image first to generate mockups from.");
+  }
+  } else if (type === "collateral") {
+  alert("Collateral generation coming soon!");
+  }
+  closeDoubleClickMenu();
+  }, [nodes, doubleClickMenuScreenPosition, closeDoubleClickMenu]);
 
   const handleNodesChangeWrapper = useCallback(
     (changes: NodeChange<AtlasNode>[]) => {
@@ -1520,6 +1533,7 @@ onAddOperationalNode={handleAddOperationalNode}
       const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
       if (fileNode) {
         setMockupSourceFile(fileNode.data as FileNodeData);
+        setMockupPromptPosition({ x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 100 });
       } else {
         // No file found - show alert
         alert("Please upload an image first to generate mockups from.");
@@ -1549,6 +1563,7 @@ presentationMode={presentationMode}
       const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
       if (fileNode) {
         setMockupSourceFile(fileNode.data as FileNodeData);
+        setMockupPromptPosition({ x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 100 });
       } else {
         alert("Please upload an image first to generate mockups from.");
       }
@@ -1667,15 +1682,20 @@ presentationMode={presentationMode}
         );
       })()}
 
-      {/* Mockup Generator Dialog */}
-      {mockupSourceFile && (
-        <MockupGeneratorDialog
-          isOpen={true}
-          onClose={() => setMockupSourceFile(null)}
-          sourceFile={mockupSourceFile}
-          onCreateNodes={handleCreateMockupNodes}
-        />
-      )}
+{/* Inline Mockup Prompt */}
+  {mockupSourceFile && mockupPromptPosition && (
+  <InlineMockupPrompt
+    isOpen={true}
+    onClose={() => {
+      setMockupSourceFile(null);
+      setMockupPromptPosition(null);
+    }}
+    position={mockupPromptPosition}
+    sourceImageUrl={mockupSourceFile.uploadedFile?.url || mockupSourceFile.previewImages?.[0] || ""}
+    sourceFileName={mockupSourceFile.label || "Untitled"}
+    onMockupsGenerated={handleCreateMockupNodes}
+  />
+  )}
 
       {/* Version Conflict Dialog */}
       {versionConflict && (
