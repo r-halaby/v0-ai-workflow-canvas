@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import type { FileNodeData, FileVersion, FileActivity, TaskItem, WorkspaceMember } from "@/lib/atlas-types";
+import React, { useState, useRef } from "react";
+import type { FileNodeData, FileVersion, FileActivity, TaskItem, WorkspaceMember, UploadedFile } from "@/lib/atlas-types";
 import { STATUS_COLORS, STATUS_LABELS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { upload } from "@vercel/blob/client";
 
 // File type icons (simplified versions)
 const FileTypeIcon = ({ extension }: { extension: string }) => {
@@ -52,39 +53,26 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState<string | null>(null);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
   const [newTodoAssignee, setNewTodoAssignee] = useState<WorkspaceMember | null>(null);
+  const [isUploadingVersion, setIsUploadingVersion] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const versionInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
-  // Sample version history if not provided
-  const versions: FileVersion[] = fileData.versions || [
-    {
-      id: "v1",
-      versionName: fileData.label,
-      previewImages: fileData.previewImages || [
-        "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=400&h=300&fit=crop",
-      ],
-      uploadedAt: "2026-05-06T10:00:00Z",
-      uploadedBy: WORKSPACE_MEMBERS[0],
-    },
-    {
-      id: "v2",
-      versionName: `${fileData.label} V 2.0`,
-      previewImages: [
-        "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=400&h=300&fit=crop",
-      ],
-      uploadedAt: "2026-05-08T14:30:00Z",
-      uploadedBy: WORKSPACE_MEMBERS[1],
-    },
-    {
-      id: "v3",
-      versionName: `${fileData.label} V 3.0`,
-      previewImages: [
-        "https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=400&h=300&fit=crop",
-      ],
-      uploadedAt: "2026-05-12T09:15:00Z",
-      uploadedBy: WORKSPACE_MEMBERS[0],
-    },
-  ];
+  // Build versions array - use stored versions or create initial version from current file
+  const versions: FileVersion[] = fileData.versions && fileData.versions.length > 0 
+    ? fileData.versions 
+    : fileData.uploadedFile 
+      ? [{
+          id: "v-initial",
+          versionName: fileData.label,
+          previewImages: fileData.previewImages || [],
+          uploadedAt: fileData.uploadedFile.uploadedAt || fileData.lastModified,
+          uploadedBy: WORKSPACE_MEMBERS[0],
+          fileUrl: fileData.uploadedFile.url,
+          fileSize: fileData.uploadedFile.size,
+        }]
+      : [];
 
   // Sample activity history if not provided
   const activities: FileActivity[] = fileData.activities || [
@@ -179,6 +167,93 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
       onUpdateFile({ tasks: updatedTasks });
     }
     setShowAssigneeDropdown(null);
+  };
+
+  const handleVersionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUpdateFile) return;
+
+    setIsUploadingVersion(true);
+    setUploadProgress(0);
+
+    try {
+      // Upload to Vercel Blob
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload/client",
+        onUploadProgress: (progress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        },
+      });
+
+      // Create preview URL for images
+      const isImage = file.type.startsWith("image/");
+      const previewUrl = isImage ? blob.url : undefined;
+
+      // Get current versions or create initial version from current file
+      const currentVersions = fileData.versions || [];
+      
+      // If no versions exist, create version 1 from current file state
+      let versionsToUpdate = [...currentVersions];
+      if (versionsToUpdate.length === 0 && fileData.uploadedFile) {
+        versionsToUpdate.push({
+          id: `v-${Date.now()}-initial`,
+          versionName: fileData.label,
+          previewImages: fileData.previewImages || [],
+          uploadedAt: fileData.lastModified || new Date().toISOString(),
+          uploadedBy: WORKSPACE_MEMBERS[0],
+          fileUrl: fileData.uploadedFile.url,
+          fileSize: fileData.uploadedFile.size,
+        });
+      }
+
+      // Create new version
+      const versionNumber = versionsToUpdate.length + 1;
+      const newVersion: FileVersion = {
+        id: `v-${Date.now()}`,
+        versionName: `${fileData.label} V ${versionNumber}.0`,
+        previewImages: previewUrl ? [previewUrl] : fileData.previewImages || [],
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: WORKSPACE_MEMBERS[0], // TODO: Use actual logged in user
+        fileUrl: blob.url,
+        fileSize: file.size,
+      };
+
+      // Create activity entry
+      const newActivity: FileActivity = {
+        id: `a-${Date.now()}`,
+        type: "version-add",
+        description: `Uploaded new version V ${versionNumber}.0`,
+        user: WORKSPACE_MEMBERS[0],
+        timestamp: new Date().toISOString(),
+      };
+
+      // Update file with new version as current
+      const uploadedFile: UploadedFile = {
+        url: blob.url,
+        pathname: blob.pathname,
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      onUpdateFile({
+        versions: [...versionsToUpdate, newVersion],
+        activities: [...(fileData.activities || []), newActivity],
+        uploadedFile,
+        previewImages: previewUrl ? [previewUrl, ...(fileData.previewImages || []).slice(0, 3)] : fileData.previewImages,
+        lastModified: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      console.error("Error uploading version:", error);
+    } finally {
+      setIsUploadingVersion(false);
+      setUploadProgress(0);
+      // Reset file input
+      if (versionInputRef.current) {
+        versionInputRef.current.value = "";
+      }
+    }
   };
 
   const getActivityIcon = (type: FileActivity["type"]) => {
@@ -473,6 +548,50 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
           {/* Tab Content */}
           {activeTab === "overview" && (
             <div>
+              {/* Hidden file input for version upload */}
+              <input
+                ref={versionInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleVersionUpload}
+                accept="*/*"
+              />
+
+              {/* Upload New Version Button */}
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Version History ({versions.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => versionInputRef.current?.click()}
+                  disabled={isUploadingVersion}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  style={{ 
+                    backgroundColor: "#F0FE00", 
+                    color: "#000000",
+                    fontFamily: "system-ui, Inter, sans-serif"
+                  }}
+                >
+                  {isUploadingVersion ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="32" />
+                      </svg>
+                      Uploading {uploadProgress}%
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M3 12V13H13V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      New Version
+                    </>
+                  )}
+                </button>
+              </div>
+
               {/* Version History Carousel */}
               <div className="relative">
                 {/* Carousel Navigation */}

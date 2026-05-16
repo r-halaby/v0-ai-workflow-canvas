@@ -233,6 +233,8 @@ export interface FileVersion {
   uploadedAt: string;
   uploadedBy: WorkspaceMember;
   notes?: string;
+  fileUrl?: string; // URL of the uploaded file for this version
+  fileSize?: number; // Size in bytes
 }
 
 // File activity/history entry
