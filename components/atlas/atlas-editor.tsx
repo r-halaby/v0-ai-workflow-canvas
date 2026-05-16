@@ -259,21 +259,16 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   // Listen for mockups generated events from AI prompt node
   useEffect(() => {
     const handleMockupsGenerated = (e: CustomEvent<{
+      promptNodeId: string;
       sourceNodeId: string;
       mockups: Array<{ imageUrl: string; name: string }>;
       prompt: string;
     }>) => {
-      const { sourceNodeId, mockups, prompt } = e.detail;
-      console.log("[v0] Received mockups-generated event:", { sourceNodeId, mockupsCount: mockups.length, prompt });
+      const { promptNodeId, sourceNodeId, mockups, prompt } = e.detail;
       
-      // Find the source node and active prompt node
+      // Find the source node
       const sourceNode = nodes.find(n => n.id === sourceNodeId);
-      console.log("[v0] Found source node:", sourceNode?.id, "activeAIPromptNodeId:", activeAIPromptNodeId);
-      
-      if (!sourceNode) {
-        console.log("[v0] Source node not found, aborting");
-        return;
-      }
+      if (!sourceNode) return;
       
       const baseX = sourceNode.position.x + 320;
       const baseY = sourceNode.position.y;
@@ -304,22 +299,15 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         animated: true,
       }));
       
-      // Remove prompt node and its edges, add mockup nodes and edges
-      console.log("[v0] Creating", newMockupNodes.length, "mockup nodes and", newEdges.length, "edges");
-      setNodes(nds => {
-        console.log("[v0] Updating nodes, removing prompt node:", activeAIPromptNodeId);
-        return [
-          ...nds.filter(n => n.id !== activeAIPromptNodeId),
-          ...newMockupNodes
-        ];
-      });
-      setEdges(eds => {
-        console.log("[v0] Updating edges, adding", newEdges.length, "new edges");
-        return [
-          ...eds.filter(e => e.source !== activeAIPromptNodeId && e.target !== activeAIPromptNodeId),
-          ...newEdges
-        ];
-      });
+      // Remove prompt node (using ID from event) and its edges, add mockup nodes and edges
+      setNodes(nds => [
+        ...nds.filter(n => n.id !== promptNodeId),
+        ...newMockupNodes
+      ]);
+      setEdges(eds => [
+        ...eds.filter(e => e.source !== promptNodeId && e.target !== promptNodeId),
+        ...newEdges
+      ]);
       setActiveAIPromptNodeId(null);
     };
 
@@ -327,7 +315,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
     return () => {
       window.removeEventListener("atlas:mockups-generated", handleMockupsGenerated as EventListener);
     };
-  }, [nodes, activeAIPromptNodeId, setNodes, setEdges]);
+  }, [nodes, setNodes, setEdges]);
   
   // Listen for close AI prompt events
   useEffect(() => {

@@ -104,34 +104,7 @@ function MockupImageNodeComponent({
           onLoad={() => setImageLoaded(true)}
         />
 
-        {/* AI Badge */}
-        <div
-          style={{
-            position: "absolute",
-            top: 8,
-            left: 8,
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            padding: "3px 8px",
-            borderRadius: 6,
-            backgroundColor: "rgba(240, 254, 0, 0.9)",
-            ...fontStyle,
-          }}
-        >
-          <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-            <path
-              d="M7 1L8.5 4.5L12 5L9.5 7.5L10 11L7 9.5L4 11L4.5 7.5L2 5L5.5 4.5L7 1Z"
-              stroke="#121212"
-              strokeWidth="1.2"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span style={{ fontSize: 10, fontWeight: 600, color: "#121212" }}>
-            AI Generated
-          </span>
         </div>
-      </div>
 
       {/* Footer */}
       <div style={{ padding: "10px 12px" }}>

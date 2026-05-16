@@ -29,7 +29,7 @@ const SUGGESTIONS = [
   "Show as a poster on a city wall",
 ];
 
-function AIPromptNodeComponent({ data }: NodeProps) {
+function AIPromptNodeComponent({ id, data }: NodeProps) {
   const nodeData = data as AIPromptNodeData;
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("16:9");
@@ -78,6 +78,7 @@ function AIPromptNodeComponent({ data }: NodeProps) {
         // Dispatch custom event to handle mockup creation in atlas-editor
         window.dispatchEvent(new CustomEvent("atlas:mockups-generated", {
           detail: {
+            promptNodeId: id,
             sourceNodeId: nodeData.sourceNodeId,
             mockups,
             prompt,
