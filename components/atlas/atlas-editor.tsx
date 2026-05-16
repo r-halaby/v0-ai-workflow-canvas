@@ -1617,7 +1617,12 @@ presentationMode={presentationMode}
         canvas={canvas}
         currentUser={workspaceSettings.members[0]}
         onSaveFramework={(framework) => {
-          onSaveFramework?.(framework);
+          if (onSaveFramework) {
+            onSaveFramework(framework);
+          } else {
+            // Default behavior: log framework save (could be extended to persist locally)
+            console.log("[v0] Framework saved:", framework.name);
+          }
           setShowSaveFrameworkDialog(false);
         }}
       />
