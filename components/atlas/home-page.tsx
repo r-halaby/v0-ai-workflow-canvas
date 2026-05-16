@@ -441,7 +441,6 @@ const deleteCanvas = (canvasId: string) => {
 
   // Community page only shows frameworks with visibility: "community"
   const filteredFrameworks = useMemo(() => {
-    console.log("[v0] filteredFrameworks - total frameworks:", frameworks.length, "with visibility:", frameworks.map(f => ({ name: f.name, visibility: f.visibility })));
     return frameworks.filter(f => {
       // Only show community-visible frameworks in the Community page
       if (f.visibility !== "community") return false;
