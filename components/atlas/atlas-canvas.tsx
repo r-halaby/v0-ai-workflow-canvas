@@ -783,7 +783,9 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   <button
   type="button"
   onClick={() => {
-  onCreateMoodboard(validMoodboardNodes.map(n => n.id));
+  // Pass all selected file node IDs - handleCreateMoodboard will filter appropriately
+  const fileNodeIds = selectedNodes.filter(n => n.type === "file").map(n => n.id);
+  onCreateMoodboard(fileNodeIds);
   }}
   className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
   style={{
@@ -813,7 +815,8 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   <button
   type="button"
   onClick={() => {
-    onCreatePresentationGroup(validMoodboardNodes.map(n => n.id));
+    const fileNodeIds = selectedNodes.filter(n => n.type === "file").map(n => n.id);
+    onCreatePresentationGroup(fileNodeIds);
   }}
   className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
   style={{
