@@ -69,14 +69,17 @@ function AIPromptNodeComponent({ data }: NodeProps) {
       
       if (result.images && result.images.length > 0) {
         console.log("[v0] Dispatching atlas:mockups-generated with", result.images.length, "images");
+        // Convert base64 images to data URLs
+        const mockups = result.images.map((img: { base64: string; mediaType: string }, index: number) => ({
+          imageUrl: `data:${img.mediaType};base64,${img.base64}`,
+          name: `${nodeData.sourceFileName} - ${prompt.slice(0, 25)}${prompt.length > 25 ? "..." : ""} (${index + 1})`,
+        }));
+        
         // Dispatch custom event to handle mockup creation in atlas-editor
         window.dispatchEvent(new CustomEvent("atlas:mockups-generated", {
           detail: {
             sourceNodeId: nodeData.sourceNodeId,
-            mockups: result.images.map((img: { url: string }, index: number) => ({
-              imageUrl: img.url,
-              name: `${nodeData.sourceFileName} - ${prompt.slice(0, 25)}${prompt.length > 25 ? "..." : ""} (${index + 1})`,
-            })),
+            mockups,
             prompt,
           }
         }));

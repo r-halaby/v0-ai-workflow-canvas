@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { prompt, sourceImageUrl, count = 1 } = await request.json();
+    const { prompt, sourceImageUrl, count = 1, variations } = await request.json();
+    const imageCount = variations || count;
 
     if (!prompt) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
     const generatedImages: Array<{ base64: string; mediaType: string }> = [];
 
     // Generate mockups using Nano Banana 2 (google/gemini-3.1-flash-image-preview)
-    for (let i = 0; i < Math.min(count, 4); i++) {
+    for (let i = 0; i < Math.min(imageCount, 4); i++) {
       const messages: Array<{ role: "user"; content: Array<{ type: "text"; text: string } | { type: "image"; image: URL }> }> = [];
       
       // Build the message content
