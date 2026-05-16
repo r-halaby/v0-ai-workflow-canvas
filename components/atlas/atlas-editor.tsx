@@ -12,7 +12,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 
-import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework } from "@/lib/atlas-types";
+import type { AtlasNode, FileExtension, FileNodeData, UploadedFile, WorkspaceSettings, Canvas, CanvasComment, MoodboardNodeData, CanvasFramework, FileVersion, FileActivity } from "@/lib/atlas-types";
 import { INITIAL_FILE_NODES, INITIAL_EDGES, getFileCategoryFromExtension, DEFAULT_WORKSPACE_SETTINGS, WORKSPACE_MEMBERS, SUPPORTED_EXTENSIONS } from "@/lib/atlas-types";
 import { AtlasCanvas } from "./atlas-canvas";
 import { AtlasToolbar } from "./atlas-toolbar";
@@ -172,6 +172,19 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 // Presentation state
   const [presentationMode, setPresentationMode] = useState(false);
   const [presentationEdges, setPresentationEdges] = useState<Edge[]>([]);
+
+  // Version conflict dialog state
+  const [versionConflict, setVersionConflict] = useState<{
+    existingNode: AtlasNode;
+    newFile: {
+      fileName: string;
+      extension: string;
+      uploadedFile: UploadedFile;
+      previewUrl?: string;
+      isVideo?: boolean;
+    };
+    position: { x: number; y: number };
+  } | null>(null);
   // Store full group data so we can restore groups when re-entering presentation mode
   const [presentationGroups, setPresentationGroups] = useState<Array<{
     id: string;
@@ -1144,41 +1157,174 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
       // Create nodes for uploaded files, positioned to avoid overlapping
       if (uploadedResults.length > 0) {
-        // Find free positions starting from the drop point
-        const freePositions = findFreePositions(nodes, uploadedResults.length, position);
+        // Check for files with the same name (potential version conflicts)
+        const filesToCreate: typeof uploadedResults = [];
         
-        const newNodes: AtlasNode[] = uploadedResults.map((file, index) => {
-          const label = file.fileName.replace(file.extension, "");
-          const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
-          // Only use previewUrl for images - videos and other files should use default previews
-          const previewImages = isImage && file.previewUrl ? [file.previewUrl] : undefined;
-          const dropTimestamp = Date.now();
+        for (const file of uploadedResults) {
+          const fileName = file.fileName;
+          // Find existing file node with the same filename
+          const existingNode = nodes.find(
+            (node) => node.type === "file" && (node.data as FileNodeData).fileName === fileName
+          );
           
-          return {
-            id: `file-${dropTimestamp}-${index}-${Math.random().toString(36).substring(2, 9)}`,
-            type: "file" as const,
-            position: freePositions[index] || { x: position.x + index * 260, y: position.y },
-            data: {
-              label,
-              fileName: file.fileName,
-              product: "atlas" as const,
-              status: "draft" as const,
-              fileExtension: file.extension,
-              fileType: isImage ? "image" : (file.isVideo ? "video" : "document"),
-              fileCategory: isImage ? "image" : (file.isVideo ? "video" : "document"),
-              lastModified: "Updated just now",
-              uploadedFile: file.uploadedFile,
-              previewImages,
-              tasks: [],
-            },
-          };
-        });
+          if (existingNode) {
+            // Show version conflict dialog for the first conflict
+            setVersionConflict({
+              existingNode,
+              newFile: file,
+              position,
+            });
+            // For simplicity, only handle one conflict at a time
+            // Remaining files will be created as new nodes
+            continue;
+          }
+          
+          filesToCreate.push(file);
+        }
+        
+        // Create new nodes for files without conflicts
+        if (filesToCreate.length > 0) {
+          const freePositions = findFreePositions(nodes, filesToCreate.length, position);
+          
+          const newNodes: AtlasNode[] = filesToCreate.map((file, index) => {
+            const label = file.fileName.replace(file.extension, "");
+            const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
+            const previewImages = isImage && file.previewUrl ? [file.previewUrl] : undefined;
+            const dropTimestamp = Date.now();
+            
+            return {
+              id: `file-${dropTimestamp}-${index}-${Math.random().toString(36).substring(2, 9)}`,
+              type: "file" as const,
+              position: freePositions[index] || { x: position.x + index * 260, y: position.y },
+              data: {
+                label,
+                fileName: file.fileName,
+                product: "atlas" as const,
+                status: "draft" as const,
+                fileExtension: file.extension,
+                fileType: isImage ? "image" : (file.isVideo ? "video" : "document"),
+                fileCategory: isImage ? "image" : (file.isVideo ? "video" : "document"),
+                lastModified: "Updated just now",
+                uploadedFile: file.uploadedFile,
+                previewImages,
+                tasks: [],
+              },
+            };
+          });
 
-        setNodes((nds) => [...nds, ...newNodes]);
+          setNodes((nds) => [...nds, ...newNodes]);
+        }
       }
     },
     [setNodes, nodes]
   );
+
+  // Handle version conflict resolution - add as new version
+  const handleAddAsVersion = useCallback(() => {
+    if (!versionConflict) return;
+    
+    const { existingNode, newFile } = versionConflict;
+    const fileData = existingNode.data as FileNodeData;
+    
+    // Build current versions array
+    const currentVersions = fileData.versions || [];
+    let versionsToUpdate = [...currentVersions];
+    
+    // If no versions exist yet, create initial version from current state
+    if (versionsToUpdate.length === 0 && fileData.uploadedFile) {
+      versionsToUpdate.push({
+        id: `v-${Date.now()}-initial`,
+        versionName: fileData.label,
+        previewImages: fileData.previewImages || [],
+        uploadedAt: fileData.uploadedFile.uploadedAt || fileData.lastModified || new Date().toISOString(),
+        uploadedBy: WORKSPACE_MEMBERS[0],
+        fileUrl: fileData.uploadedFile.url,
+        fileSize: fileData.uploadedFile.size,
+      });
+    }
+    
+    // Create new version
+    const versionNumber = versionsToUpdate.length + 1;
+    const isImage = newFile.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
+    const newVersion: FileVersion = {
+      id: `v-${Date.now()}`,
+      versionName: `${fileData.label} V ${versionNumber}.0`,
+      previewImages: isImage && newFile.previewUrl ? [newFile.previewUrl] : fileData.previewImages || [],
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: WORKSPACE_MEMBERS[0],
+      fileUrl: newFile.uploadedFile.url,
+      fileSize: newFile.uploadedFile.size,
+    };
+    
+    // Create activity entry
+    const newActivity: FileActivity = {
+      id: `a-${Date.now()}`,
+      type: "version-add",
+      description: `Uploaded new version V ${versionNumber}.0`,
+      user: WORKSPACE_MEMBERS[0],
+      timestamp: new Date().toISOString(),
+    };
+    
+    // Update the existing node with new version
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === existingNode.id) {
+          const currentData = node.data as FileNodeData;
+          return {
+            ...node,
+            data: {
+              ...currentData,
+              versions: [...versionsToUpdate, newVersion],
+              activities: [...(currentData.activities || []), newActivity],
+              uploadedFile: newFile.uploadedFile,
+              previewImages: isImage && newFile.previewUrl 
+                ? [newFile.previewUrl, ...(currentData.previewImages || []).slice(0, 3)]
+                : currentData.previewImages,
+              lastModified: "Updated just now",
+            },
+          };
+        }
+        return node;
+      })
+    );
+    
+    setVersionConflict(null);
+  }, [versionConflict, setNodes]);
+
+  // Handle version conflict resolution - create as separate file
+  const handleCreateSeparate = useCallback(() => {
+    if (!versionConflict) return;
+    
+    const { newFile, position } = versionConflict;
+    const label = newFile.fileName.replace(newFile.extension, "");
+    const isImage = newFile.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
+    const previewImages = isImage && newFile.previewUrl ? [newFile.previewUrl] : undefined;
+    
+    // Find a free position
+    const freePositions = findFreePositions(nodes, 1, position);
+    
+    const newNode: AtlasNode = {
+      id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      type: "file" as const,
+      position: freePositions[0] || position,
+      data: {
+        label,
+        fileName: newFile.fileName,
+        product: "atlas" as const,
+        status: "draft" as const,
+        fileExtension: newFile.extension as FileExtension,
+        fileType: isImage ? "image" : (newFile.isVideo ? "video" : "document"),
+        fileCategory: isImage ? "image" : (newFile.isVideo ? "video" : "document"),
+        lastModified: "Updated just now",
+        uploadedFile: newFile.uploadedFile,
+        previewImages,
+        tasks: [],
+      },
+    };
+    
+    setNodes((nds) => [...nds, newNode]);
+    setVersionConflict(null);
+  }, [versionConflict, setNodes, nodes]);
 
   // Wrapper handlers that use the double-click position then close the menu
   const handleDoubleClickAddStatusPill = useCallback(() => {
@@ -1502,6 +1648,76 @@ presentationMode={presentationMode}
           sourceFile={mockupSourceFile}
           onCreateNodes={handleCreateMockupNodes}
         />
+      )}
+
+      {/* Version Conflict Dialog */}
+      {versionConflict && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div 
+            className="rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
+            style={{ 
+              backgroundColor: "#1C1C1E",
+              border: "1px solid #2C2C2E",
+            }}
+          >
+            <h2 
+              className="text-lg font-semibold mb-2"
+              style={{ color: "#FFFFFF", fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              File Already Exists
+            </h2>
+            <p 
+              className="text-sm mb-6"
+              style={{ color: "#8E8E93", fontFamily: "system-ui, Inter, sans-serif" }}
+            >
+              A file named <span className="font-medium text-white">{versionConflict.newFile.fileName}</span> already exists on this canvas. Would you like to add this as a new version or create a separate file?
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleAddAsVersion}
+                className="w-full py-3 px-4 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                style={{ 
+                  backgroundColor: "#F0FE00",
+                  color: "#000000",
+                  fontFamily: "system-ui, Inter, sans-serif"
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 12V13H13V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Add as New Version
+              </button>
+              
+              <button
+                type="button"
+                onClick={handleCreateSeparate}
+                className="w-full py-3 px-4 rounded-xl text-sm font-medium transition-colors"
+                style={{ 
+                  backgroundColor: "#2C2C2E",
+                  color: "#FFFFFF",
+                  fontFamily: "system-ui, Inter, sans-serif"
+                }}
+              >
+                Create Separate File
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setVersionConflict(null)}
+                className="w-full py-2 text-sm transition-colors"
+                style={{ 
+                  color: "#8E8E93",
+                  fontFamily: "system-ui, Inter, sans-serif"
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Moodboard Expanded View */}
