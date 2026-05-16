@@ -734,8 +734,12 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   // Handle creating a moodboard from selected nodes
   const handleCreateMoodboard = useCallback(
     (nodeIds: string[]) => {
+      console.log("[v0] handleCreateMoodboard called with nodeIds:", nodeIds);
+      console.log("[v0] Current nodes count:", nodes.length);
+      
       // Get the selected file nodes
       const selectedNodes = nodes.filter(n => nodeIds.includes(n.id) && n.type === "file");
+      console.log("[v0] Selected file nodes:", selectedNodes.map(n => n.id));
       if (selectedNodes.length < 2) return;
 
       // Calculate center position of selected nodes
@@ -767,10 +771,12 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       };
 
       // Remove the original nodes and add the moodboard
-      setNodes(nds => [
-        ...nds.filter(n => !nodeIds.includes(n.id)),
-        moodboardNode,
-      ]);
+      console.log("[v0] Creating moodboard, removing nodes:", nodeIds);
+      setNodes(nds => {
+        const filtered = nds.filter(n => !nodeIds.includes(n.id));
+        console.log("[v0] After filter, nodes count:", filtered.length, "+ 1 moodboard =", filtered.length + 1);
+        return [...filtered, moodboardNode];
+      });
 
       // Remove edges connected to the grouped nodes
       setEdges(eds => eds.filter(e => !nodeIds.includes(e.source) && !nodeIds.includes(e.target)));
