@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import type { FileNodeData, FileVersion, FileActivity, TaskItem, WorkspaceMember } from "@/lib/atlas-types";
+import React, { useState, useRef } from "react";
+import type { FileNodeData, FileVersion, FileActivity, TaskItem, WorkspaceMember, UploadedFile } from "@/lib/atlas-types";
 import { STATUS_COLORS, STATUS_LABELS, WORKSPACE_MEMBERS } from "@/lib/atlas-types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { upload } from "@vercel/blob/client";
 
 // File type icons (simplified versions)
 const FileTypeIcon = ({ extension }: { extension: string }) => {
@@ -52,39 +53,28 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState<string | null>(null);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
   const [newTodoAssignee, setNewTodoAssignee] = useState<WorkspaceMember | null>(null);
+  const [isUploadingVersion, setIsUploadingVersion] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const versionInputRef = useRef<HTMLInputElement>(null);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   if (!isOpen) return null;
 
-  // Sample version history if not provided
-  const versions: FileVersion[] = fileData.versions || [
-    {
-      id: "v1",
-      versionName: fileData.label,
-      previewImages: fileData.previewImages || [
-        "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=400&h=300&fit=crop",
-      ],
-      uploadedAt: "2026-05-06T10:00:00Z",
-      uploadedBy: WORKSPACE_MEMBERS[0],
-    },
-    {
-      id: "v2",
-      versionName: `${fileData.label} V 2.0`,
-      previewImages: [
-        "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=400&h=300&fit=crop",
-      ],
-      uploadedAt: "2026-05-08T14:30:00Z",
-      uploadedBy: WORKSPACE_MEMBERS[1],
-    },
-    {
-      id: "v3",
-      versionName: `${fileData.label} V 3.0`,
-      previewImages: [
-        "https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=400&h=300&fit=crop",
-      ],
-      uploadedAt: "2026-05-12T09:15:00Z",
-      uploadedBy: WORKSPACE_MEMBERS[0],
-    },
-  ];
+  // Build versions array - use stored versions or create initial version from current file
+  const versions: FileVersion[] = fileData.versions && fileData.versions.length > 0 
+    ? fileData.versions 
+    : fileData.uploadedFile 
+      ? [{
+          id: "v-initial",
+          versionName: fileData.label,
+          previewImages: fileData.previewImages || [],
+          uploadedAt: fileData.uploadedFile.uploadedAt || fileData.lastModified,
+          uploadedBy: WORKSPACE_MEMBERS[0],
+          fileUrl: fileData.uploadedFile.url,
+          fileSize: fileData.uploadedFile.size,
+        }]
+      : [];
 
   // Sample activity history if not provided
   const activities: FileActivity[] = fileData.activities || [
@@ -125,10 +115,20 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
     },
   ];
 
-  const tasks = fileData.tasks || [];
-  const assignees = fileData.assignees || WORKSPACE_MEMBERS.slice(0, 3);
-  const dueDate = fileData.dueDate || "May 15th";
-  const blockers = fileData.blockers ?? 1;
+  const tasks = Array.isArray(fileData.tasks) ? fileData.tasks : [];
+  // Derive team members from task assignees (unique members who have been assigned tasks)
+  const taskAssignees = tasks
+    .filter(task => task && task.assignee)
+    .map(task => task.assignee as WorkspaceMember);
+  // Get unique assignees by ID
+  const uniqueAssignees = Array.from(
+    new Map(taskAssignees.map(a => [a.id, a])).values()
+  );
+  // Use file-level assignees if set, otherwise fall back to task assignees
+  const assignees = fileData.assignees && fileData.assignees.length > 0 
+    ? fileData.assignees 
+    : uniqueAssignees;
+  const dueDate = fileData.dueDate || "";
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -179,6 +179,107 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
       onUpdateFile({ tasks: updatedTasks });
     }
     setShowAssigneeDropdown(null);
+  };
+
+  const handleStatusChange = (newStatus: FileNodeData["status"]) => {
+    if (onUpdateFile) {
+      onUpdateFile({ status: newStatus });
+    }
+    setShowStatusDropdown(false);
+  };
+
+  const handleDueDateChange = (newDate: string) => {
+    if (onUpdateFile) {
+      onUpdateFile({ dueDate: newDate });
+    }
+    setShowDatePicker(false);
+  };
+
+  const handleVersionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUpdateFile) return;
+
+    setIsUploadingVersion(true);
+    setUploadProgress(0);
+
+    try {
+      // Upload to Vercel Blob
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload/client",
+        onUploadProgress: (progress) => {
+          setUploadProgress(Math.round(progress.percentage));
+        },
+      });
+
+      // Create preview URL for images
+      const isImage = file.type.startsWith("image/");
+      const previewUrl = isImage ? blob.url : undefined;
+
+      // Get current versions or create initial version from current file
+      const currentVersions = fileData.versions || [];
+      
+      // If no versions exist, create version 1 from current file state
+      let versionsToUpdate = [...currentVersions];
+      if (versionsToUpdate.length === 0 && fileData.uploadedFile) {
+        versionsToUpdate.push({
+          id: `v-${Date.now()}-initial`,
+          versionName: fileData.label,
+          previewImages: fileData.previewImages || [],
+          uploadedAt: fileData.lastModified || new Date().toISOString(),
+          uploadedBy: WORKSPACE_MEMBERS[0],
+          fileUrl: fileData.uploadedFile.url,
+          fileSize: fileData.uploadedFile.size,
+        });
+      }
+
+      // Create new version
+      const versionNumber = versionsToUpdate.length + 1;
+      const newVersion: FileVersion = {
+        id: `v-${Date.now()}`,
+        versionName: `${fileData.label} V ${versionNumber}.0`,
+        previewImages: previewUrl ? [previewUrl] : fileData.previewImages || [],
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: WORKSPACE_MEMBERS[0], // TODO: Use actual logged in user
+        fileUrl: blob.url,
+        fileSize: file.size,
+      };
+
+      // Create activity entry
+      const newActivity: FileActivity = {
+        id: `a-${Date.now()}`,
+        type: "version-add",
+        description: `Uploaded new version V ${versionNumber}.0`,
+        user: WORKSPACE_MEMBERS[0],
+        timestamp: new Date().toISOString(),
+      };
+
+      // Update file with new version as current
+      const uploadedFile: UploadedFile = {
+        url: blob.url,
+        pathname: blob.pathname,
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      onUpdateFile({
+        versions: [...versionsToUpdate, newVersion],
+        activities: [...(fileData.activities || []), newActivity],
+        uploadedFile,
+        previewImages: previewUrl ? [previewUrl, ...(fileData.previewImages || []).slice(0, 3)] : fileData.previewImages,
+        lastModified: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      console.error("Error uploading version:", error);
+    } finally {
+      setIsUploadingVersion(false);
+      setUploadProgress(0);
+      // Reset file input
+      if (versionInputRef.current) {
+        versionInputRef.current.value = "";
+      }
+    }
   };
 
   const getActivityIcon = (type: FileActivity["type"]) => {
@@ -381,73 +482,134 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
           )}
 
           {/* Metadata Row */}
-          <div className="grid grid-cols-4 gap-6 mb-8">
-            {/* Status */}
-            <div>
+          <div className="grid grid-cols-3 gap-6 mb-8">
+            {/* Status - Clickable Dropdown */}
+            <div className="relative">
               <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Status
               </div>
-              <span
-                className="inline-flex px-3 py-1 rounded-full text-sm font-medium text-white"
+              <button
+                type="button"
+                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-white cursor-pointer transition-opacity hover:opacity-80"
                 style={{ backgroundColor: STATUS_COLORS[fileData.status] }}
               >
                 {STATUS_LABELS[fileData.status]}
-              </span>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              
+              {/* Status Dropdown */}
+              {showStatusDropdown && (
+                <div 
+                  className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-xl z-20 min-w-[140px]"
+                  style={{ backgroundColor: "#2C2C2E", border: "1px solid #3C3C3E" }}
+                >
+                  {(Object.keys(STATUS_LABELS) as Array<keyof typeof STATUS_LABELS>).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => handleStatusChange(status)}
+                      className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-white/10 transition-colors"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <span 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: STATUS_COLORS[status] }}
+                      />
+                      <span className="text-white">{STATUS_LABELS[status]}</span>
+                      {fileData.status === status && (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto">
+                          <path d="M3 7L6 10L11 4" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Due Date */}
-            <div>
+            {/* Due Date - Clickable Date Picker */}
+            <div className="relative">
               <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Due Date
               </div>
-              <div className="flex items-center gap-2 text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <button
+                type="button"
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors cursor-pointer"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M5 1V3M11 1V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                {dueDate}
-              </div>
-            </div>
-
-            {/* Blockers */}
-            <div>
-              <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                Blockers
-              </div>
-              {blockers > 0 ? (
-                <span
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium text-white"
-                  style={{ backgroundColor: "#EF4444" }}
+                {dueDate ? (
+                  <span>{new Date(dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                ) : (
+                  <span className="text-gray-500">Set date</span>
+                )}
+              </button>
+              
+              {/* Date Picker Dropdown */}
+              {showDatePicker && (
+                <div 
+                  className="absolute top-full left-0 mt-2 p-3 rounded-lg shadow-xl z-20"
+                  style={{ backgroundColor: "#2C2C2E", border: "1px solid #3C3C3E" }}
                 >
-                  <span className="w-2 h-2 rounded-full bg-white" />
-                  {blockers}
-                </span>
-              ) : (
-                <span className="text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>None</span>
+                  <input
+                    type="date"
+                    defaultValue={dueDate ? new Date(dueDate).toISOString().split("T")[0] : ""}
+                    onChange={(e) => handleDueDateChange(e.target.value)}
+                    className="bg-transparent text-white text-sm px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-[#F0FE00]"
+                    style={{ colorScheme: "dark" }}
+                  />
+                  {dueDate && (
+                    <button
+                      type="button"
+                      onClick={() => handleDueDateChange("")}
+                      className="mt-2 w-full text-xs text-gray-400 hover:text-white transition-colors"
+                    >
+                      Clear date
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Team Members */}
+            {/* Team Members - Derived from task assignees */}
             <div>
               <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Team Members
               </div>
-              <div className="space-y-1.5">
-                {assignees.slice(0, 3).map((member) => (
-                  <div key={member.id} className="flex items-center gap-2">
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white"
-                      style={{ backgroundColor: member.avatarColor || "#666666" }}
-                    >
-                      {member.name.split(" ").map(n => n[0]).join("")}
+              {assignees.length > 0 ? (
+                <div className="space-y-1.5">
+                  {assignees.slice(0, 3).map((member) => (
+                    <div key={member.id} className="flex items-center gap-2">
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white"
+                        style={{ backgroundColor: member.avatarColor || "#666666" }}
+                      >
+                        {member.name.split(" ").map(n => n[0]).join("")}
+                      </div>
+                      <span className="text-sm text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {member.name.split(" ")[0]} {member.name.split(" ")[1]?.[0]}.
+                      </span>
                     </div>
-                    <span className="text-sm text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      {member.name.split(" ")[0]} {member.name.split(" ")[1]?.[0]}.
+                  ))}
+                  {assignees.length > 3 && (
+                    <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      +{assignees.length - 3} more
                     </span>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              ) : (
+                <span className="text-sm text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Assign tasks to add members
+                </span>
+              )}
             </div>
           </div>
 
@@ -473,6 +635,50 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
           {/* Tab Content */}
           {activeTab === "overview" && (
             <div>
+              {/* Hidden file input for version upload */}
+              <input
+                ref={versionInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleVersionUpload}
+                accept="*/*"
+              />
+
+              {/* Upload New Version Button */}
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Version History ({versions.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => versionInputRef.current?.click()}
+                  disabled={isUploadingVersion}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  style={{ 
+                    backgroundColor: "#F0FE00", 
+                    color: "#000000",
+                    fontFamily: "system-ui, Inter, sans-serif"
+                  }}
+                >
+                  {isUploadingVersion ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="32" />
+                      </svg>
+                      Uploading {uploadProgress}%
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M3 12V13H13V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      New Version
+                    </>
+                  )}
+                </button>
+              </div>
+
               {/* Version History Carousel */}
               <div className="relative">
                 {/* Carousel Navigation */}
