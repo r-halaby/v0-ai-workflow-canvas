@@ -745,11 +745,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       // Extract images from selected nodes
       const images = selectedNodes.map(node => {
         const fileData = node.data as FileNodeData;
+        const isVideo = fileData.fileType === "video" || fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
         return {
           id: node.id,
           url: fileData.uploadedFile?.url || fileData.thumbnail || "",
           fileName: fileData.fileName || fileData.label || "Image",
           thumbnail: fileData.thumbnail,
+          fileType: isVideo ? "video" as const : "image" as const,
         };
       }).filter(img => img.url);
 

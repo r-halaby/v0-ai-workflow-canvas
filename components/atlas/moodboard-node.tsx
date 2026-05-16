@@ -75,21 +75,46 @@ export function MoodboardNode({ data, selected }: NodeProps) {
       {/* Image Grid Preview */}
       <div className="p-2">
         <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden">
-          {previewImages.map((img, idx) => (
-            <div
-              key={img.id}
-              className="aspect-square bg-black/20 overflow-hidden"
-              style={{
-                borderRadius: idx === 0 ? "4px 0 0 0" : idx === 1 ? "0 4px 0 0" : idx === 2 ? "0 0 0 4px" : "0 0 4px 0",
-              }}
-            >
-              <img
-                src={img.thumbnail || img.url}
-                alt={img.fileName}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
+          {previewImages.map((img, idx) => {
+            const isVideo = img.fileType === "video" || img.fileName?.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+            return (
+              <div
+                key={img.id}
+                className="aspect-square bg-black/20 overflow-hidden relative"
+                style={{
+                  borderRadius: idx === 0 ? "4px 0 0 0" : idx === 1 ? "0 4px 0 0" : idx === 2 ? "0 0 0 4px" : "0 0 4px 0",
+                }}
+              >
+                {isVideo ? (
+                  <>
+                    <video
+                      src={img.url}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                    />
+                    {/* Play icon overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div 
+                        className="w-6 h-6 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 16 16" fill="white">
+                          <path d="M4 3L13 8L4 13V3Z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <img
+                    src={img.thumbnail || img.url}
+                    alt={img.fileName}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+            );
+          })}
           {/* Fill empty slots */}
           {Array.from({ length: Math.max(0, 4 - previewImages.length) }).map((_, idx) => (
             <div

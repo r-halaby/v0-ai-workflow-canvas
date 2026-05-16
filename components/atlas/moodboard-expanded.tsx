@@ -356,39 +356,62 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
               className="columns-2 md:columns-3 lg:columns-4 gap-4"
               style={{ columnFill: "balance" }}
             >
-              {data.images?.map((img) => (
-                <div
-                  key={img.id}
-                  className="mb-4 break-inside-avoid cursor-pointer group"
-                  onClick={() => setSelectedImage(img.id === selectedImage ? null : img.id)}
-                >
-                  <div 
-                    className="relative rounded-xl overflow-hidden transition-all duration-200"
-                    style={{
-                      border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid transparent",
-                    }}
+              {data.images?.map((img) => {
+                const isVideo = img.fileType === "video" || img.fileName?.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+                return (
+                  <div
+                    key={img.id}
+                    className="mb-4 break-inside-avoid cursor-pointer group"
+                    onClick={() => setSelectedImage(img.id === selectedImage ? null : img.id)}
                   >
-                    <img
-                      src={img.url}
-                      alt={img.fileName}
-                      className="w-full h-auto object-contain"
-                      draggable={false}
-                    />
-                    
-                    {/* Hover overlay */}
                     <div 
-                      className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
+                      className="relative rounded-xl overflow-hidden transition-all duration-200"
+                      style={{
+                        border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid transparent",
+                      }}
                     >
-                      <div className="p-3 w-full">
-                        <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                          {img.fileName}
-                        </p>
+                      {isVideo ? (
+                        <video
+                          src={img.url}
+                          className="w-full h-auto object-contain"
+                          muted
+                          loop
+                          autoPlay
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          src={img.url}
+                          alt={img.fileName}
+                          className="w-full h-auto object-contain"
+                          draggable={false}
+                        />
+                      )}
+                      
+                      {/* Play icon for videos */}
+                      {isVideo && (
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+                          <svg width="10" height="10" viewBox="0 0 16 16" fill="white">
+                            <path d="M4 3L13 8L4 13V3Z" />
+                          </svg>
+                        </div>
+                      )}
+                      
+                      {/* Hover overlay */}
+                      <div 
+                        className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
+                      >
+                        <div className="p-3 w-full">
+                          <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            {img.fileName}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -413,6 +436,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
                 const isDragging = draggingId === img.id;
                 const rotation = pos.rotation ?? 0;
                 const scale = pos.scale ?? 1;
+                const isVideo = img.fileType === "video" || img.fileName?.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i);
                 
                 return (
                   <div
@@ -439,12 +463,32 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
                           : "0 8px 24px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3)",
                       }}
                     >
-                      <img
-                        src={img.url}
-                        alt={img.fileName}
-                        className="w-full h-auto block"
-                        draggable={false}
-                      />
+                      {isVideo ? (
+                        <video
+                          src={img.url}
+                          className="w-full h-auto block"
+                          muted
+                          loop
+                          autoPlay
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          src={img.url}
+                          alt={img.fileName}
+                          className="w-full h-auto block"
+                          draggable={false}
+                        />
+                      )}
+                      
+                      {/* Play icon for videos */}
+                      {isVideo && (
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+                          <svg width="10" height="10" viewBox="0 0 16 16" fill="white">
+                            <path d="M4 3L13 8L4 13V3Z" />
+                          </svg>
+                        </div>
+                      )}
                       
                       {/* Hover overlay */}
                       <div 
@@ -468,37 +512,62 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
           {layoutMode === "grid" && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {data.images?.map((img) => (
-                <div
-                  key={img.id}
-                  className="cursor-pointer group"
-                  onClick={() => setSelectedImage(img.id === selectedImage ? null : img.id)}
-                >
-                  <div 
-                    className="relative rounded-xl overflow-hidden transition-all duration-200 aspect-square"
-                    style={{
-                      border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid #333333",
-                    }}
-                  >
-                    <img
-                      src={img.url}
-                      alt={img.fileName}
-                      className="w-full h-full object-cover"
-                      draggable={false}
-                    />
-                    
-                    {/* Hover overlay */}
-                    <div 
-                      className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
+                {(() => {
+                  const isVideo = img.fileType === "video" || img.fileName?.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+                  return (
+                    <div
+                      key={img.id}
+                      className="cursor-pointer group"
+                      onClick={() => setSelectedImage(img.id === selectedImage ? null : img.id)}
                     >
-                      <div className="p-3 w-full">
-                        <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                          {img.fileName}
-                        </p>
+                      <div 
+                        className="relative rounded-xl overflow-hidden transition-all duration-200 aspect-square"
+                        style={{
+                          border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid #333333",
+                        }}
+                      >
+                        {isVideo ? (
+                          <video
+                            src={img.url}
+                            className="w-full h-full object-cover"
+                            muted
+                            loop
+                            autoPlay
+                            playsInline
+                          />
+                        ) : (
+                          <img
+                            src={img.url}
+                            alt={img.fileName}
+                            className="w-full h-full object-cover"
+                            draggable={false}
+                          />
+                        )}
+                        
+                        {/* Play icon for videos */}
+                        {isVideo && (
+                          <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+                            <svg width="10" height="10" viewBox="0 0 16 16" fill="white">
+                              <path d="M4 3L13 8L4 13V3Z" />
+                            </svg>
+                          </div>
+                        )}
+                        
+                        {/* Hover overlay */}
+                        <div 
+                          className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
+                        >
+                          <div className="p-3 w-full">
+                            <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                              {img.fileName}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
               ))}
             </div>
           )}
