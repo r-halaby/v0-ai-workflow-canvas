@@ -268,6 +268,16 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
             <path d="M14 8L18 6V14L14 12" stroke="#60A5FA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         );
+      case "audio":
+        return (
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 3V17" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M6 7V13" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M14 7V13" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M2 9V11" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M18 9V11" stroke="#1DB954" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        );
       default:
         return (
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -332,7 +342,7 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
                   Drop files here or click to browse
                 </p>
                 <p className="text-xs mt-1" style={{ color: "#8E8E93", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-                  Design files, images, vectors, and videos
+                  Design files, images, vectors, videos, and audio
                 </p>
               </div>
             </div>
@@ -471,6 +481,9 @@ export function UploadDialog({ open, onClose, onFilesUploaded }: UploadDialogPro
             </div>
             <div>
               <span className="font-medium text-gray-400">Video:</span> .mp4, .mov
+            </div>
+            <div>
+              <span className="font-medium text-gray-400">Audio:</span> .mp3, .wav, .aac, .flac
             </div>
           </div>
         </div>
