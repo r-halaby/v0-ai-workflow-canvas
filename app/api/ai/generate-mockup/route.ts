@@ -1,94 +1,62 @@
-import { generateText } from "ai";
-import { gateway } from "@ai-sdk/gateway";
 import { NextResponse } from "next/server";
+import * as fal from "@fal-ai/serverless-client";
+
+// Configure fal client
+fal.config({
+  credentials: process.env.FAL_KEY,
+});
 
 export async function POST(request: Request) {
   try {
-    const { prompt, sourceImageUrl, count = 1 } = await request.json();
+    const { prompt, sourceImageUrl, count = 1, variations } = await request.json();
+    const imageCount = Math.min(variations || count, 4);
 
     if (!prompt) {
-      return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Prompt is required" },
+        { status: 400 }
+      );
     }
 
-    const generatedImages: Array<{ base64: string; mediaType: string }> = [];
+    // Generate all images in parallel using fal.ai's fast Flux Schnell model
+    const generationPromises = Array.from({ length: imageCount }, async (_, index) => {
+      // Add slight variation to prompt for each image
+      const variedPrompt = imageCount > 1 
+        ? `${prompt}. Variation ${index + 1}, unique perspective and composition.`
+        : prompt;
 
-    // Generate mockups using Nano Banana 2 (google/gemini-3.1-flash-image-preview)
-    for (let i = 0; i < Math.min(count, 4); i++) {
-      const messages: Array<{ role: "user"; content: Array<{ type: "text"; text: string } | { type: "image"; image: URL }> }> = [];
-      
-      // Build the message content
-      const content: Array<{ type: "text"; text: string } | { type: "image"; image: URL }> = [];
-      
-      // Add source image if provided and valid
-      if (sourceImageUrl) {
-        try {
-          // Handle different URL formats
-          let imageUrl: URL;
-          if (sourceImageUrl.startsWith('data:')) {
-            // Skip data URLs for now - AI SDK may not support them directly as URL
-            // We'll just use the prompt without the source image
-          } else if (sourceImageUrl.startsWith('http://') || sourceImageUrl.startsWith('https://')) {
-            imageUrl = new URL(sourceImageUrl);
-            content.push({
-              type: "image",
-              image: imageUrl,
-            });
-          } else if (sourceImageUrl.startsWith('/')) {
-            // Relative URL - prepend the host
-            const host = request.headers.get('host') || 'localhost:3000';
-            const protocol = request.headers.get('x-forwarded-proto') || 'https';
-            imageUrl = new URL(sourceImageUrl, `${protocol}://${host}`);
-            content.push({
-              type: "image",
-              image: imageUrl,
-            });
-          }
-        } catch (urlError) {
-          console.error("Invalid source image URL:", sourceImageUrl, urlError);
-          // Continue without the source image rather than failing completely
-        }
-      }
-      
-      content.push({
-        type: "text",
-        text: sourceImageUrl 
-          ? `Based on this image, create a new mockup variation: ${prompt}. Generate a high-quality mockup image.`
-          : `Create a mockup image: ${prompt}. Generate a high-quality mockup image.`,
-      });
-      
-      messages.push({ role: "user", content });
-
-      const result = await generateText({
-        model: gateway("google/gemini-2.0-flash-exp-image-generation"),
-        messages,
-        providerOptions: {
-          google: {
-            responseModalities: ["TEXT", "IMAGE"],
-          },
+      const result = await fal.subscribe("fal-ai/flux/schnell", {
+        input: {
+          prompt: `Create a professional mockup: ${variedPrompt}. High quality, photorealistic rendering.`,
+          image_size: "landscape_16_9",
+          num_inference_steps: 4,
+          num_images: 1,
         },
-      });
+      }) as { images?: Array<{ url: string }> };
 
-      // Extract generated images from the result
-      if (result.files) {
-        for (const file of result.files) {
-          if (file.mediaType?.startsWith("image/") && file.base64) {
-            generatedImages.push({
-              base64: file.base64,
-              mediaType: file.mediaType,
-            });
-          }
-        }
-      }
+      return result.images?.[0]?.url;
+    });
+
+    // Wait for all images to generate in parallel
+    const imageUrls = await Promise.all(generationPromises);
+    
+    // Filter out any failed generations and format response
+    const images = imageUrls
+      .filter((url): url is string => !!url)
+      .map(url => ({ url }));
+
+    if (images.length === 0) {
+      return NextResponse.json(
+        { error: "Failed to generate any images" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({
-      images: generatedImages,
-      count: generatedImages.length,
-    });
+    return NextResponse.json({ images });
   } catch (error) {
     console.error("Mockup generation error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Mockup generation failed" },
+      { error: "Failed to generate mockups" },
       { status: 500 }
     );
   }

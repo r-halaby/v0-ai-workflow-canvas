@@ -35,6 +35,8 @@ import { ProjectHealthNode } from "./project-health-node";
 import { PipelineNode } from "./pipeline-node";
 import { TeamHealthNode } from "./team-health-node";
 import { MoodboardNode } from "./moodboard-node";
+import { MockupImageNode } from "./nodes/mockup-image-node";
+import { AIPromptNode } from "./nodes/ai-prompt-node";
 import { PresentationGroupNode } from "./presentation-group-node";
 import { CommentPin, NewCommentInput } from "./comment-pin";
 import { AddNodeMenu } from "./add-node-menu";
@@ -53,6 +55,8 @@ const nodeTypes: NodeTypes = {
   pipeline: PipelineNode,
   teamHealth: TeamHealthNode,
   moodboard: MoodboardNode,
+  mockupImage: MockupImageNode,
+  aiPrompt: AIPromptNode,
   presentationGroup: PresentationGroupNode,
 };
 

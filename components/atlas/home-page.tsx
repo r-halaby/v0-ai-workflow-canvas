@@ -10,6 +10,9 @@ import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_FR
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
 import { CanvasPreview } from "./canvas-preview";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { useSageConversations, useSageConversation, useSageChatPersistence } from "@/lib/use-sage-conversations";
 import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "favorites" | "workspace" | "private";
@@ -204,8 +207,164 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [projects, setProjects] = useState<Project[]>([]);
   const [expandedFilesProjects, setExpandedFilesProjects] = useState<Set<string>>(new Set());
   const [expandedFilesCanvases, setExpandedFilesCanvases] = useState<Set<string>>(new Set());
-  const [showSageChat, setShowSageChat] = useState(false);
-const [sageMessage, setSageMessage] = useState("");
+const [showSageChat, setShowSageChat] = useState(false);
+  const [sageInput, setSageInput] = useState("");
+  const [showChatHistory, setShowChatHistory] = useState(false);
+  
+  // Sage conversation persistence
+  const { currentConversationId, setCurrentConversationId } = useSageChatPersistence("home");
+  const { conversations, createConversation, deleteConversation, refresh: refreshConversations } = useSageConversations();
+  const { messages: loadedMessages, saveMessages } = useSageConversation(currentConversationId);
+  const lastSavedMessageCount = useRef(0);
+  
+  // Sage AI Chat
+  const { messages: sageMessages, sendMessage: sendSageMessage, status: sageStatus, setMessages } = useChat({
+    id: currentConversationId || "home-sage-chat",
+    transport: new DefaultChatTransport({ api: "/api/sage" }),
+  });
+  
+  // Load messages when conversation changes
+  useEffect(() => {
+    if (loadedMessages.length > 0 && currentConversationId) {
+      // Convert loaded messages to useChat format
+      const formattedMessages = loadedMessages.map(msg => ({
+        id: msg.id,
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+        parts: msg.parts || [{ type: "text" as const, text: msg.content }],
+      }));
+      setMessages(formattedMessages);
+      lastSavedMessageCount.current = loadedMessages.length;
+    }
+  }, [loadedMessages, currentConversationId, setMessages]);
+  
+  // Save messages when they change
+  useEffect(() => {
+    if (sageMessages.length > lastSavedMessageCount.current && currentConversationId && sageStatus === "ready") {
+      const newMessages = sageMessages.slice(lastSavedMessageCount.current);
+      if (newMessages.length > 0) {
+        saveMessages(newMessages.map(m => ({
+          role: m.role,
+          content: typeof m.content === "string" ? m.content : "",
+          parts: m.parts,
+        })));
+        lastSavedMessageCount.current = sageMessages.length;
+        refreshConversations();
+      }
+    }
+  }, [sageMessages, currentConversationId, sageStatus, saveMessages, refreshConversations]);
+  
+  const handleSageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sageInput.trim() || sageStatus === "streaming") return;
+    
+    // Create conversation if this is the first message
+    if (!currentConversationId) {
+      const conv = await createConversation(sageInput.substring(0, 50));
+      if (conv) {
+        setCurrentConversationId(conv.id);
+      }
+    }
+    
+    sendSageMessage({ text: sageInput });
+    setSageInput("");
+  };
+  
+  const handleNewChat = async () => {
+    const conv = await createConversation();
+    if (conv) {
+      setCurrentConversationId(conv.id);
+      setMessages([]);
+      lastSavedMessageCount.current = 0;
+    }
+  };
+  
+  const handleSelectConversation = (id: string) => {
+    setCurrentConversationId(id);
+    lastSavedMessageCount.current = 0;
+    setShowChatHistory(false);
+  };
+  
+  const handleDeleteConversation = async (id: string) => {
+    await deleteConversation(id);
+    if (currentConversationId === id) {
+      setCurrentConversationId(null);
+      setMessages([]);
+      lastSavedMessageCount.current = 0;
+    }
+  };
+  
+  // Track processed tool call IDs to avoid duplicate processing
+  const processedToolCalls = useRef<Set<string>>(new Set());
+  
+  // Watch for tool calls in messages
+  useEffect(() => {
+    // Check ALL messages for tool calls, not just the last one
+    for (const message of sageMessages) {
+      if (message.role !== "assistant") continue;
+      
+      // Check for tool calls in parts
+      const toolParts = message.parts?.filter(
+        (part): part is { type: "tool-invocation"; toolInvocation: { toolName: string; toolCallId: string; result?: unknown; state?: string } } => 
+          part.type === "tool-invocation"
+      ) || [];
+      
+      for (const part of toolParts) {
+        const toolCallId = part.toolInvocation?.toolCallId;
+        const state = part.toolInvocation?.state;
+        
+        // Only process completed tool calls that haven't been processed yet
+        if (!toolCallId || state !== "output-available" || processedToolCalls.current.has(toolCallId)) {
+          continue;
+        }
+        
+        const result = part.toolInvocation?.result as Record<string, unknown> | undefined;
+        if (!result) continue;
+        
+        processedToolCalls.current.add(toolCallId);
+        
+        if (result.action === "createNewCanvas" && result.canvasId) {
+          // Create the canvas
+          const canvasId = result.canvasId as string;
+          const newCanvas: Canvas = {
+            id: canvasId,
+            name: (result.name as string) || "New Canvas",
+            description: (result.description as string) || "",
+            nodes: (result.initialNodes as Canvas["nodes"]) || [],
+            edges: [],
+            visibility: "workspace",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          
+          onCanvasesChange([...canvases, newCanvas]);
+          
+          // Automatically open the canvas after creation
+          setTimeout(() => {
+            setShowSageChat(false);
+            onOpenCanvas(canvasId);
+          }, 300);
+        } else if (result.action === "openCanvas" && result.navigateTo) {
+          const navigateTo = result.navigateTo as string;
+          
+          if (navigateTo.startsWith("search:")) {
+            // Search for canvas by name
+            const searchName = navigateTo.slice(7).toLowerCase();
+            const found = canvases.find(c => c.name.toLowerCase().includes(searchName));
+            if (found) {
+              setShowSageChat(false);
+              onOpenCanvas(found.id);
+            }
+          } else {
+            // Direct canvas ID
+            setShowSageChat(false);
+            onOpenCanvas(navigateTo);
+          }
+        }
+      }
+    }
+  }, [sageMessages, canvases, onCanvasesChange, onOpenCanvas]);
+  
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   // Use external frameworks if provided, otherwise use local state
   const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
@@ -1130,7 +1289,7 @@ All Frameworks
                           </div>
 
                           {/* Stats & Actions */}
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between gap-4 mt-3">
                             <div className="flex items-center gap-4">
                               {/* Upvote Button */}
                               <button
@@ -1173,7 +1332,7 @@ All Frameworks
                             </div>
 
 {/* Actions */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 ml-auto">
                               {/* Delete Button - only show for user's own frameworks */}
                               {framework.createdBy.id === currentUserId && onRemoveFramework && (
                                 <button
@@ -3086,18 +3245,92 @@ All Frameworks
       {/* Sage Chat Panel */}
       {showSageChat && (
         <div
-          className="fixed bottom-24 right-6 w-96 rounded-2xl overflow-hidden shadow-2xl z-50"
+          className="fixed bottom-24 right-6 rounded-2xl overflow-hidden shadow-2xl z-50 flex"
           style={{
             backgroundColor: "#141414",
             border: "1px solid #2a2a2a",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
+            width: showChatHistory ? "600px" : "384px",
+            transition: "width 0.2s ease-in-out",
           }}
         >
+          {/* Chat History Sidebar */}
+          {showChatHistory && (
+            <div
+              className="w-52 flex-shrink-0 flex flex-col"
+              style={{ borderRight: "1px solid #2a2a2a" }}
+            >
+              <div className="p-3 flex items-center justify-between" style={{ borderBottom: "1px solid #2a2a2a" }}>
+                <span className="text-xs font-medium text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Chat History
+                </span>
+                <button
+                  onClick={handleNewChat}
+                  className="text-xs px-2 py-1 rounded-lg hover:bg-white/10 transition-colors"
+                  style={{ color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  + New
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                {conversations.length === 0 ? (
+                  <p className="text-xs text-gray-600 text-center py-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    No conversations yet
+                  </p>
+                ) : (
+                  conversations.map((conv) => (
+                    <div
+                      key={conv.id}
+                      className={`group px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                        currentConversationId === conv.id ? "bg-white/10" : "hover:bg-white/5"
+                      }`}
+                      onClick={() => handleSelectConversation(conv.id)}
+                    >
+                      <p
+                        className="text-xs text-white truncate"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        {conv.title}
+                      </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          {new Date(conv.updated_at).toLocaleDateString()}
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteConversation(conv.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-all"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M2 3h8M4.5 3V2a1 1 0 011-1h1a1 1 0 011 1v1M9 3v6.5a1 1 0 01-1 1H4a1 1 0 01-1-1V3" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col" style={{ width: "384px" }}>
           {/* Chat Header */}
           <div
             className="px-5 py-4 flex items-center gap-3"
             style={{ borderBottom: "1px solid #2a2a2a" }}
           >
+            <button
+              onClick={() => setShowChatHistory(!showChatHistory)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+              title="Chat History"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={showChatHistory ? "#F0FE00" : "#888"} strokeWidth="1.5">
+                <path d="M2 4h12M2 8h12M2 12h8" />
+              </svg>
+            </button>
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center"
               style={{ backgroundColor: "#F0FE00" }}
@@ -3106,7 +3339,7 @@ All Frameworks
                 <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
               </svg>
             </div>
-            <div>
+            <div className="flex-1">
               <h4
                 className="text-white font-semibold text-sm"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
@@ -3120,11 +3353,20 @@ All Frameworks
                 AI Design Assistant
               </p>
             </div>
+            <button
+              onClick={handleNewChat}
+              className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+              title="New Chat"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#888" strokeWidth="1.5">
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+            </button>
           </div>
 
           {/* Chat Messages */}
           <div className="h-80 overflow-y-auto p-4 space-y-4">
-            {/* Welcome message */}
+            {/* Welcome message - always shown */}
             <div className="flex gap-3">
               <div
                 className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
@@ -3172,10 +3414,82 @@ All Frameworks
                 </ul>
               </div>
             </div>
+            
+            {/* Dynamic messages */}
+            {sageMessages.map((message) => (
+              <div key={message.id} className="flex gap-3">
+                {message.role === "assistant" ? (
+                  <>
+                    <div
+                      className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                      style={{ backgroundColor: "#F0FE00" }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+                      </svg>
+                    </div>
+                    <div
+                      className="flex-1 p-3 rounded-xl rounded-tl-sm"
+                      style={{ backgroundColor: "#1e1e1e" }}
+                    >
+                      <p
+                        className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        {message.parts?.map((part, i) => {
+                          if (part.type === "text") return part.text;
+                          return null;
+                        }).filter(Boolean).join("") || (typeof message.content === "string" ? message.content : "")}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex-1" />
+                    <div
+                      className="p-3 rounded-xl rounded-tr-sm max-w-[80%]"
+                      style={{ backgroundColor: "#F0FE0020", border: "1px solid #F0FE0040" }}
+                    >
+                      <p
+                        className="text-sm text-white leading-relaxed"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        {typeof message.content === "string" ? message.content : ""}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+            
+            {/* Loading indicator */}
+            {sageStatus === "streaming" && (
+              <div className="flex gap-3">
+                <div
+                  className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                  style={{ backgroundColor: "#F0FE00" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+                  </svg>
+                </div>
+                <div
+                  className="flex-1 p-3 rounded-xl rounded-tl-sm"
+                  style={{ backgroundColor: "#1e1e1e" }}
+                >
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Chat Input */}
-          <div
+          <form
+            onSubmit={handleSageSubmit}
             className="p-4"
             style={{ borderTop: "1px solid #2a2a2a" }}
           >
@@ -3185,21 +3499,29 @@ All Frameworks
             >
               <input
                 type="text"
-                value={sageMessage}
-                onChange={(e) => setSageMessage(e.target.value)}
+                value={sageInput}
+                onChange={(e) => setSageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && sageInput.trim() && sageStatus !== "streaming") {
+                    e.preventDefault();
+                    handleSageSubmit(e as unknown as React.FormEvent);
+                  }
+                }}
                 placeholder="Ask Sage anything..."
                 className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                disabled={sageStatus === "streaming"}
               />
               <button
-                type="button"
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                style={{ backgroundColor: sageMessage.trim() ? "#F0FE00" : "#333333" }}
+                type="submit"
+                disabled={!sageInput.trim() || sageStatus === "streaming"}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:cursor-not-allowed"
+                style={{ backgroundColor: sageInput.trim() ? "#F0FE00" : "#333333" }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
                     d="M14 2L7 9M14 2L10 14L7 9M14 2L2 6L7 9"
-                    stroke={sageMessage.trim() ? "#121212" : "#666666"}
+                    stroke={sageInput.trim() ? "#121212" : "#666666"}
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -3207,6 +3529,7 @@ All Frameworks
                 </svg>
               </button>
             </div>
+          </form>
           </div>
         </div>
       )}
