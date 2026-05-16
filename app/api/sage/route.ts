@@ -275,6 +275,247 @@ const sageTools = {
   }),
   
   // ============================================================================
+  // P1 TOOLS - Advanced Reasoning & Analysis
+  // ============================================================================
+  
+  detectConflict: tool({
+    description: `Analyze two specific feedback items to detect and explain conflicts between them. Use this when you need to understand why two pieces of feedback might be in tension, or when a user asks about conflicting requirements.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      feedbackIdA: z.string().describe("ID of the first feedback item"),
+      feedbackIdB: z.string().describe("ID of the second feedback item"),
+    }),
+    execute: async ({ projectId, feedbackIdA, feedbackIdB }) => {
+      const state = getOrCreateProjectState(projectId);
+      
+      const feedbackA = state.feedback.find(f => f.id === feedbackIdA);
+      const feedbackB = state.feedback.find(f => f.id === feedbackIdB);
+      
+      if (!feedbackA || !feedbackB) {
+        return {
+          action: "detectConflict",
+          error: "One or both feedback items not found",
+          hasConflict: false,
+        };
+      }
+      
+      // Analyze conflict between the two feedback items
+      const textA = feedbackA.rawInput.toLowerCase();
+      const textB = feedbackB.rawInput.toLowerCase();
+      
+      const conflictIndicators: string[] = [];
+      let conflictScore = 0;
+      
+      // Check for opposing directives
+      const opposingPairs = [
+        ["more", "less"],
+        ["add", "remove"],
+        ["bigger", "smaller"],
+        ["simpler", "complex"],
+        ["bold", "subtle"],
+        ["bright", "dark"],
+        ["modern", "classic"],
+        ["minimal", "detailed"],
+        ["faster", "slower"],
+        ["include", "exclude"],
+      ];
+      
+      for (const [wordA, wordB] of opposingPairs) {
+        if ((textA.includes(wordA) && textB.includes(wordB)) ||
+            (textA.includes(wordB) && textB.includes(wordA))) {
+          conflictIndicators.push(`Opposing direction: "${wordA}" vs "${wordB}"`);
+          conflictScore += 25;
+        }
+      }
+      
+      // Check for negation patterns
+      if ((textA.includes("not") && !textB.includes("not")) ||
+          (!textA.includes("not") && textB.includes("not"))) {
+        if (feedbackA.type === feedbackB.type) {
+          conflictIndicators.push("Negation conflict on same topic");
+          conflictScore += 20;
+        }
+      }
+      
+      // Check for different stakeholder priorities
+      if (feedbackA.reviewerRole !== feedbackB.reviewerRole) {
+        conflictIndicators.push(`Different perspectives: ${feedbackA.reviewerRole} vs ${feedbackB.reviewerRole}`);
+        conflictScore += 10;
+      }
+      
+      const hasConflict = conflictScore >= 25;
+      
+      // Update conflict flags if conflict detected
+      if (hasConflict) {
+        if (!feedbackA.conflictsWith?.includes(feedbackIdB)) {
+          feedbackA.conflictFlag = true;
+          feedbackA.conflictsWith = [...(feedbackA.conflictsWith || []), feedbackIdB];
+        }
+        if (!feedbackB.conflictsWith?.includes(feedbackIdA)) {
+          feedbackB.conflictFlag = true;
+          feedbackB.conflictsWith = [...(feedbackB.conflictsWith || []), feedbackIdA];
+        }
+        state.conflictCount = state.feedback.filter(f => f.conflictFlag && !f.resolvedAt).length;
+        updateProjectState(state);
+      }
+      
+      return {
+        action: "detectConflict",
+        feedbackA: { id: feedbackIdA, text: feedbackA.rawInput, role: feedbackA.reviewerRole, type: feedbackA.type },
+        feedbackB: { id: feedbackIdB, text: feedbackB.rawInput, role: feedbackB.reviewerRole, type: feedbackB.type },
+        hasConflict,
+        conflictScore,
+        conflictIndicators,
+        recommendation: hasConflict 
+          ? "Consider scheduling a stakeholder alignment meeting to resolve these conflicting requirements."
+          : "These feedback items appear compatible.",
+        summary: hasConflict
+          ? `Conflict detected (score: ${conflictScore}/100): ${conflictIndicators.join(", ")}`
+          : "No significant conflict detected between these feedback items",
+      };
+    },
+  }),
+  
+  resolveFeedback: tool({
+    description: `Mark feedback as resolved with an optional resolution note. Use this when feedback has been addressed through a decision, design change, or stakeholder conversation.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      feedbackId: z.string().describe("ID of the feedback to resolve"),
+      resolution: z.string().describe("How the feedback was addressed"),
+      linkedDecisionId: z.string().optional().describe("ID of a decision that resolved this feedback"),
+    }),
+    execute: async ({ projectId, feedbackId, resolution, linkedDecisionId }) => {
+      const state = getOrCreateProjectState(projectId);
+      
+      const feedback = state.feedback.find(f => f.id === feedbackId);
+      if (!feedback) {
+        return {
+          action: "resolveFeedback",
+          error: "Feedback not found",
+          resolved: false,
+        };
+      }
+      
+      if (feedback.resolvedAt) {
+        return {
+          action: "resolveFeedback",
+          feedbackId,
+          alreadyResolved: true,
+          resolvedAt: feedback.resolvedAt,
+          resolution: feedback.resolution,
+          summary: "This feedback was already resolved",
+        };
+      }
+      
+      feedback.resolvedAt = new Date().toISOString();
+      feedback.resolution = linkedDecisionId 
+        ? `${resolution} (Decision: ${linkedDecisionId})`
+        : resolution;
+      
+      state.unresolvedFeedbackCount = Math.max(0, state.unresolvedFeedbackCount - 1);
+      if (feedback.conflictFlag) {
+        state.conflictCount = Math.max(0, state.conflictCount - 1);
+      }
+      
+      updateProjectState(state);
+      
+      return {
+        action: "resolveFeedback",
+        feedbackId,
+        resolved: true,
+        resolution: feedback.resolution,
+        remainingUnresolved: state.unresolvedFeedbackCount,
+        remainingConflicts: state.conflictCount,
+        summary: `Feedback resolved. ${state.unresolvedFeedbackCount} feedback items remaining.`,
+      };
+    },
+  }),
+  
+  listFeedback: tool({
+    description: `Get all feedback for a project, optionally filtered by status or type. Use this to review outstanding feedback or analyze feedback patterns.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      filter: z.enum(["all", "unresolved", "conflicts", "resolved"]).default("all").describe("Filter feedback by status"),
+      type: z.string().optional().describe("Filter by feedback type"),
+    }),
+    execute: async ({ projectId, filter, type }) => {
+      const state = getOrCreateProjectState(projectId);
+      
+      let filtered = state.feedback;
+      
+      if (filter === "unresolved") {
+        filtered = filtered.filter(f => !f.resolvedAt);
+      } else if (filter === "resolved") {
+        filtered = filtered.filter(f => f.resolvedAt);
+      } else if (filter === "conflicts") {
+        filtered = filtered.filter(f => f.conflictFlag && !f.resolvedAt);
+      }
+      
+      if (type) {
+        filtered = filtered.filter(f => f.type === type);
+      }
+      
+      return {
+        action: "listFeedback",
+        projectId,
+        filter,
+        type: type || "all",
+        totalCount: state.feedback.length,
+        filteredCount: filtered.length,
+        feedback: filtered.map(f => ({
+          id: f.id,
+          type: f.type,
+          rawInput: f.rawInput.substring(0, 100) + (f.rawInput.length > 100 ? "..." : ""),
+          reviewerRole: f.reviewerRole,
+          actionabilityScore: f.actionabilityScore,
+          conflictFlag: f.conflictFlag,
+          resolved: !!f.resolvedAt,
+          createdAt: f.createdAt,
+        })),
+        summary: `Found ${filtered.length} feedback items (${filter}${type ? `, type: ${type}` : ""})`,
+      };
+    },
+  }),
+  
+  listDecisions: tool({
+    description: `Get all decisions logged for a project. Use this to review the decision history or find decisions related to specific topics.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      limit: z.number().optional().describe("Maximum number of decisions to return"),
+      tag: z.string().optional().describe("Filter by tag"),
+    }),
+    execute: async ({ projectId, limit, tag }) => {
+      const state = getOrCreateProjectState(projectId);
+      
+      let decisions = state.decisions;
+      
+      if (tag) {
+        decisions = decisions.filter(d => d.tags?.includes(tag));
+      }
+      
+      if (limit) {
+        decisions = decisions.slice(-limit);
+      }
+      
+      return {
+        action: "listDecisions",
+        projectId,
+        totalCount: state.decisions.length,
+        returnedCount: decisions.length,
+        decisions: decisions.map(d => ({
+          id: d.id,
+          decision: d.decision,
+          rationale: d.rationale.substring(0, 100) + (d.rationale.length > 100 ? "..." : ""),
+          tags: d.tags,
+          feedbackAddressed: d.relatedFeedbackIds?.length || 0,
+          createdAt: d.createdAt,
+        })),
+        summary: `Found ${decisions.length} decision${decisions.length !== 1 ? "s" : ""}${tag ? ` with tag "${tag}"` : ""}`,
+      };
+    },
+  }),
+  
+  // ============================================================================
   // CANVAS TOOLS - Visual Node Creation
   // ============================================================================
   
@@ -715,6 +956,12 @@ You are concise, professional, and observational. You help users organize their 
 - **getProjectState**: Check project health, drift score, and metrics
 - **createProjectStatusSet**: Create workflow stages based on project type
 
+### Analysis & Resolution (P1 Tools)
+- **detectConflict**: Analyze two specific feedback items to understand and explain conflicts
+- **resolveFeedback**: Mark feedback as addressed with resolution notes
+- **listFeedback**: Get all feedback with filtering (unresolved, conflicts, by type)
+- **listDecisions**: Get decision history with optional tag filtering
+
 ### Canvas Actions (Basic)
 - **createStatusPills**: Add visual status indicators to the canvas
 - **createTextNote**: Add text notes/documentation to the canvas
@@ -756,6 +1003,20 @@ You are concise, professional, and observational. You help users organize their 
 ### When user asks about PROJECT HEALTH or STATUS:
 1. Use getProjectState to get current metrics
 2. Report drift score, unresolved feedback, and conflicts
+
+### When user asks about CONFLICTS:
+1. Use listFeedback with filter="conflicts" to see all conflicts
+2. Use detectConflict for detailed analysis of specific feedback pairs
+3. Recommend resolution strategies
+
+### When user RESOLVES or ADDRESSES feedback:
+1. Use resolveFeedback to mark it as addressed
+2. Link to any related decision if applicable
+3. Report remaining unresolved items
+
+### When user wants to REVIEW history:
+1. Use listFeedback or listDecisions to retrieve records
+2. Summarize patterns and trends
 
 ## CANVAS WORKFLOW
 
