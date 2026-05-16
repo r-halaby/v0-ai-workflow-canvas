@@ -511,64 +511,62 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
           {/* Grid Layout - 1:1 aspect ratio with object-cover */}
           {layoutMode === "grid" && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {data.images?.map((img) => (
-                {(() => {
-                  const isVideo = img.fileType === "video" || img.fileName?.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i);
-                  return (
-                    <div
-                      key={img.id}
-                      className="cursor-pointer group"
-                      onClick={() => setSelectedImage(img.id === selectedImage ? null : img.id)}
+              {data.images?.map((img) => {
+                const isVideo = img.fileType === "video" || img.fileName?.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+                return (
+                  <div
+                    key={img.id}
+                    className="cursor-pointer group"
+                    onClick={() => setSelectedImage(img.id === selectedImage ? null : img.id)}
+                  >
+                    <div 
+                      className="relative rounded-xl overflow-hidden transition-all duration-200 aspect-square"
+                      style={{
+                        border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid #333333",
+                      }}
                     >
+                      {isVideo ? (
+                        <video
+                          src={img.url}
+                          className="w-full h-full object-cover"
+                          muted
+                          loop
+                          autoPlay
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          src={img.url}
+                          alt={img.fileName}
+                          className="w-full h-full object-cover"
+                          draggable={false}
+                        />
+                      )}
+                      
+                      {/* Play icon for videos */}
+                      {isVideo && (
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+                          <svg width="10" height="10" viewBox="0 0 16 16" fill="white">
+                            <path d="M4 3L13 8L4 13V3Z" />
+                          </svg>
+                        </div>
+                      )}
+                      
+                      {/* Hover overlay */}
                       <div 
-                        className="relative rounded-xl overflow-hidden transition-all duration-200 aspect-square"
-                        style={{
-                          border: selectedImage === img.id ? "2px solid #ffffff" : "1px solid #333333",
-                        }}
+                        className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
                       >
-                        {isVideo ? (
-                          <video
-                            src={img.url}
-                            className="w-full h-full object-cover"
-                            muted
-                            loop
-                            autoPlay
-                            playsInline
-                          />
-                        ) : (
-                          <img
-                            src={img.url}
-                            alt={img.fileName}
-                            className="w-full h-full object-cover"
-                            draggable={false}
-                          />
-                        )}
-                        
-                        {/* Play icon for videos */}
-                        {isVideo && (
-                          <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
-                            <svg width="10" height="10" viewBox="0 0 16 16" fill="white">
-                              <path d="M4 3L13 8L4 13V3Z" />
-                            </svg>
-                          </div>
-                        )}
-                        
-                        {/* Hover overlay */}
-                        <div 
-                          className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ background: "linear-gradient(transparent 50%, rgba(0,0,0,0.8))" }}
-                        >
-                          <div className="p-3 w-full">
-                            <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                              {img.fileName}
-                            </p>
-                          </div>
+                        <div className="p-3 w-full">
+                          <p className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                            {img.fileName}
+                          </p>
                         </div>
                       </div>
                     </div>
-                  );
-                })()}
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
