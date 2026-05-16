@@ -300,13 +300,22 @@ export interface SageChatMessage {
   timestamp: string;
 }
 
-// Sage overview node data interface
+// Sage overview node data interface with health intelligence
 export interface SageOverviewNodeData {
   label: string;
   projectProgress: number; // 0-100
-  alignmentScore: number; // 0-100
+  alignmentScore: number; // 0-100 (legacy, maps to driftScore)
   summary: string;
   lastUpdated: string;
+  // Sage Health Intelligence (Section 5)
+  healthStatus?: SageHealthStatus;
+  driftScore?: number; // 0-100 alignment score
+  driftDelta?: number; // Change since last calculation
+  intent?: ProjectIntent | null;
+  decisions?: Decision[];
+  feedback?: FeedbackRecord[];
+  unresolvedFeedbackCount?: number;
+  conflictCount?: number;
 }
 
 // Stakeholder node data interface
