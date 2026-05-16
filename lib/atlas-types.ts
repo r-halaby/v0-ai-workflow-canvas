@@ -387,6 +387,7 @@ export interface MoodboardNodeData {
     url: string;
     fileName: string;
     thumbnail?: string;
+    fileType?: "image" | "video"; // Track whether this is an image or video
   }[];
   isExpanded: boolean;
   createdAt: string;

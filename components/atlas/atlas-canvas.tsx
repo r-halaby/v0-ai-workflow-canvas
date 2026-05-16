@@ -1,6 +1,10 @@
 "use client";
 
-import React, { useCallback, useRef, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useRef, useMemo, useState, useEffect, createContext, useContext } from "react";
+
+// Context to share which nodes are part of the presentation (have yellow borders)
+export const PresentationNodesContext = createContext<Set<string>>(new Set());
+export const usePresentationNodes = () => useContext(PresentationNodesContext);
 import {
   ReactFlow,
   Background,
@@ -419,26 +423,25 @@ const reactFlowInstance = useReactFlow();
     return nodes.filter(node => node.selected);
   }, [nodes]);
 
-// Check if selected nodes can be grouped into a moodboard (must be file nodes with images)
-  const canCreateMoodboard = useMemo(() => {
-  if (selectedNodes.length < 2) return false;
-  return selectedNodes.every(node => {
-  if (node.type !== "file") return false;
-  const fileData = node.data as { fileType?: string; uploadedFile?: { url?: string } };
-  return fileData.fileType === "image" || fileData.uploadedFile?.url;
-  });
-  }, [selectedNodes]);
-
-  // Check if selected nodes can be grouped for presentation (must be file nodes with images, in presentation mode)
-  const canCreatePresentationGroup = useMemo(() => {
-    if (!presentationMode) return false;
-    if (selectedNodes.length < 2) return false;
-    return selectedNodes.every(node => {
+// Filter selected nodes to only valid moodboard nodes (file nodes with images/videos)
+  const validMoodboardNodes = useMemo(() => {
+    return selectedNodes.filter(node => {
       if (node.type !== "file") return false;
       const fileData = node.data as { fileType?: string; uploadedFile?: { url?: string } };
-      return fileData.fileType === "image" || fileData.uploadedFile?.url;
+      return fileData.fileType === "image" || fileData.fileType === "video" || fileData.uploadedFile?.url;
     });
-  }, [selectedNodes, presentationMode]);
+  }, [selectedNodes]);
+
+  // Check if selected nodes can be grouped into a moodboard (must have at least 2 valid nodes)
+  const canCreateMoodboard = useMemo(() => {
+    return validMoodboardNodes.length >= 2;
+  }, [validMoodboardNodes]);
+
+  // Check if selected nodes can be grouped for presentation (must have at least 2 valid nodes, in presentation mode)
+  const canCreatePresentationGroup = useMemo(() => {
+    if (!presentationMode) return false;
+    return validMoodboardNodes.length >= 2;
+  }, [validMoodboardNodes, presentationMode]);
 
   // Handle node click for moodboard expansion
   const handleNodeClick = useCallback((_: React.MouseEvent, node: AtlasNode) => {
@@ -468,6 +471,16 @@ const reactFlowInstance = useReactFlow();
     });
   }, [nodes, searchQuery]);
 
+  // Compute which nodes are part of the presentation (connected by presentation edges)
+  const presentationNodeIds = useMemo(() => {
+    const nodeIds = new Set<string>();
+    presentationEdges.forEach(edge => {
+      nodeIds.add(edge.source);
+      nodeIds.add(edge.target);
+    });
+    return nodeIds;
+  }, [presentationEdges]);
+
   // Combine regular edges with presentation edges
   const allEdges = useMemo(() => {
     const presentationEdgeIds = new Set(presentationEdges.map(e => e.id));
@@ -484,13 +497,13 @@ const reactFlowInstance = useReactFlow();
       const isPresentation = presentationEdgeIds.has(edge.id) || edge.id.startsWith("presentation-");
       return {
         ...edge,
+        type: "default",
         style: {
-          ...edge.style,
           strokeWidth: isPresentation ? 3 : 2,
           stroke: isPresentation ? "#F0FE00" : "#52525b",
           strokeDasharray: isPresentation ? "8 4" : "5 5",
         },
-        animated: true,
+        animated: !isPresentation, // Disable animation for presentation edges to ensure styles apply
       };
     });
   }, [allEdges, presentationEdges]);
@@ -524,6 +537,7 @@ const reactFlowInstance = useReactFlow();
       onMouseMove={handleSelectionMove}
       onMouseUp={handleSelectionEnd}
     >
+      <PresentationNodesContext.Provider value={presentationNodeIds}>
       <ReactFlow
         nodes={filteredNodes}
         edges={styledEdges}
@@ -622,6 +636,7 @@ onClick={(event) => {
           }}
         />
       </ReactFlow>
+      </PresentationNodesContext.Provider>
 
       {/* Comment Pins Layer */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
@@ -768,7 +783,9 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   <button
   type="button"
   onClick={() => {
-  onCreateMoodboard(selectedNodes.map(n => n.id));
+  // Pass all selected file node IDs - handleCreateMoodboard will filter appropriately
+  const fileNodeIds = selectedNodes.filter(n => n.type === "file").map(n => n.id);
+  onCreateMoodboard(fileNodeIds);
   }}
   className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
   style={{
@@ -784,7 +801,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   <rect x="14" y="14" width="7" height="7" rx="1" />
   </svg>
   <span className="text-sm font-medium">
-  Create Moodboard ({selectedNodes.length} images)
+  Create Moodboard ({validMoodboardNodes.length} images)
   </span>
   </button>
   </div>
@@ -798,7 +815,8 @@ onAddOperationalNode={handleMenuAddOperationalNode}
   <button
   type="button"
   onClick={() => {
-    onCreatePresentationGroup(selectedNodes.map(n => n.id));
+    const fileNodeIds = selectedNodes.filter(n => n.type === "file").map(n => n.id);
+    onCreatePresentationGroup(fileNodeIds);
   }}
   className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg"
   style={{
@@ -815,7 +833,7 @@ onAddOperationalNode={handleMenuAddOperationalNode}
     <rect x="13" y="17" width="9" height="5" rx="1" />
   </svg>
   <span className="text-sm font-medium">
-    Group for Slide ({selectedNodes.length} images)
+    Group for Slide ({validMoodboardNodes.length} images)
   </span>
   </button>
   </div>

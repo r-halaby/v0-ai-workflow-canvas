@@ -745,11 +745,13 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       // Extract images from selected nodes
       const images = selectedNodes.map(node => {
         const fileData = node.data as FileNodeData;
+        const isVideo = fileData.fileType === "video" || fileData.fileExtension?.match(/^\.(mp4|mov|webm|avi|mkv|m4v)$/i);
         return {
           id: node.id,
           url: fileData.uploadedFile?.url || fileData.thumbnail || "",
           fileName: fileData.fileName || fileData.label || "Image",
           thumbnail: fileData.thumbnail,
+          fileType: isVideo ? "video" as const : "image" as const,
         };
       }).filter(img => img.url);
 
@@ -953,8 +955,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         ]);
       }
     } else {
-      // Exiting presentation mode - restore original nodes and clear groups
+      // Exiting presentation mode - restore original nodes, clear groups and edges
       const groupNodes = nodes.filter(n => n.type === "presentationGroup");
+      
+      // Always clear presentation edges when exiting
+      setPresentationEdges([]);
       
       if (groupNodes.length > 0) {
         // Collect all original nodes to restore
@@ -1394,7 +1399,7 @@ presentationMode={presentationMode}
   presentationMode={presentationMode}
   onPresentationModeChange={handlePresentationModeChange}
   onStartPresentation={handleStartPresentation}
-  presentationEdgeCount={presentationEdges.length}
+  presentationEdgeCount={new Set(presentationEdges.flatMap(e => [e.source, e.target])).size}
   />
 
         
