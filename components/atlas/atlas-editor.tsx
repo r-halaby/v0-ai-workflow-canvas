@@ -264,12 +264,16 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       prompt: string;
     }>) => {
       const { sourceNodeId, mockups, prompt } = e.detail;
+      console.log("[v0] Received mockups-generated event:", { sourceNodeId, mockupsCount: mockups.length, prompt });
       
       // Find the source node and active prompt node
       const sourceNode = nodes.find(n => n.id === sourceNodeId);
-      const promptNode = activeAIPromptNodeId ? nodes.find(n => n.id === activeAIPromptNodeId) : null;
+      console.log("[v0] Found source node:", sourceNode?.id, "activeAIPromptNodeId:", activeAIPromptNodeId);
       
-      if (!sourceNode) return;
+      if (!sourceNode) {
+        console.log("[v0] Source node not found, aborting");
+        return;
+      }
       
       const baseX = sourceNode.position.x + 320;
       const baseY = sourceNode.position.y;
@@ -301,14 +305,21 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       }));
       
       // Remove prompt node and its edges, add mockup nodes and edges
-      setNodes(nds => [
-        ...nds.filter(n => n.id !== activeAIPromptNodeId),
-        ...newMockupNodes
-      ]);
-      setEdges(eds => [
-        ...eds.filter(e => e.source !== activeAIPromptNodeId && e.target !== activeAIPromptNodeId),
-        ...newEdges
-      ]);
+      console.log("[v0] Creating", newMockupNodes.length, "mockup nodes and", newEdges.length, "edges");
+      setNodes(nds => {
+        console.log("[v0] Updating nodes, removing prompt node:", activeAIPromptNodeId);
+        return [
+          ...nds.filter(n => n.id !== activeAIPromptNodeId),
+          ...newMockupNodes
+        ];
+      });
+      setEdges(eds => {
+        console.log("[v0] Updating edges, adding", newEdges.length, "new edges");
+        return [
+          ...eds.filter(e => e.source !== activeAIPromptNodeId && e.target !== activeAIPromptNodeId),
+          ...newEdges
+        ];
+      });
       setActiveAIPromptNodeId(null);
     };
 

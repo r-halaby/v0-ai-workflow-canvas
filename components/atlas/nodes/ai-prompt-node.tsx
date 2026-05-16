@@ -65,8 +65,10 @@ function AIPromptNodeComponent({ data }: NodeProps) {
       }
 
       const result = await response.json();
+      console.log("[v0] API response:", result);
       
       if (result.images && result.images.length > 0) {
+        console.log("[v0] Dispatching atlas:mockups-generated with", result.images.length, "images");
         // Dispatch custom event to handle mockup creation in atlas-editor
         window.dispatchEvent(new CustomEvent("atlas:mockups-generated", {
           detail: {
@@ -79,6 +81,7 @@ function AIPromptNodeComponent({ data }: NodeProps) {
           }
         }));
       } else {
+        console.log("[v0] No images in result:", result);
         setError("No images were generated");
         setIsGenerating(false);
       }
