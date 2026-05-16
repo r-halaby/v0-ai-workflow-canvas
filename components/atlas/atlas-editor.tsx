@@ -228,47 +228,6 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         sourceNodeId,
         sourceImageUrl,
         sourceFileName: fileData.label || fileData.fileName || "Untitled",
-        onClose: () => {
-          // Remove the prompt node
-          setNodes(nds => nds.filter(n => n.id !== promptNodeId));
-          setEdges(eds => eds.filter(e => e.source !== promptNodeId && e.target !== promptNodeId));
-          setActiveAIPromptNodeId(null);
-        },
-        onMockupsCreated: (mockups: Array<{ imageUrl: string; name: string }>, prompt: string) => {
-          // Position mockups to the right of the source node
-          const baseX = sourceNode.position.x + 320;
-          const baseY = sourceNode.position.y;
-          
-          const newMockupNodes: AtlasNode[] = mockups.map((mockup, index) => ({
-            id: `mockup-${Date.now()}-${index}`,
-            type: "mockupImage" as const,
-            position: { 
-              x: baseX, 
-              y: baseY + (index * 280)
-            },
-            data: {
-              label: mockup.name,
-              imageUrl: mockup.imageUrl,
-              sourceFileName: fileData.fileName,
-              prompt: prompt,
-              generatedAt: "Just now",
-            },
-          }));
-          
-          // Create edges from SOURCE node directly to mockup nodes
-          const newEdges: Edge[] = newMockupNodes.map(mockupNode => ({
-            id: `edge-${sourceNodeId}-${mockupNode.id}`,
-            source: sourceNodeId,
-            target: mockupNode.id,
-            style: { stroke: "#F0FE00", strokeWidth: 2 },
-            animated: true,
-          }));
-          
-          // Remove the prompt node and its edge, then add mockup nodes
-          setNodes(nds => [...nds.filter(n => n.id !== promptNodeId), ...newMockupNodes]);
-          setEdges(eds => [...eds.filter(e => e.source !== promptNodeId && e.target !== promptNodeId), ...newEdges]);
-          setActiveAIPromptNodeId(null);
-        },
       },
     };
     
@@ -296,6 +255,84 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       window.removeEventListener("atlas:generate-mockup", handleMockupEvent as EventListener);
     };
   }, [createAIPromptNode]);
+  
+  // Listen for mockups generated events from AI prompt node
+  useEffect(() => {
+    const handleMockupsGenerated = (e: CustomEvent<{
+      sourceNodeId: string;
+      mockups: Array<{ imageUrl: string; name: string }>;
+      prompt: string;
+    }>) => {
+      const { sourceNodeId, mockups, prompt } = e.detail;
+      
+      // Find the source node and active prompt node
+      const sourceNode = nodes.find(n => n.id === sourceNodeId);
+      const promptNode = activeAIPromptNodeId ? nodes.find(n => n.id === activeAIPromptNodeId) : null;
+      
+      if (!sourceNode) return;
+      
+      const baseX = sourceNode.position.x + 320;
+      const baseY = sourceNode.position.y;
+      
+      // Create mockup image nodes
+      const newMockupNodes: AtlasNode[] = mockups.map((mockup, index) => ({
+        id: `mockup-${Date.now()}-${index}`,
+        type: "mockupImage" as const,
+        position: { 
+          x: baseX, 
+          y: baseY + (index * 280)
+        },
+        data: {
+          label: mockup.name,
+          imageUrl: mockup.imageUrl,
+          sourceFileName: (sourceNode.data as FileNodeData).fileName,
+          prompt: prompt,
+          generatedAt: "Just now",
+        },
+      }));
+      
+      // Create edges from source node to each mockup
+      const newEdges: Edge[] = newMockupNodes.map(mockupNode => ({
+        id: `edge-${sourceNodeId}-${mockupNode.id}`,
+        source: sourceNodeId,
+        target: mockupNode.id,
+        style: { stroke: "#F0FE00", strokeWidth: 2 },
+        animated: true,
+      }));
+      
+      // Remove prompt node and its edges, add mockup nodes and edges
+      setNodes(nds => [
+        ...nds.filter(n => n.id !== activeAIPromptNodeId),
+        ...newMockupNodes
+      ]);
+      setEdges(eds => [
+        ...eds.filter(e => e.source !== activeAIPromptNodeId && e.target !== activeAIPromptNodeId),
+        ...newEdges
+      ]);
+      setActiveAIPromptNodeId(null);
+    };
+
+    window.addEventListener("atlas:mockups-generated", handleMockupsGenerated as EventListener);
+    return () => {
+      window.removeEventListener("atlas:mockups-generated", handleMockupsGenerated as EventListener);
+    };
+  }, [nodes, activeAIPromptNodeId, setNodes, setEdges]);
+  
+  // Listen for close AI prompt events
+  useEffect(() => {
+    const handleClosePrompt = () => {
+      if (activeAIPromptNodeId) {
+        setNodes(nds => nds.filter(n => n.id !== activeAIPromptNodeId));
+        setEdges(eds => eds.filter(e => e.source !== activeAIPromptNodeId && e.target !== activeAIPromptNodeId));
+        setActiveAIPromptNodeId(null);
+      }
+    };
+
+    window.addEventListener("atlas:close-ai-prompt", handleClosePrompt as EventListener);
+    return () => {
+      window.removeEventListener("atlas:close-ai-prompt", handleClosePrompt as EventListener);
+    };
+  }, [activeAIPromptNodeId, setNodes, setEdges]);
 
   // Current user (first member for demo)
   const currentUser = workspaceSettings.members[0] || WORKSPACE_MEMBERS[0];

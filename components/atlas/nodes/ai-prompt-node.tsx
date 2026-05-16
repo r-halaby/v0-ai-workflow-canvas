@@ -8,9 +8,6 @@ export interface AIPromptNodeData {
   sourceNodeId: string;
   sourceImageUrl: string;
   sourceFileName: string;
-  onGenerate?: (prompt: string, aspectRatio: string, variations: number) => void;
-  onClose?: () => void;
-  onMockupsCreated?: (mockups: Array<{ imageUrl: string; name: string }>, prompt: string) => void;
 }
 
 const ASPECT_RATIOS = [
@@ -70,13 +67,20 @@ function AIPromptNodeComponent({ data }: NodeProps) {
       const result = await response.json();
       
       if (result.images && result.images.length > 0) {
-        nodeData.onMockupsCreated?.(
-          result.images.map((img: { url: string }, index: number) => ({
-            imageUrl: img.url,
-            name: `${nodeData.sourceFileName} - ${prompt.slice(0, 25)}${prompt.length > 25 ? "..." : ""} (${index + 1})`,
-          })),
-          prompt
-        );
+        // Dispatch custom event to handle mockup creation in atlas-editor
+        window.dispatchEvent(new CustomEvent("atlas:mockups-generated", {
+          detail: {
+            sourceNodeId: nodeData.sourceNodeId,
+            mockups: result.images.map((img: { url: string }, index: number) => ({
+              imageUrl: img.url,
+              name: `${nodeData.sourceFileName} - ${prompt.slice(0, 25)}${prompt.length > 25 ? "..." : ""} (${index + 1})`,
+            })),
+            prompt,
+          }
+        }));
+      } else {
+        setError("No images were generated");
+        setIsGenerating(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
@@ -214,7 +218,11 @@ function AIPromptNodeComponent({ data }: NodeProps) {
 
         {/* Close button */}
         <button
-          onClick={() => nodeData.onClose?.()}
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent("atlas:close-ai-prompt", {
+              detail: { sourceNodeId: nodeData.sourceNodeId }
+            }));
+          }}
           className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
           style={{ color: "#888" }}
         >
