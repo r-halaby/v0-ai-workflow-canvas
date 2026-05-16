@@ -25,8 +25,8 @@ import type {
   ProjectType,
   SageProjectState,
   SageActor,
-  STATUS_WORKFLOWS,
 } from "./atlas-types";
+import { STATUS_WORKFLOWS } from "./atlas-types";
 
 // Generate unique IDs
 function generateId(prefix: string): string {
