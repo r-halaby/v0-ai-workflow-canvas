@@ -1205,7 +1205,7 @@ All Frameworks
                   <div className="text-center">
                     <div className="w-16 h-16 mx-auto rounded-xl flex items-center justify-center overflow-hidden mb-2" style={{ backgroundColor: "#1a1a1a", border: "1px dashed #333333" }}>
                       {workspaceSettings.branding?.workspaceIcon ? (
-                        <img src={workspaceSettings.branding.workspaceIcon} alt="Icon" className="w-full h-full object-cover" />
+                        <img src={workspaceSettings.branding.workspaceIcon} alt="Icon" className="max-w-full max-h-full object-contain" />
                       ) : (
                         <span className="text-xl font-bold" style={{ color: "#F0FE00" }}>{workspaceSettings.name.charAt(0)}</span>
                       )}
