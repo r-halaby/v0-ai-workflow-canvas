@@ -813,28 +813,46 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       const basePosition = moodboardNode.position;
 
       // Create individual file nodes from the moodboard images
-      const newNodes: AtlasNode[] = moodboardData.images.map((img, index) => ({
-        id: `file-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`,
-        type: "file" as const,
-        position: {
-          x: basePosition.x + (index % 3) * 250,
-          y: basePosition.y + Math.floor(index / 3) * 200,
-        },
-        data: {
-          label: img.fileName,
-          fileName: img.fileName,
-          fileType: "image",
-          fileExtension: "png",
-          fileCategory: "image",
-          status: "approved",
-          product: "brand",
-          thumbnail: img.thumbnail || img.url,
-          lastModified: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-          connectedNodes: 0,
-          tasks: { total: 0, completed: 0 },
-          uploadedFile: { url: img.url, name: img.fileName },
-        } as FileNodeData,
-      }));
+      const newNodes: AtlasNode[] = moodboardData.images.map((img, index) => {
+        // Detect file extension from filename
+        const extMatch = img.fileName.match(/\.([a-zA-Z0-9]+)$/);
+        const extension = extMatch ? `.${extMatch[1].toLowerCase()}` : ".png";
+        
+        // Determine file type based on extension
+        const videoExtensions = [".mp4", ".mov", ".avi", ".webm", ".mkv", ".m4v"];
+        const audioExtensions = [".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".aiff"];
+        const isVideoFile = videoExtensions.includes(extension);
+        const isAudioFile = audioExtensions.includes(extension);
+        const fileType = isVideoFile ? "video" : (isAudioFile ? "audio" : "image");
+        const fileCategory = isVideoFile ? "video" : (isAudioFile ? "audio" : "image");
+        
+        // For images, use the URL as preview; for video/audio, don't set previewImages
+        const previewImages = !isVideoFile && !isAudioFile ? [img.url] : undefined;
+        
+        return {
+          id: `file-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`,
+          type: "file" as const,
+          position: {
+            x: basePosition.x + (index % 3) * 250,
+            y: basePosition.y + Math.floor(index / 3) * 200,
+          },
+          data: {
+            label: img.fileName.replace(/\.[^.]+$/, ""), // Remove extension from label
+            fileName: img.fileName,
+            fileType,
+            fileExtension: extension as FileExtension,
+            fileCategory,
+            status: "approved",
+            product: "brand",
+            thumbnail: img.thumbnail || img.url,
+            lastModified: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            connectedNodes: 0,
+            tasks: [],
+            uploadedFile: { url: img.url, pathname: img.fileName, size: 0, uploadedAt: new Date().toISOString() },
+            previewImages,
+          } as FileNodeData,
+        };
+      });
 
       // Remove moodboard and add individual nodes
       setNodes(nds => [
