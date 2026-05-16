@@ -498,13 +498,13 @@ const reactFlowInstance = useReactFlow();
       const isPresentation = presentationEdgeIds.has(edge.id) || edge.id.startsWith("presentation-");
       return {
         ...edge,
+        type: "default",
         style: {
-          ...edge.style,
           strokeWidth: isPresentation ? 3 : 2,
           stroke: isPresentation ? "#F0FE00" : "#52525b",
           strokeDasharray: isPresentation ? "8 4" : "5 5",
         },
-        animated: true,
+        animated: !isPresentation, // Disable animation for presentation edges to ensure styles apply
       };
     });
   }, [allEdges, presentationEdges]);
