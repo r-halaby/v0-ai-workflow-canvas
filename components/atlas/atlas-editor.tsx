@@ -1615,7 +1615,11 @@ presentationMode={presentationMode}
         open={showSaveFrameworkDialog}
         onClose={() => setShowSaveFrameworkDialog(false)}
         canvas={canvas}
-        currentUser={workspaceSettings.members[0]}
+        currentUser={{
+          ...workspaceSettings.members[0],
+          // Use branding profile picture if available
+          avatar: workspaceSettings.branding?.profilePicture || workspaceSettings.members[0].avatar,
+        }}
         onSaveFramework={(framework) => {
           if (onSaveFramework) {
             onSaveFramework(framework);
