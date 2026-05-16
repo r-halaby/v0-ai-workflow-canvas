@@ -366,6 +366,315 @@ const sageTools = {
       };
     },
   }),
+  
+  // ============================================================================
+  // P0 CANVAS AGENT TOOLS - Advanced Node Creation
+  // ============================================================================
+  
+  parseFileToNodes: tool({
+    description: `Parse an uploaded file (PDF, text document, brief) into structured text nodes on the canvas. Use this when a user uploads a document and wants to extract its content into organized nodes. The tool extracts sections from the document and creates a text node for each section, automatically grouping them with the filename as the group label.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      fileName: z.string().describe("The name of the uploaded file"),
+      fileContent: z.string().describe("The text content extracted from the file"),
+      startPosition: z.object({
+        x: z.number().describe("X coordinate for the first node"),
+        y: z.number().describe("Y coordinate for the first node"),
+      }).optional().describe("Starting position for nodes (defaults to auto-calculate)"),
+    }),
+    execute: async ({ projectId, fileName, fileContent, startPosition }) => {
+      // Parse content into sections
+      // Look for common section patterns: headers, numbered sections, blank line separators
+      const sections: Array<{ title: string; content: string }> = [];
+      
+      // Split by common section patterns
+      const lines = fileContent.split('\n');
+      let currentSection: { title: string; content: string[] } | null = null;
+      
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        
+        // Detect section headers (numbered, ALL CAPS, or with colons)
+        const isHeader = 
+          /^[0-9]+[\.\)]\s+[A-Z]/.test(trimmedLine) || // "1. Section" or "1) Section"
+          /^[A-Z][A-Z\s]{3,}$/.test(trimmedLine) || // "ALL CAPS HEADER"
+          /^#+\s+/.test(trimmedLine) || // "# Markdown Header"
+          /^[A-Z][a-z]+:$/.test(trimmedLine); // "Title:"
+        
+        if (isHeader && trimmedLine.length > 2) {
+          // Save previous section
+          if (currentSection && currentSection.content.length > 0) {
+            sections.push({
+              title: currentSection.title,
+              content: currentSection.content.join('\n').trim(),
+            });
+          }
+          // Start new section
+          currentSection = {
+            title: trimmedLine.replace(/^#+\s+/, '').replace(/:$/, ''),
+            content: [],
+          };
+        } else if (currentSection) {
+          currentSection.content.push(line);
+        } else if (trimmedLine.length > 0) {
+          // No section yet, create initial section
+          currentSection = {
+            title: 'Overview',
+            content: [line],
+          };
+        }
+      }
+      
+      // Don't forget the last section
+      if (currentSection && currentSection.content.length > 0) {
+        sections.push({
+          title: currentSection.title,
+          content: currentSection.content.join('\n').trim(),
+        });
+      }
+      
+      // If no sections found, create one from entire content
+      if (sections.length === 0) {
+        sections.push({
+          title: fileName.replace(/\.[^.]+$/, ''), // Remove extension
+          content: fileContent.trim(),
+        });
+      }
+      
+      // Calculate positions with collision avoidance
+      const baseX = startPosition?.x ?? 100;
+      const baseY = startPosition?.y ?? 100;
+      const nodeWidth = 280;
+      const nodeHeight = 200;
+      const gap = 24;
+      const nodesPerRow = 3;
+      
+      const nodes = sections.map((section, index) => {
+        const row = Math.floor(index / nodesPerRow);
+        const col = index % nodesPerRow;
+        
+        return {
+          id: `node-${projectId}-${Date.now()}-${index}`,
+          title: section.title,
+          content: section.content,
+          position: {
+            x: baseX + col * (nodeWidth + gap),
+            y: baseY + row * (nodeHeight + gap),
+          },
+        };
+      });
+      
+      // Create group for all nodes
+      const groupId = `group-${projectId}-${Date.now()}`;
+      
+      return {
+        action: "parseFileToNodes",
+        projectId,
+        fileName,
+        groupId,
+        groupLabel: fileName.replace(/\.[^.]+$/, ''), // Remove extension for label
+        nodes,
+        nodeCount: nodes.length,
+        summary: `Extracted ${nodes.length} sections from "${fileName}" and grouped them together`,
+      };
+    },
+  }),
+  
+  createTextNodeWithPosition: tool({
+    description: `Create a single text node at a specific position on the canvas with collision avoidance. Use this when you need to place a text note at a precise location, or when creating nodes that should avoid overlapping with existing content.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      title: z.string().describe("The title of the text node"),
+      content: z.string().describe("The content/body of the text node"),
+      position: z.object({
+        x: z.number().describe("X coordinate"),
+        y: z.number().describe("Y coordinate"),
+      }).optional().describe("Position for the node (auto-calculates if not provided)"),
+      existingNodePositions: z.array(z.object({
+        x: z.number(),
+        y: z.number(),
+        width: z.number().default(280),
+        height: z.number().default(200),
+      })).optional().describe("Positions of existing nodes to avoid collision"),
+      sourceFile: z.string().optional().describe("Source file this node came from, if any"),
+    }),
+    execute: async ({ projectId, title, content, position, existingNodePositions, sourceFile }) => {
+      const nodeWidth = 280;
+      const nodeHeight = 200;
+      const gap = 24;
+      
+      let finalPosition = position || { x: 100, y: 100 };
+      
+      // Collision avoidance if existing positions provided
+      if (existingNodePositions && existingNodePositions.length > 0 && !position) {
+        // Find a free spot by checking grid positions
+        let found = false;
+        for (let row = 0; row < 10 && !found; row++) {
+          for (let col = 0; col < 5 && !found; col++) {
+            const testX = 100 + col * (nodeWidth + gap);
+            const testY = 100 + row * (nodeHeight + gap);
+            
+            // Check if this position overlaps with any existing node
+            const overlaps = existingNodePositions.some(existing => {
+              return !(
+                testX + nodeWidth < existing.x ||
+                testX > existing.x + existing.width ||
+                testY + nodeHeight < existing.y ||
+                testY > existing.y + existing.height
+              );
+            });
+            
+            if (!overlaps) {
+              finalPosition = { x: testX, y: testY };
+              found = true;
+            }
+          }
+        }
+      }
+      
+      const nodeId = `node-${projectId}-${Date.now()}`;
+      
+      return {
+        action: "createTextNodeWithPosition",
+        projectId,
+        nodeId,
+        title,
+        content,
+        position: finalPosition,
+        sourceFile,
+        summary: `Created text node "${title}" at position (${finalPosition.x}, ${finalPosition.y})`,
+      };
+    },
+  }),
+  
+  groupNodes: tool({
+    description: `Group multiple nodes together with an optional label. Use this to organize related nodes on the canvas, such as grouping all nodes from a single document or all nodes related to a specific topic.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      nodeIds: z.array(z.string()).describe("IDs of nodes to group together"),
+      label: z.string().optional().describe("Label for the group"),
+      color: z.string().optional().describe("Background color for the group (hex)"),
+    }),
+    execute: async ({ projectId, nodeIds, label, color }) => {
+      const groupId = `group-${projectId}-${Date.now()}`;
+      
+      return {
+        action: "groupNodes",
+        projectId,
+        groupId,
+        nodeIds,
+        label: label || "Group",
+        color: color || "#1a1a1a",
+        summary: `Grouped ${nodeIds.length} nodes${label ? ` as "${label}"` : ""}`,
+      };
+    },
+  }),
+  
+  moveNodes: tool({
+    description: `Move one or more nodes to new positions on the canvas. Use this for rearranging nodes or organizing the canvas layout.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      moves: z.array(z.object({
+        nodeId: z.string().describe("ID of the node to move"),
+        position: z.object({
+          x: z.number().describe("New X coordinate"),
+          y: z.number().describe("New Y coordinate"),
+        }),
+      })).describe("Array of node movements"),
+    }),
+    execute: async ({ projectId, moves }) => {
+      return {
+        action: "moveNodes",
+        projectId,
+        moves,
+        summary: `Moved ${moves.length} node(s) to new positions`,
+      };
+    },
+  }),
+  
+  connectNodes: tool({
+    description: `Create a visual connection/arrow between two nodes on the canvas. Use this to show relationships, dependencies, or flow between nodes.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      sourceNodeId: z.string().describe("ID of the source node (where the arrow starts)"),
+      targetNodeId: z.string().describe("ID of the target node (where the arrow ends)"),
+      label: z.string().optional().describe("Label for the connection"),
+      style: z.enum(["arrow", "line", "dashed"]).default("arrow").describe("Style of the connection"),
+    }),
+    execute: async ({ projectId, sourceNodeId, targetNodeId, label, style }) => {
+      const connectionId = `conn-${projectId}-${Date.now()}`;
+      
+      return {
+        action: "connectNodes",
+        projectId,
+        connectionId,
+        sourceNodeId,
+        targetNodeId,
+        label,
+        style,
+        summary: `Created ${style} connection from ${sourceNodeId} to ${targetNodeId}${label ? ` labeled "${label}"` : ""}`,
+      };
+    },
+  }),
+  
+  arrangeNodes: tool({
+    description: `Arrange nodes in a specific layout pattern. Use this to automatically organize nodes in a grid, row, column, or other pattern.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      nodeIds: z.array(z.string()).describe("IDs of nodes to arrange"),
+      layout: z.enum(["grid", "row", "column", "circle"]).describe("Layout pattern"),
+      startPosition: z.object({
+        x: z.number().describe("Starting X coordinate"),
+        y: z.number().describe("Starting Y coordinate"),
+      }).optional(),
+      spacing: z.number().optional().describe("Space between nodes (default 24)"),
+    }),
+    execute: async ({ projectId, nodeIds, layout, startPosition, spacing = 24 }) => {
+      const nodeWidth = 280;
+      const nodeHeight = 200;
+      const baseX = startPosition?.x ?? 100;
+      const baseY = startPosition?.y ?? 100;
+      
+      const positions: Array<{ nodeId: string; position: { x: number; y: number } }> = [];
+      
+      nodeIds.forEach((nodeId, index) => {
+        let x = baseX;
+        let y = baseY;
+        
+        switch (layout) {
+          case "row":
+            x = baseX + index * (nodeWidth + spacing);
+            y = baseY;
+            break;
+          case "column":
+            x = baseX;
+            y = baseY + index * (nodeHeight + spacing);
+            break;
+          case "grid":
+            const cols = Math.ceil(Math.sqrt(nodeIds.length));
+            x = baseX + (index % cols) * (nodeWidth + spacing);
+            y = baseY + Math.floor(index / cols) * (nodeHeight + spacing);
+            break;
+          case "circle":
+            const radius = Math.max(nodeWidth, nodeHeight) * nodeIds.length / (2 * Math.PI);
+            const angle = (index / nodeIds.length) * 2 * Math.PI - Math.PI / 2;
+            x = baseX + radius + radius * Math.cos(angle);
+            y = baseY + radius + radius * Math.sin(angle);
+            break;
+        }
+        
+        positions.push({ nodeId, position: { x, y } });
+      });
+      
+      return {
+        action: "arrangeNodes",
+        projectId,
+        layout,
+        positions,
+        summary: `Arranged ${nodeIds.length} nodes in ${layout} layout`,
+      };
+    },
+  }),
 };
 
 function getColorHex(colorName: string): string {
@@ -406,10 +715,18 @@ You are concise, professional, and observational. You help users organize their 
 - **getProjectState**: Check project health, drift score, and metrics
 - **createProjectStatusSet**: Create workflow stages based on project type
 
-### Canvas Actions
+### Canvas Actions (Basic)
 - **createStatusPills**: Add visual status indicators to the canvas
 - **createTextNote**: Add text notes/documentation to the canvas
 - **suggestWorkflow**: Suggest workflow stages for a project type
+
+### Canvas Agent Tools (Advanced)
+- **parseFileToNodes**: Parse uploaded documents into structured text nodes, auto-grouped by filename
+- **createTextNodeWithPosition**: Create text nodes with collision avoidance
+- **groupNodes**: Group related nodes together with a label
+- **moveNodes**: Reposition nodes on the canvas
+- **connectNodes**: Draw connections/arrows between nodes
+- **arrangeNodes**: Auto-arrange nodes in grid, row, column, or circle layout
 
 ## WHEN TO USE REASONING TOOLS
 
@@ -425,6 +742,16 @@ You are concise, professional, and observational. You help users organize their 
 ### When user makes a DECISION:
 1. Use logDecision to record it with rationale
 2. Link to related feedback if applicable
+
+### When user UPLOADS A FILE or DOCUMENT:
+1. Use parseFileToNodes to extract structured content
+2. The tool auto-groups nodes with the filename as label
+3. Report how many sections were extracted
+
+### When user wants to ORGANIZE or ARRANGE nodes:
+1. Use arrangeNodes for automatic layouts (grid, row, column, circle)
+2. Use groupNodes to group related nodes together
+3. Use connectNodes to show relationships between nodes
 
 ### When user asks about PROJECT HEALTH or STATUS:
 1. Use getProjectState to get current metrics
