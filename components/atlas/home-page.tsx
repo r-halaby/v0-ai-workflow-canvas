@@ -10,6 +10,8 @@ import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, PRODUCT_COLORS, SAMPLE_FR
 import { ReactFlow, Background, Controls, useNodesState, useEdgesState, ReactFlowProvider } from "@xyflow/react";
 import { FileNode } from "./file-node";
 import { CanvasPreview } from "./canvas-preview";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "favorites" | "workspace" | "private";
@@ -204,8 +206,21 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [projects, setProjects] = useState<Project[]>([]);
   const [expandedFilesProjects, setExpandedFilesProjects] = useState<Set<string>>(new Set());
   const [expandedFilesCanvases, setExpandedFilesCanvases] = useState<Set<string>>(new Set());
-  const [showSageChat, setShowSageChat] = useState(false);
-const [sageMessage, setSageMessage] = useState("");
+const [showSageChat, setShowSageChat] = useState(false);
+  const [sageInput, setSageInput] = useState("");
+  
+  // Sage AI Chat
+  const { messages: sageMessages, sendMessage: sendSageMessage, status: sageStatus } = useChat({
+    id: "home-sage-chat",
+    transport: new DefaultChatTransport({ api: "/api/sage" }),
+  });
+  
+  const handleSageSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sageInput.trim() || sageStatus === "streaming") return;
+    sendSageMessage({ text: sageInput });
+    setSageInput("");
+  };
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   // Use external frameworks if provided, otherwise use local state
   const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
@@ -3124,7 +3139,7 @@ All Frameworks
 
           {/* Chat Messages */}
           <div className="h-80 overflow-y-auto p-4 space-y-4">
-            {/* Welcome message */}
+            {/* Welcome message - always shown */}
             <div className="flex gap-3">
               <div
                 className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
@@ -3172,10 +3187,82 @@ All Frameworks
                 </ul>
               </div>
             </div>
+            
+            {/* Dynamic messages */}
+            {sageMessages.map((message) => (
+              <div key={message.id} className="flex gap-3">
+                {message.role === "assistant" ? (
+                  <>
+                    <div
+                      className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                      style={{ backgroundColor: "#F0FE00" }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+                      </svg>
+                    </div>
+                    <div
+                      className="flex-1 p-3 rounded-xl rounded-tl-sm"
+                      style={{ backgroundColor: "#1e1e1e" }}
+                    >
+                      <p
+                        className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        {message.parts?.map((part, i) => {
+                          if (part.type === "text") return part.text;
+                          return null;
+                        }).filter(Boolean).join("") || (typeof message.content === "string" ? message.content : "")}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex-1" />
+                    <div
+                      className="p-3 rounded-xl rounded-tr-sm max-w-[80%]"
+                      style={{ backgroundColor: "#F0FE0020", border: "1px solid #F0FE0040" }}
+                    >
+                      <p
+                        className="text-sm text-white leading-relaxed"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        {typeof message.content === "string" ? message.content : ""}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+            
+            {/* Loading indicator */}
+            {sageStatus === "streaming" && (
+              <div className="flex gap-3">
+                <div
+                  className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                  style={{ backgroundColor: "#F0FE00" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+                  </svg>
+                </div>
+                <div
+                  className="flex-1 p-3 rounded-xl rounded-tl-sm"
+                  style={{ backgroundColor: "#1e1e1e" }}
+                >
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Chat Input */}
-          <div
+          <form
+            onSubmit={handleSageSubmit}
             className="p-4"
             style={{ borderTop: "1px solid #2a2a2a" }}
           >
@@ -3185,21 +3272,23 @@ All Frameworks
             >
               <input
                 type="text"
-                value={sageMessage}
-                onChange={(e) => setSageMessage(e.target.value)}
+                value={sageInput}
+                onChange={(e) => setSageInput(e.target.value)}
                 placeholder="Ask Sage anything..."
                 className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                disabled={sageStatus === "streaming"}
               />
               <button
-                type="button"
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                style={{ backgroundColor: sageMessage.trim() ? "#F0FE00" : "#333333" }}
+                type="submit"
+                disabled={!sageInput.trim() || sageStatus === "streaming"}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors disabled:cursor-not-allowed"
+                style={{ backgroundColor: sageInput.trim() ? "#F0FE00" : "#333333" }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
                     d="M14 2L7 9M14 2L10 14L7 9M14 2L2 6L7 9"
-                    stroke={sageMessage.trim() ? "#121212" : "#666666"}
+                    stroke={sageInput.trim() ? "#121212" : "#666666"}
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -3207,7 +3296,7 @@ All Frameworks
                 </svg>
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>
