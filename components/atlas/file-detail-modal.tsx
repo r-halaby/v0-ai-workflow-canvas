@@ -56,6 +56,8 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
   const [isUploadingVersion, setIsUploadingVersion] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const versionInputRef = useRef<HTMLInputElement>(null);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   if (!isOpen) return null;
 
@@ -114,9 +116,19 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
   ];
 
   const tasks = fileData.tasks || [];
-  const assignees = fileData.assignees || WORKSPACE_MEMBERS.slice(0, 3);
-  const dueDate = fileData.dueDate || "May 15th";
-  const blockers = fileData.blockers ?? 1;
+  // Derive team members from task assignees (unique members who have been assigned tasks)
+  const taskAssignees = tasks
+    .filter(task => task.assignee)
+    .map(task => task.assignee as WorkspaceMember);
+  // Get unique assignees by ID
+  const uniqueAssignees = Array.from(
+    new Map(taskAssignees.map(a => [a.id, a])).values()
+  );
+  // Use file-level assignees if set, otherwise fall back to task assignees
+  const assignees = fileData.assignees && fileData.assignees.length > 0 
+    ? fileData.assignees 
+    : uniqueAssignees;
+  const dueDate = fileData.dueDate || "";
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -167,6 +179,20 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
       onUpdateFile({ tasks: updatedTasks });
     }
     setShowAssigneeDropdown(null);
+  };
+
+  const handleStatusChange = (newStatus: FileNodeData["status"]) => {
+    if (onUpdateFile) {
+      onUpdateFile({ status: newStatus });
+    }
+    setShowStatusDropdown(false);
+  };
+
+  const handleDueDateChange = (newDate: string) => {
+    if (onUpdateFile) {
+      onUpdateFile({ dueDate: newDate });
+    }
+    setShowDatePicker(false);
   };
 
   const handleVersionUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -456,73 +482,134 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
           )}
 
           {/* Metadata Row */}
-          <div className="grid grid-cols-4 gap-6 mb-8">
-            {/* Status */}
-            <div>
+          <div className="grid grid-cols-3 gap-6 mb-8">
+            {/* Status - Clickable Dropdown */}
+            <div className="relative">
               <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Status
               </div>
-              <span
-                className="inline-flex px-3 py-1 rounded-full text-sm font-medium text-white"
+              <button
+                type="button"
+                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-white cursor-pointer transition-opacity hover:opacity-80"
                 style={{ backgroundColor: STATUS_COLORS[fileData.status] }}
               >
                 {STATUS_LABELS[fileData.status]}
-              </span>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              
+              {/* Status Dropdown */}
+              {showStatusDropdown && (
+                <div 
+                  className="absolute top-full left-0 mt-2 py-1 rounded-lg shadow-xl z-20 min-w-[140px]"
+                  style={{ backgroundColor: "#2C2C2E", border: "1px solid #3C3C3E" }}
+                >
+                  {(Object.keys(STATUS_LABELS) as Array<keyof typeof STATUS_LABELS>).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => handleStatusChange(status)}
+                      className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-white/10 transition-colors"
+                      style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                    >
+                      <span 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: STATUS_COLORS[status] }}
+                      />
+                      <span className="text-white">{STATUS_LABELS[status]}</span>
+                      {fileData.status === status && (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto">
+                          <path d="M3 7L6 10L11 4" stroke="#F0FE00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Due Date */}
-            <div>
+            {/* Due Date - Clickable Date Picker */}
+            <div className="relative">
               <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Due Date
               </div>
-              <div className="flex items-center gap-2 text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+              <button
+                type="button"
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors cursor-pointer"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M2 6H14" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M5 1V3M11 1V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                {dueDate}
-              </div>
-            </div>
-
-            {/* Blockers */}
-            <div>
-              <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                Blockers
-              </div>
-              {blockers > 0 ? (
-                <span
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium text-white"
-                  style={{ backgroundColor: "#EF4444" }}
+                {dueDate ? (
+                  <span>{new Date(dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                ) : (
+                  <span className="text-gray-500">Set date</span>
+                )}
+              </button>
+              
+              {/* Date Picker Dropdown */}
+              {showDatePicker && (
+                <div 
+                  className="absolute top-full left-0 mt-2 p-3 rounded-lg shadow-xl z-20"
+                  style={{ backgroundColor: "#2C2C2E", border: "1px solid #3C3C3E" }}
                 >
-                  <span className="w-2 h-2 rounded-full bg-white" />
-                  {blockers}
-                </span>
-              ) : (
-                <span className="text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>None</span>
+                  <input
+                    type="date"
+                    defaultValue={dueDate ? new Date(dueDate).toISOString().split("T")[0] : ""}
+                    onChange={(e) => handleDueDateChange(e.target.value)}
+                    className="bg-transparent text-white text-sm px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-[#F0FE00]"
+                    style={{ colorScheme: "dark" }}
+                  />
+                  {dueDate && (
+                    <button
+                      type="button"
+                      onClick={() => handleDueDateChange("")}
+                      className="mt-2 w-full text-xs text-gray-400 hover:text-white transition-colors"
+                    >
+                      Clear date
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Team Members */}
+            {/* Team Members - Derived from task assignees */}
             <div>
               <div className="text-sm text-gray-500 mb-2" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                 Team Members
               </div>
-              <div className="space-y-1.5">
-                {assignees.slice(0, 3).map((member) => (
-                  <div key={member.id} className="flex items-center gap-2">
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white"
-                      style={{ backgroundColor: member.avatarColor || "#666666" }}
-                    >
-                      {member.name.split(" ").map(n => n[0]).join("")}
+              {assignees.length > 0 ? (
+                <div className="space-y-1.5">
+                  {assignees.slice(0, 3).map((member) => (
+                    <div key={member.id} className="flex items-center gap-2">
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white"
+                        style={{ backgroundColor: member.avatarColor || "#666666" }}
+                      >
+                        {member.name.split(" ").map(n => n[0]).join("")}
+                      </div>
+                      <span className="text-sm text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                        {member.name.split(" ")[0]} {member.name.split(" ")[1]?.[0]}.
+                      </span>
                     </div>
-                    <span className="text-sm text-gray-300" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                      {member.name.split(" ")[0]} {member.name.split(" ")[1]?.[0]}.
+                  ))}
+                  {assignees.length > 3 && (
+                    <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                      +{assignees.length - 3} more
                     </span>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              ) : (
+                <span className="text-sm text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Assign tasks to add members
+                </span>
+              )}
             </div>
           </div>
 
