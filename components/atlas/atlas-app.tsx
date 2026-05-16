@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import type { Canvas, WorkspaceSettings } from "@/lib/atlas-types";
-import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS } from "@/lib/atlas-types";
+import type { Canvas, WorkspaceSettings, CanvasFramework } from "@/lib/atlas-types";
+import { INITIAL_CANVASES, DEFAULT_WORKSPACE_SETTINGS, SAMPLE_FRAMEWORKS } from "@/lib/atlas-types";
 import { HomePage } from "./home-page";
 import { AtlasEditor } from "./atlas-editor";
 
@@ -46,6 +46,7 @@ export function AtlasApp() {
   const [activeCanvasId, setActiveCanvasId] = useState<string | null>(null);
   const [canvases, setCanvases] = useState<Canvas[]>(INITIAL_CANVASES);
   const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>(DEFAULT_WORKSPACE_SETTINGS);
+  const [frameworks, setFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Load from localStorage on mount (client-side only)
@@ -93,6 +94,10 @@ export function AtlasApp() {
     );
   }, []);
 
+  const handleSaveFramework = useCallback((framework: CanvasFramework) => {
+    setFrameworks((prev) => [framework, ...prev]);
+  }, []);
+
   const activeCanvas = canvases.find((c) => c.id === activeCanvasId);
 
   if (view === "canvas" && activeCanvas) {
@@ -103,6 +108,7 @@ export function AtlasApp() {
         onBack={handleBack}
         workspaceSettings={workspaceSettings}
         onWorkspaceSettingsChange={setWorkspaceSettings}
+        onSaveFramework={handleSaveFramework}
       />
     );
   }
@@ -114,6 +120,8 @@ export function AtlasApp() {
       onWorkspaceSettingsChange={setWorkspaceSettings}
       canvases={canvases}
       onCanvasesChange={setCanvases}
+      frameworks={frameworks}
+      onFrameworksChange={setFrameworks}
     />
   );
 }
