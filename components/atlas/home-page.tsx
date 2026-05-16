@@ -293,6 +293,78 @@ const [showSageChat, setShowSageChat] = useState(false);
       lastSavedMessageCount.current = 0;
     }
   };
+  
+  // Handle Sage canvas actions (create/open canvas)
+  const [pendingCanvasAction, setPendingCanvasAction] = useState<{
+    action: "createNewCanvas" | "openCanvas";
+    canvasId?: string;
+    canvasName?: string;
+    initialNodes?: Array<{ id: string; type: string; position: { x: number; y: number }; data: Record<string, unknown> }>;
+  } | null>(null);
+  
+  // Watch for tool calls in messages
+  useEffect(() => {
+    const lastMessage = sageMessages[sageMessages.length - 1];
+    if (!lastMessage || lastMessage.role !== "assistant") return;
+    
+    // Check for tool calls in parts
+    const toolParts = lastMessage.parts?.filter(
+      (part): part is { type: "tool-invocation"; toolInvocation: { toolName: string; result?: unknown } } => 
+        part.type === "tool-invocation"
+    ) || [];
+    
+    for (const part of toolParts) {
+      const result = part.toolInvocation?.result as Record<string, unknown> | undefined;
+      if (!result) continue;
+      
+      if (result.action === "createNewCanvas" && result.canvasId) {
+        // Create the canvas
+        const newCanvas: Canvas = {
+          id: result.canvasId as string,
+          name: (result.name as string) || "New Canvas",
+          description: (result.description as string) || "",
+          nodes: (result.initialNodes as Canvas["nodes"]) || [],
+          edges: [],
+          visibility: "workspace",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        
+        onCanvasesChange([...canvases, newCanvas]);
+        setPendingCanvasAction({
+          action: "createNewCanvas",
+          canvasId: result.canvasId as string,
+          canvasName: result.name as string,
+          initialNodes: result.initialNodes as Canvas["nodes"],
+        });
+      } else if (result.action === "openCanvas" && result.navigateTo) {
+        const navigateTo = result.navigateTo as string;
+        if (navigateTo.startsWith("search:")) {
+          // Search for canvas by name
+          const searchName = navigateTo.slice(7).toLowerCase();
+          const found = canvases.find(c => c.name.toLowerCase().includes(searchName));
+          if (found) {
+            setShowSageChat(false);
+            onOpenCanvas(found.id);
+          }
+        } else {
+          // Direct canvas ID
+          setShowSageChat(false);
+          onOpenCanvas(navigateTo);
+        }
+      }
+    }
+  }, [sageMessages, canvases, onCanvasesChange, onOpenCanvas]);
+  
+  // Helper function to open a recently created canvas
+  const handleOpenPendingCanvas = () => {
+    if (pendingCanvasAction?.canvasId) {
+      setShowSageChat(false);
+      onOpenCanvas(pendingCanvasAction.canvasId);
+      setPendingCanvasAction(null);
+    }
+  };
+  
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   // Use external frameworks if provided, otherwise use local state
   const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
@@ -3410,6 +3482,42 @@ All Frameworks
                     <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: "150ms" }} />
                     <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Open Canvas Action Button */}
+            {pendingCanvasAction && (
+              <div className="flex gap-3">
+                <div
+                  className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                  style={{ backgroundColor: "#F0FE00" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
+                  </svg>
+                </div>
+                <div
+                  className="flex-1 p-3 rounded-xl rounded-tl-sm"
+                  style={{ backgroundColor: "#1e1e1e" }}
+                >
+                  <p
+                    className="text-sm text-gray-300 mb-3"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    Canvas &quot;{pendingCanvasAction.canvasName}&quot; is ready!
+                  </p>
+                  <button
+                    onClick={handleOpenPendingCanvas}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105"
+                    style={{
+                      backgroundColor: "#F0FE00",
+                      color: "#121212",
+                      fontFamily: "system-ui, Inter, sans-serif",
+                    }}
+                  >
+                    Open Canvas
+                  </button>
                 </div>
               </div>
             )}

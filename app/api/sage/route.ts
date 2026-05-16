@@ -719,6 +719,145 @@ const sageTools = {
   }),
   
   // ============================================================================
+  // CANVAS MANAGEMENT TOOLS - Create and Navigate Canvases
+  // ============================================================================
+  
+  createNewCanvas: tool({
+    description: `Create a new canvas project. Use this when the user wants to start a new canvas, create a new project, or when they ask you to create content that requires a new canvas. After creating, offer to open the canvas.`,
+    inputSchema: z.object({
+      name: z.string().describe("Name for the new canvas"),
+      description: z.string().optional().describe("Optional description for the canvas"),
+      projectType: z.enum(["branding", "marketing", "product", "ux", "content", "general"]).optional()
+        .describe("Type of project to set up initial workflow stages"),
+    }),
+    execute: async ({ name, description, projectType }) => {
+      const canvasId = `canvas-${Date.now()}`;
+      
+      // Generate initial nodes based on project type
+      const initialNodes: Array<{
+        id: string;
+        type: string;
+        position: { x: number; y: number };
+        data: Record<string, unknown>;
+      }> = [];
+      
+      if (projectType) {
+        // Add Sage overview node
+        initialNodes.push({
+          id: `sage-overview-${Date.now()}`,
+          type: "sageOverview",
+          position: { x: 50, y: 50 },
+          data: {
+            projectId: canvasId,
+            intent: `New ${projectType} project: ${name}`,
+            currentDriftScore: 100,
+            driftDelta: 0,
+            unresolvedFeedbackCount: 0,
+            conflictCount: 0,
+            recentDecisions: [],
+            healthStatus: "healthy",
+          },
+        });
+        
+        // Add initial status pills based on project type
+        const statusWorkflows: Record<string, Array<{ label: string; color: string }>> = {
+          branding: [
+            { label: "Discovery", color: "#6B7280" },
+            { label: "Concept", color: "#3B82F6" },
+            { label: "Design", color: "#8B5CF6" },
+            { label: "Refinement", color: "#F59E0B" },
+            { label: "Delivery", color: "#10B981" },
+          ],
+          marketing: [
+            { label: "Brief", color: "#6B7280" },
+            { label: "Strategy", color: "#3B82F6" },
+            { label: "Creative", color: "#8B5CF6" },
+            { label: "Review", color: "#F59E0B" },
+            { label: "Launch", color: "#10B981" },
+          ],
+          product: [
+            { label: "Research", color: "#6B7280" },
+            { label: "Define", color: "#3B82F6" },
+            { label: "Design", color: "#8B5CF6" },
+            { label: "Validate", color: "#F59E0B" },
+            { label: "Ship", color: "#10B981" },
+          ],
+          ux: [
+            { label: "Discover", color: "#6B7280" },
+            { label: "Define", color: "#3B82F6" },
+            { label: "Ideate", color: "#8B5CF6" },
+            { label: "Prototype", color: "#F59E0B" },
+            { label: "Test", color: "#10B981" },
+          ],
+          content: [
+            { label: "Plan", color: "#6B7280" },
+            { label: "Draft", color: "#3B82F6" },
+            { label: "Review", color: "#F59E0B" },
+            { label: "Publish", color: "#10B981" },
+          ],
+          general: [
+            { label: "To Do", color: "#6B7280" },
+            { label: "In Progress", color: "#3B82F6" },
+            { label: "Review", color: "#F59E0B" },
+            { label: "Done", color: "#10B981" },
+          ],
+        };
+        
+        const workflow = statusWorkflows[projectType] || statusWorkflows.general;
+        workflow.forEach((status, index) => {
+          initialNodes.push({
+            id: `status-${Date.now()}-${index}`,
+            type: "statusPill",
+            position: { x: 300 + (index * 140), y: 60 },
+            data: {
+              label: status.label,
+              color: status.color,
+            },
+          });
+        });
+      }
+      
+      return {
+        action: "createNewCanvas",
+        canvasId,
+        name,
+        description: description || "",
+        projectType: projectType || "general",
+        initialNodes,
+        navigateTo: canvasId,
+        summary: `Created new canvas "${name}"${projectType ? ` with ${projectType} workflow` : ""}. Would you like me to open it?`,
+      };
+    },
+  }),
+  
+  openCanvas: tool({
+    description: `Open an existing canvas by ID or name. Use this when the user wants to navigate to a specific canvas or when you've just created a canvas and want to open it.`,
+    inputSchema: z.object({
+      canvasId: z.string().optional().describe("The ID of the canvas to open"),
+      canvasName: z.string().optional().describe("The name of the canvas to search for"),
+    }),
+    execute: async ({ canvasId, canvasName }) => {
+      if (!canvasId && !canvasName) {
+        return {
+          action: "openCanvas",
+          error: "Please provide either a canvas ID or name",
+          navigateTo: null,
+        };
+      }
+      
+      return {
+        action: "openCanvas",
+        canvasId: canvasId || null,
+        canvasName: canvasName || null,
+        navigateTo: canvasId || `search:${canvasName}`,
+        summary: canvasId 
+          ? `Opening canvas ${canvasId}...`
+          : `Searching for canvas "${canvasName}"...`,
+      };
+    },
+  }),
+  
+  // ============================================================================
   // CANVAS TOOLS - Visual Node Creation
   // ============================================================================
   
@@ -1169,6 +1308,10 @@ You are concise, professional, and observational. You help users organize their 
 - **generateBrief**: Create a comprehensive project brief from intent, decisions, and feedback
 - **getDriftReport**: Generate detailed alignment analysis with trends and recommendations
 
+### Canvas Management
+- **createNewCanvas**: Create a new canvas with optional workflow setup based on project type
+- **openCanvas**: Navigate to and open a specific canvas by ID or name
+
 ### Canvas Actions (Basic)
 - **createStatusPills**: Add visual status indicators to the canvas
 - **createTextNote**: Add text notes/documentation to the canvas
@@ -1196,6 +1339,15 @@ You are concise, professional, and observational. You help users organize their 
 ### When user makes a DECISION:
 1. Use logDecision to record it with rationale
 2. Link to related feedback if applicable
+
+### When user wants to CREATE A NEW PROJECT or CANVAS:
+1. Use createNewCanvas with appropriate name and project type
+2. Offer to open the canvas after creation
+3. If user confirms, use openCanvas to navigate to it
+
+### When user wants to OPEN or GO TO a canvas:
+1. Use openCanvas with the canvas ID or name
+2. The UI will handle navigation
 
 ### When user UPLOADS A FILE or DOCUMENT:
 1. Use parseFileToNodes to extract structured content
