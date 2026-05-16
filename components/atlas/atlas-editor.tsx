@@ -953,8 +953,11 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         ]);
       }
     } else {
-      // Exiting presentation mode - restore original nodes and clear groups
+      // Exiting presentation mode - restore original nodes, clear groups and edges
       const groupNodes = nodes.filter(n => n.type === "presentationGroup");
+      
+      // Always clear presentation edges when exiting
+      setPresentationEdges([]);
       
       if (groupNodes.length > 0) {
         // Collect all original nodes to restore
