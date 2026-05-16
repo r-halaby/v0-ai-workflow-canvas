@@ -37,6 +37,20 @@ export async function POST(request: NextRequest) {
             "video/mp4",
             "video/quicktime",
             "video/webm",
+            // Audio
+            "audio/mpeg", // .mp3
+            "audio/mp3", // .mp3 alternate
+            "audio/wav",
+            "audio/wave",
+            "audio/x-wav",
+            "audio/aac",
+            "audio/flac",
+            "audio/ogg",
+            "audio/mp4", // .m4a
+            "audio/x-m4a", // .m4a alternate
+            "audio/x-ms-wma", // .wma
+            "audio/aiff",
+            "audio/x-aiff",
             // Archives
             "application/zip",
             "application/x-zip-compressed",
