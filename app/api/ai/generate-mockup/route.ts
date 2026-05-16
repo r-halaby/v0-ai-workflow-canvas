@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       messages.push({ role: "user", content });
 
       const result = await generateText({
-        model: gateway("google/gemini-2.0-flash-exp-image-generation"),
+        model: gateway("google/gemini-3.1-flash-image-preview"),
         messages,
         providerOptions: {
           google: {
