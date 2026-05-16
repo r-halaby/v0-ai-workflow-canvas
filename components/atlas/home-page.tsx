@@ -1590,11 +1590,11 @@ All Frameworks
                       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     };
                     return (
-                      <div className="flex text-xs text-gray-500 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
-                        <div className="flex-1">{formatWeekDate(-2)}</div>
-                        <div className="flex-1 text-center">{formatWeekDate(-1)}</div>
-                        <div className="flex-1 text-center">{formatWeekDate(0)}</div>
-                        <div className="flex-1 text-right">{formatWeekDate(1)}</div>
+                      <div className="flex text-xs text-gray-500 mb-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>
+                        <div className="flex-1" suppressHydrationWarning>{formatWeekDate(-2)}</div>
+                        <div className="flex-1 text-center" suppressHydrationWarning>{formatWeekDate(-1)}</div>
+                        <div className="flex-1 text-center" suppressHydrationWarning>{formatWeekDate(0)}</div>
+                        <div className="flex-1 text-right" suppressHydrationWarning>{formatWeekDate(1)}</div>
                       </div>
                     );
                   })()}
@@ -1898,7 +1898,7 @@ All Frameworks
                       <div className="space-y-4">
                         {/* Month header */}
                         <div className="text-center mb-4">
-                          <span className="text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          <span className="text-white font-medium" style={{ fontFamily: "system-ui, Inter, sans-serif" }} suppressHydrationWarning>
                             {monthYear}
                           </span>
                         </div>
@@ -1940,6 +1940,7 @@ All Frameworks
                                     <span
                                       className={`text-xs ${isToday ? "bg-white text-black px-1.5 py-0.5 rounded-full font-medium" : "text-gray-400"}`}
                                       style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                                      suppressHydrationWarning
                                     >
                                       {cell.date.getDate()}
                                     </span>
