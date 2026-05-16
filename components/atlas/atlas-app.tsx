@@ -95,12 +95,11 @@ export function AtlasApp() {
   }, []);
 
   const handleSaveFramework = useCallback((framework: CanvasFramework) => {
-    console.log("[v0] handleSaveFramework called with:", framework.name, "visibility:", framework.visibility);
-    setFrameworks((prev) => {
-      const updated = [framework, ...prev];
-      console.log("[v0] Frameworks state updated, total:", updated.length, "community:", updated.filter(f => f.visibility === "community").length);
-      return updated;
-    });
+    setFrameworks((prev) => [framework, ...prev]);
+  }, []);
+
+  const handleRemoveFramework = useCallback((frameworkId: string) => {
+    setFrameworks((prev) => prev.filter((f) => f.id !== frameworkId));
   }, []);
 
   const activeCanvas = canvases.find((c) => c.id === activeCanvasId);
@@ -127,6 +126,7 @@ export function AtlasApp() {
       onCanvasesChange={setCanvases}
       frameworks={frameworks}
       onFrameworksChange={setFrameworks}
+      onRemoveFramework={handleRemoveFramework}
     />
   );
 }
