@@ -126,12 +126,12 @@ export function SaveFrameworkDialog({
 
       {/* Dialog */}
       <div
-        className="relative w-full max-w-lg rounded-xl overflow-hidden"
+        className="relative w-full max-w-lg rounded-xl overflow-hidden flex flex-col max-h-[90vh]"
         style={{ backgroundColor: "#1a1a1a", border: "1px solid #333333" }}
       >
         {/* Header */}
         <div
-          className="px-6 py-4 flex items-center justify-between"
+          className="px-6 py-4 flex items-center justify-between flex-shrink-0"
           style={{ borderBottom: "1px solid #333333" }}
         >
           <div className="flex items-center gap-3">
@@ -171,7 +171,7 @@ export function SaveFrameworkDialog({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5 space-y-5">
+        <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1">
           {/* Template Name */}
           <div>
             <label
@@ -397,7 +397,7 @@ export function SaveFrameworkDialog({
 
         {/* Footer */}
         <div
-          className="px-6 py-4 flex items-center justify-end gap-3"
+          className="px-6 py-4 flex items-center justify-end gap-3 flex-shrink-0"
           style={{ borderTop: "1px solid #333333" }}
         >
           <button
