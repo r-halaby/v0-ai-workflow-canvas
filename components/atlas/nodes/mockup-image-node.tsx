@@ -41,7 +41,6 @@ function MockupImageNodeComponent({
       <Handle
         type="target"
         position={Position.Left}
-        id="input"
         style={{
           width: 8,
           height: 8,
@@ -52,7 +51,6 @@ function MockupImageNodeComponent({
       <Handle
         type="source"
         position={Position.Right}
-        id="output"
         style={{
           width: 8,
           height: 8,

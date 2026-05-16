@@ -105,7 +105,6 @@ function AIPromptNodeComponent({ data }: NodeProps) {
       <Handle
         type="target"
         position={Position.Left}
-        id="input"
         style={{
           width: 12,
           height: 12,

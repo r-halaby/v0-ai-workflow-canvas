@@ -260,8 +260,6 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
             id: `edge-${sourceNodeId}-${mockupNode.id}`,
             source: sourceNodeId,
             target: mockupNode.id,
-            sourceHandle: "source",
-            targetHandle: "input",
             style: { stroke: "#F0FE00", strokeWidth: 2 },
             animated: true,
           }));
@@ -279,8 +277,6 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       id: `edge-${sourceNodeId}-${promptNodeId}`,
       source: sourceNodeId,
       target: promptNodeId,
-      sourceHandle: "source",
-      targetHandle: "input",
       style: { stroke: "#666", strokeWidth: 2 },
     };
     
