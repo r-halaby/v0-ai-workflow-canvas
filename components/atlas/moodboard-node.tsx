@@ -72,18 +72,46 @@ export function MoodboardNode({ data, selected }: NodeProps) {
         </span>
       </div>
 
-      {/* Image Grid Preview */}
+      {/* Image Grid Preview - Adaptive layout based on image count */}
       <div className="p-2">
-        <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden">
+        <div 
+          className={`grid gap-1 rounded-lg overflow-hidden ${
+            previewImages.length === 1 ? "grid-cols-1" : 
+            previewImages.length === 2 ? "grid-cols-2" : 
+            previewImages.length === 3 ? "grid-cols-2" : 
+            "grid-cols-2"
+          }`}
+        >
           {previewImages.map((img, idx) => {
             const isVideo = img.fileType === "video" || img.fileName?.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+            const count = previewImages.length;
+            
+            // Calculate border radius based on position and count
+            let borderRadius = "0";
+            if (count === 1) {
+              borderRadius = "4px";
+            } else if (count === 2) {
+              borderRadius = idx === 0 ? "4px 0 0 4px" : "0 4px 4px 0";
+            } else if (count === 3) {
+              // First image spans full width on top
+              if (idx === 0) borderRadius = "4px 4px 0 0";
+              else if (idx === 1) borderRadius = "0 0 0 4px";
+              else borderRadius = "0 0 4px 0";
+            } else {
+              // 4+ images in 2x2 grid
+              if (idx === 0) borderRadius = "4px 0 0 0";
+              else if (idx === 1) borderRadius = "0 4px 0 0";
+              else if (idx === 2) borderRadius = "0 0 0 4px";
+              else borderRadius = "0 0 4px 0";
+            }
+            
             return (
               <div
                 key={img.id}
-                className="aspect-square bg-black/20 overflow-hidden relative"
-                style={{
-                  borderRadius: idx === 0 ? "4px 0 0 0" : idx === 1 ? "0 4px 0 0" : idx === 2 ? "0 0 0 4px" : "0 0 4px 0",
-                }}
+                className={`bg-black/20 overflow-hidden relative ${
+                  count === 3 && idx === 0 ? "col-span-2 aspect-video" : "aspect-square"
+                }`}
+                style={{ borderRadius }}
               >
                 {isVideo ? (
                   <>
@@ -115,14 +143,6 @@ export function MoodboardNode({ data, selected }: NodeProps) {
               </div>
             );
           })}
-          {/* Fill empty slots */}
-          {Array.from({ length: Math.max(0, 4 - previewImages.length) }).map((_, idx) => (
-            <div
-              key={`empty-${idx}`}
-              className="aspect-square"
-              style={{ backgroundColor: "#ffffff08" }}
-            />
-          ))}
         </div>
         
         {/* More indicator */}
