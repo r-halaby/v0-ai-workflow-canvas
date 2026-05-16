@@ -110,7 +110,7 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
   );
 }
 
-function UserSection({ profilePicture }: { profilePicture?: string }) {
+function UserSection() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
@@ -140,14 +140,10 @@ function UserSection({ profilePicture }: { profilePicture?: string }) {
     <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
       <div className="flex items-center gap-3">
         <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold overflow-hidden"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
           style={{ backgroundColor: "#F0FE00", color: "#121212" }}
         >
-          {profilePicture ? (
-            <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
-          ) : (
-            user.email?.charAt(0).toUpperCase() || "U"
-          )}
+          {user.email?.charAt(0).toUpperCase() || "U"}
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -799,7 +795,7 @@ const deleteCanvas = (canvasId: string) => {
         </div>
 
         {/* User Section */}
-        <UserSection profilePicture={workspaceSettings.branding?.profilePicture} />
+        <UserSection />
         
         {/* Bottom actions */}
         <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
