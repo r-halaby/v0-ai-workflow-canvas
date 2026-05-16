@@ -15,6 +15,15 @@ const FileTypeIcon = ({ extension }: { extension: string }) => {
     ".mp4": "#7C3AED",
     ".indd": "#FF3366",
     ".pptx": "#D24726",
+    // Audio
+    ".mp3": "#1DB954",
+    ".wav": "#4A90D9",
+    ".aac": "#FF6B35",
+    ".flac": "#8B5CF6",
+    ".ogg": "#E91E63",
+    ".m4a": "#00BCD4",
+    ".wma": "#00A4EF",
+    ".aiff": "#A855F7",
   }[extension] || "#666666";
 
   return (
@@ -295,6 +304,71 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
               <div className="p-3 flex items-center justify-between border-t" style={{ borderColor: "#2a2a2a" }}>
                 <div className="flex items-center gap-2">
                   <FileTypeIcon extension={fileData.fileExtension} />
+                  <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    {fileData.fileName}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  {fileData.uploadedFile.size ? `${(fileData.uploadedFile.size / (1024 * 1024)).toFixed(1)} MB` : ""}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Audio Player - Only show for audio files */}
+          {[".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".aiff"].includes(fileData.fileExtension) && fileData.uploadedFile?.url && (
+            <div className="mb-8 rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              {/* Waveform visualization */}
+              <div 
+                className="p-6 flex items-center justify-center"
+                style={{ backgroundColor: "#0d0d0d" }}
+              >
+                <div className="flex items-end justify-center gap-0.5 h-20 w-full max-w-md">
+                  {[...Array(48)].map((_, i) => {
+                    const height = 20 + Math.sin(i * 0.3) * 30 + Math.random() * 20;
+                    return (
+                      <div
+                        key={i}
+                        className="w-1.5 rounded-full"
+                        style={{
+                          height: `${height}%`,
+                          backgroundColor: "#1DB954",
+                          opacity: 0.6 + Math.random() * 0.4,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Audio controls */}
+              <div className="p-4 border-t" style={{ borderColor: "#2a2a2a" }}>
+                <audio
+                  src={fileData.uploadedFile.url}
+                  controls
+                  className="w-full"
+                  style={{ 
+                    height: 40,
+                    borderRadius: 8,
+                  }}
+                >
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+              
+              {/* File info */}
+              <div className="px-4 pb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: "#1DB954" }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M5 11V5L7 6V10L5 11Z" fill="white"/>
+                      <path d="M8 10V6L10 7V9L8 10Z" fill="white"/>
+                      <path d="M11 9V7L12 7.5V8.5L11 9Z" fill="white"/>
+                    </svg>
+                  </div>
                   <span className="text-sm text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
                     {fileData.fileName}
                   </span>
