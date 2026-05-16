@@ -12,6 +12,7 @@ import { FileNode } from "./file-node";
 import { CanvasPreview } from "./canvas-preview";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { useSageConversations, useSageConversation, useSageChatPersistence } from "@/lib/use-sage-conversations";
 import "@xyflow/react/dist/style.css";
 
 type SidebarFilter = "all" | "favorites" | "workspace" | "private";
@@ -208,18 +209,89 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [expandedFilesCanvases, setExpandedFilesCanvases] = useState<Set<string>>(new Set());
 const [showSageChat, setShowSageChat] = useState(false);
   const [sageInput, setSageInput] = useState("");
+  const [showChatHistory, setShowChatHistory] = useState(false);
+  
+  // Sage conversation persistence
+  const { currentConversationId, setCurrentConversationId } = useSageChatPersistence("home");
+  const { conversations, createConversation, deleteConversation, refresh: refreshConversations } = useSageConversations();
+  const { messages: loadedMessages, saveMessages } = useSageConversation(currentConversationId);
+  const lastSavedMessageCount = useRef(0);
   
   // Sage AI Chat
-  const { messages: sageMessages, sendMessage: sendSageMessage, status: sageStatus } = useChat({
-    id: "home-sage-chat",
+  const { messages: sageMessages, sendMessage: sendSageMessage, status: sageStatus, setMessages } = useChat({
+    id: currentConversationId || "home-sage-chat",
     transport: new DefaultChatTransport({ api: "/api/sage" }),
   });
   
-  const handleSageSubmit = (e: React.FormEvent) => {
+  // Load messages when conversation changes
+  useEffect(() => {
+    if (loadedMessages.length > 0 && currentConversationId) {
+      // Convert loaded messages to useChat format
+      const formattedMessages = loadedMessages.map(msg => ({
+        id: msg.id,
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+        parts: msg.parts || [{ type: "text" as const, text: msg.content }],
+      }));
+      setMessages(formattedMessages);
+      lastSavedMessageCount.current = loadedMessages.length;
+    }
+  }, [loadedMessages, currentConversationId, setMessages]);
+  
+  // Save messages when they change
+  useEffect(() => {
+    if (sageMessages.length > lastSavedMessageCount.current && currentConversationId && sageStatus === "ready") {
+      const newMessages = sageMessages.slice(lastSavedMessageCount.current);
+      if (newMessages.length > 0) {
+        saveMessages(newMessages.map(m => ({
+          role: m.role,
+          content: typeof m.content === "string" ? m.content : "",
+          parts: m.parts,
+        })));
+        lastSavedMessageCount.current = sageMessages.length;
+        refreshConversations();
+      }
+    }
+  }, [sageMessages, currentConversationId, sageStatus, saveMessages, refreshConversations]);
+  
+  const handleSageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sageInput.trim() || sageStatus === "streaming") return;
+    
+    // Create conversation if this is the first message
+    if (!currentConversationId) {
+      const conv = await createConversation(sageInput.substring(0, 50));
+      if (conv) {
+        setCurrentConversationId(conv.id);
+      }
+    }
+    
     sendSageMessage({ text: sageInput });
     setSageInput("");
+  };
+  
+  const handleNewChat = async () => {
+    const conv = await createConversation();
+    if (conv) {
+      setCurrentConversationId(conv.id);
+      setMessages([]);
+      lastSavedMessageCount.current = 0;
+    }
+  };
+  
+  const handleSelectConversation = (id: string) => {
+    setCurrentConversationId(id);
+    lastSavedMessageCount.current = 0;
+    setShowChatHistory(false);
+  };
+  
+  const handleDeleteConversation = async (id: string) => {
+    await deleteConversation(id);
+    if (currentConversationId === id) {
+      setCurrentConversationId(null);
+      setMessages([]);
+      lastSavedMessageCount.current = 0;
+    }
   };
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   // Use external frameworks if provided, otherwise use local state
@@ -3101,18 +3173,92 @@ All Frameworks
       {/* Sage Chat Panel */}
       {showSageChat && (
         <div
-          className="fixed bottom-24 right-6 w-96 rounded-2xl overflow-hidden shadow-2xl z-50"
+          className="fixed bottom-24 right-6 rounded-2xl overflow-hidden shadow-2xl z-50 flex"
           style={{
             backgroundColor: "#141414",
             border: "1px solid #2a2a2a",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
+            width: showChatHistory ? "600px" : "384px",
+            transition: "width 0.2s ease-in-out",
           }}
         >
+          {/* Chat History Sidebar */}
+          {showChatHistory && (
+            <div
+              className="w-52 flex-shrink-0 flex flex-col"
+              style={{ borderRight: "1px solid #2a2a2a" }}
+            >
+              <div className="p-3 flex items-center justify-between" style={{ borderBottom: "1px solid #2a2a2a" }}>
+                <span className="text-xs font-medium text-gray-400" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                  Chat History
+                </span>
+                <button
+                  onClick={handleNewChat}
+                  className="text-xs px-2 py-1 rounded-lg hover:bg-white/10 transition-colors"
+                  style={{ color: "#F0FE00", fontFamily: "system-ui, Inter, sans-serif" }}
+                >
+                  + New
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                {conversations.length === 0 ? (
+                  <p className="text-xs text-gray-600 text-center py-4" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                    No conversations yet
+                  </p>
+                ) : (
+                  conversations.map((conv) => (
+                    <div
+                      key={conv.id}
+                      className={`group px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                        currentConversationId === conv.id ? "bg-white/10" : "hover:bg-white/5"
+                      }`}
+                      onClick={() => handleSelectConversation(conv.id)}
+                    >
+                      <p
+                        className="text-xs text-white truncate"
+                        style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                      >
+                        {conv.title}
+                      </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] text-gray-600" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
+                          {new Date(conv.updated_at).toLocaleDateString()}
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteConversation(conv.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-all"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M2 3h8M4.5 3V2a1 1 0 011-1h1a1 1 0 011 1v1M9 3v6.5a1 1 0 01-1 1H4a1 1 0 01-1-1V3" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col" style={{ width: "384px" }}>
           {/* Chat Header */}
           <div
             className="px-5 py-4 flex items-center gap-3"
             style={{ borderBottom: "1px solid #2a2a2a" }}
           >
+            <button
+              onClick={() => setShowChatHistory(!showChatHistory)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+              title="Chat History"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={showChatHistory ? "#F0FE00" : "#888"} strokeWidth="1.5">
+                <path d="M2 4h12M2 8h12M2 12h8" />
+              </svg>
+            </button>
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center"
               style={{ backgroundColor: "#F0FE00" }}
@@ -3121,7 +3267,7 @@ All Frameworks
                 <path d="M10 2L12.09 7.26L18 8L14 12L15.18 18L10 15.27L4.82 18L6 12L2 8L7.91 7.26L10 2Z" fill="#121212"/>
               </svg>
             </div>
-            <div>
+            <div className="flex-1">
               <h4
                 className="text-white font-semibold text-sm"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
@@ -3135,6 +3281,15 @@ All Frameworks
                 AI Design Assistant
               </p>
             </div>
+            <button
+              onClick={handleNewChat}
+              className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+              title="New Chat"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#888" strokeWidth="1.5">
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+            </button>
           </div>
 
           {/* Chat Messages */}
@@ -3303,6 +3458,7 @@ All Frameworks
               </button>
             </div>
           </form>
+          </div>
         </div>
       )}
     </div>
