@@ -516,6 +516,209 @@ const sageTools = {
   }),
   
   // ============================================================================
+  // P2 TOOLS - Brief Generation & Reporting
+  // ============================================================================
+  
+  generateBrief: tool({
+    description: `Generate a comprehensive project brief document from the project's intent, decisions, and feedback. Use this when a user wants to create a summary document, hand off to a new team member, or document the project state for reference.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+      includeDecisions: z.boolean().default(true).describe("Include decision log in the brief"),
+      includeFeedback: z.boolean().default(true).describe("Include feedback summary in the brief"),
+      includeMetrics: z.boolean().default(true).describe("Include health metrics in the brief"),
+      format: z.enum(["markdown", "structured"]).default("markdown").describe("Output format"),
+    }),
+    execute: async ({ projectId, includeDecisions, includeFeedback, includeMetrics, format }) => {
+      const state = getOrCreateProjectState(projectId);
+      
+      const now = new Date().toISOString();
+      const briefId = `brief-${projectId}-${Date.now()}`;
+      
+      // Build brief sections
+      const sections: Array<{ title: string; content: string }> = [];
+      
+      // Intent Section
+      if (state.intent) {
+        sections.push({
+          title: "Project Intent",
+          content: state.intent.statement,
+        });
+        
+        if (state.intent.revisionHistory.length > 0) {
+          sections.push({
+            title: "Intent Evolution",
+            content: state.intent.revisionHistory
+              .map((rev, i) => `Revision ${i + 1}: ${rev.statement}${rev.reason ? ` (Reason: ${rev.reason})` : ""}`)
+              .join("\n"),
+          });
+        }
+      }
+      
+      // Health Metrics Section
+      if (includeMetrics) {
+        const healthStatus = 
+          state.currentDriftScore >= 80 ? "Healthy" :
+          state.currentDriftScore >= 60 ? "Needs Attention" :
+          state.currentDriftScore >= 40 ? "At Risk" : "Critical";
+        
+        sections.push({
+          title: "Project Health",
+          content: [
+            `Alignment Score: ${state.currentDriftScore}/100 (${healthStatus})`,
+            `Unresolved Feedback: ${state.unresolvedFeedbackCount}`,
+            `Active Conflicts: ${state.conflictCount}`,
+            `Total Decisions: ${state.decisions.length}`,
+            `Total Feedback: ${state.feedback.length}`,
+          ].join("\n"),
+        });
+      }
+      
+      // Decisions Section
+      if (includeDecisions && state.decisions.length > 0) {
+        sections.push({
+          title: "Key Decisions",
+          content: state.decisions
+            .map((d, i) => `${i + 1}. ${d.decision}\n   Rationale: ${d.rationale}`)
+            .join("\n\n"),
+        });
+      }
+      
+      // Feedback Summary Section
+      if (includeFeedback && state.feedback.length > 0) {
+        const feedbackByType: Record<string, number> = {};
+        const unresolvedItems: string[] = [];
+        const conflicts: string[] = [];
+        
+        for (const fb of state.feedback) {
+          feedbackByType[fb.type] = (feedbackByType[fb.type] || 0) + 1;
+          if (!fb.resolvedAt) {
+            unresolvedItems.push(`- [${fb.type}] ${fb.rawInput.substring(0, 80)}... (${fb.reviewerRole})`);
+          }
+          if (fb.conflictFlag && !fb.resolvedAt) {
+            conflicts.push(`- ${fb.rawInput.substring(0, 60)}...`);
+          }
+        }
+        
+        let feedbackContent = "Feedback by Type:\n";
+        for (const [type, count] of Object.entries(feedbackByType)) {
+          feedbackContent += `- ${type}: ${count}\n`;
+        }
+        
+        if (unresolvedItems.length > 0) {
+          feedbackContent += `\nUnresolved Items (${unresolvedItems.length}):\n${unresolvedItems.slice(0, 5).join("\n")}`;
+          if (unresolvedItems.length > 5) {
+            feedbackContent += `\n... and ${unresolvedItems.length - 5} more`;
+          }
+        }
+        
+        if (conflicts.length > 0) {
+          feedbackContent += `\n\nConflicting Feedback (${conflicts.length}):\n${conflicts.slice(0, 3).join("\n")}`;
+        }
+        
+        sections.push({
+          title: "Feedback Summary",
+          content: feedbackContent,
+        });
+      }
+      
+      // Format output
+      let briefContent: string;
+      if (format === "markdown") {
+        briefContent = `# Project Brief\n\nGenerated: ${new Date(now).toLocaleDateString()}\n\n`;
+        for (const section of sections) {
+          briefContent += `## ${section.title}\n\n${section.content}\n\n`;
+        }
+      } else {
+        briefContent = JSON.stringify({ id: briefId, generatedAt: now, sections }, null, 2);
+      }
+      
+      return {
+        action: "generateBrief",
+        briefId,
+        projectId,
+        generatedAt: now,
+        format,
+        sections: sections.map(s => s.title),
+        content: briefContent,
+        summary: `Generated project brief with ${sections.length} sections`,
+      };
+    },
+  }),
+  
+  getDriftReport: tool({
+    description: `Generate a detailed drift analysis report showing how the project has evolved relative to its original intent. Use this when a user wants to understand alignment trends or prepare for a stakeholder review.`,
+    inputSchema: z.object({
+      projectId: z.string().describe("The project/canvas ID"),
+    }),
+    execute: async ({ projectId }) => {
+      const state = getOrCreateProjectState(projectId);
+      
+      // Get recent drift history
+      const recentDrift = state.driftHistory.slice(-10);
+      
+      // Calculate trend
+      let trend: "improving" | "declining" | "stable" = "stable";
+      if (recentDrift.length >= 2) {
+        const recent = recentDrift.slice(-3);
+        const avgDelta = recent.reduce((sum, d) => sum + d.delta, 0) / recent.length;
+        if (avgDelta > 2) trend = "improving";
+        else if (avgDelta < -2) trend = "declining";
+      }
+      
+      // Identify risk factors
+      const riskFactors: string[] = [];
+      if (state.unresolvedFeedbackCount > 3) {
+        riskFactors.push(`High unresolved feedback (${state.unresolvedFeedbackCount} items)`);
+      }
+      if (state.conflictCount > 0) {
+        riskFactors.push(`Active conflicts (${state.conflictCount})`);
+      }
+      if (!state.intent) {
+        riskFactors.push("No project intent defined");
+      }
+      if (state.decisions.length === 0) {
+        riskFactors.push("No decisions logged");
+      }
+      const daysSinceDecision = state.decisions.length > 0 
+        ? Math.floor((Date.now() - new Date(state.decisions[state.decisions.length - 1].createdAt).getTime()) / (1000 * 60 * 60 * 24))
+        : null;
+      if (daysSinceDecision !== null && daysSinceDecision > 7) {
+        riskFactors.push(`No recent decisions (${daysSinceDecision} days)`);
+      }
+      
+      // Generate recommendations
+      const recommendations: string[] = [];
+      if (!state.intent) {
+        recommendations.push("Define a clear project intent to establish alignment baseline");
+      }
+      if (state.conflictCount > 0) {
+        recommendations.push("Schedule a stakeholder alignment meeting to resolve conflicts");
+      }
+      if (state.unresolvedFeedbackCount > 3) {
+        recommendations.push("Review and address outstanding feedback items");
+      }
+      if (trend === "declining") {
+        recommendations.push("Revisit recent decisions to ensure alignment with intent");
+      }
+      
+      return {
+        action: "getDriftReport",
+        projectId,
+        currentScore: state.currentDriftScore,
+        trend,
+        history: recentDrift.map(d => ({
+          score: d.score,
+          delta: d.delta,
+          calculatedAt: d.calculatedAt,
+        })),
+        riskFactors,
+        recommendations,
+        summary: `Alignment: ${state.currentDriftScore}/100 (${trend}). ${riskFactors.length} risk factors identified.`,
+      };
+    },
+  }),
+  
+  // ============================================================================
   // CANVAS TOOLS - Visual Node Creation
   // ============================================================================
   
@@ -962,6 +1165,10 @@ You are concise, professional, and observational. You help users organize their 
 - **listFeedback**: Get all feedback with filtering (unresolved, conflicts, by type)
 - **listDecisions**: Get decision history with optional tag filtering
 
+### Brief Generation & Reporting (P2 Tools)
+- **generateBrief**: Create a comprehensive project brief from intent, decisions, and feedback
+- **getDriftReport**: Generate detailed alignment analysis with trends and recommendations
+
 ### Canvas Actions (Basic)
 - **createStatusPills**: Add visual status indicators to the canvas
 - **createTextNote**: Add text notes/documentation to the canvas
@@ -1017,6 +1224,16 @@ You are concise, professional, and observational. You help users organize their 
 ### When user wants to REVIEW history:
 1. Use listFeedback or listDecisions to retrieve records
 2. Summarize patterns and trends
+
+### When user asks for a BRIEF or SUMMARY document:
+1. Use generateBrief to compile project state into a formatted document
+2. Include intent, decisions, feedback summary, and health metrics
+3. Offer both markdown and structured formats
+
+### When user asks about DRIFT or ALIGNMENT trends:
+1. Use getDriftReport for comprehensive analysis
+2. Report trend direction, risk factors, and recommendations
+3. Suggest actions to improve alignment
 
 ## CANVAS WORKFLOW
 
