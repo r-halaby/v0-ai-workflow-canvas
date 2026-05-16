@@ -302,55 +302,76 @@ const [showSageChat, setShowSageChat] = useState(false);
     initialNodes?: Array<{ id: string; type: string; position: { x: number; y: number }; data: Record<string, unknown> }>;
   } | null>(null);
   
+  // Track processed tool call IDs to avoid duplicate processing
+  const processedToolCalls = useRef<Set<string>>(new Set());
+  
   // Watch for tool calls in messages
   useEffect(() => {
-    const lastMessage = sageMessages[sageMessages.length - 1];
-    if (!lastMessage || lastMessage.role !== "assistant") return;
-    
-    // Check for tool calls in parts
-    const toolParts = lastMessage.parts?.filter(
-      (part): part is { type: "tool-invocation"; toolInvocation: { toolName: string; result?: unknown } } => 
-        part.type === "tool-invocation"
-    ) || [];
-    
-    for (const part of toolParts) {
-      const result = part.toolInvocation?.result as Record<string, unknown> | undefined;
-      if (!result) continue;
+    // Check ALL messages for tool calls, not just the last one
+    for (const message of sageMessages) {
+      if (message.role !== "assistant") continue;
       
-      if (result.action === "createNewCanvas" && result.canvasId) {
-        // Create the canvas
-        const newCanvas: Canvas = {
-          id: result.canvasId as string,
-          name: (result.name as string) || "New Canvas",
-          description: (result.description as string) || "",
-          nodes: (result.initialNodes as Canvas["nodes"]) || [],
-          edges: [],
-          visibility: "workspace",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
+      // Check for tool calls in parts
+      const toolParts = message.parts?.filter(
+        (part): part is { type: "tool-invocation"; toolInvocation: { toolName: string; toolCallId: string; result?: unknown; state?: string } } => 
+          part.type === "tool-invocation"
+      ) || [];
+      
+      for (const part of toolParts) {
+        const toolCallId = part.toolInvocation?.toolCallId;
+        const state = part.toolInvocation?.state;
         
-        onCanvasesChange([...canvases, newCanvas]);
-        setPendingCanvasAction({
-          action: "createNewCanvas",
-          canvasId: result.canvasId as string,
-          canvasName: result.name as string,
-          initialNodes: result.initialNodes as Canvas["nodes"],
-        });
-      } else if (result.action === "openCanvas" && result.navigateTo) {
-        const navigateTo = result.navigateTo as string;
-        if (navigateTo.startsWith("search:")) {
-          // Search for canvas by name
-          const searchName = navigateTo.slice(7).toLowerCase();
-          const found = canvases.find(c => c.name.toLowerCase().includes(searchName));
-          if (found) {
+        // Only process completed tool calls that haven't been processed yet
+        if (!toolCallId || state !== "output-available" || processedToolCalls.current.has(toolCallId)) {
+          continue;
+        }
+        
+        const result = part.toolInvocation?.result as Record<string, unknown> | undefined;
+        if (!result) continue;
+        
+        console.log("[v0] Processing tool call:", part.toolInvocation?.toolName, result);
+        processedToolCalls.current.add(toolCallId);
+        
+        if (result.action === "createNewCanvas" && result.canvasId) {
+          console.log("[v0] Creating canvas:", result.canvasId, result.name);
+          // Create the canvas
+          const newCanvas: Canvas = {
+            id: result.canvasId as string,
+            name: (result.name as string) || "New Canvas",
+            description: (result.description as string) || "",
+            nodes: (result.initialNodes as Canvas["nodes"]) || [],
+            edges: [],
+            visibility: "workspace",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          
+          onCanvasesChange([...canvases, newCanvas]);
+          setPendingCanvasAction({
+            action: "createNewCanvas",
+            canvasId: result.canvasId as string,
+            canvasName: result.name as string,
+            initialNodes: result.initialNodes as Canvas["nodes"],
+          });
+        } else if (result.action === "openCanvas" && result.navigateTo) {
+          const navigateTo = result.navigateTo as string;
+          console.log("[v0] Opening canvas:", navigateTo);
+          
+          if (navigateTo.startsWith("search:")) {
+            // Search for canvas by name
+            const searchName = navigateTo.slice(7).toLowerCase();
+            const found = canvases.find(c => c.name.toLowerCase().includes(searchName));
+            console.log("[v0] Searching for:", searchName, "Found:", found?.id);
+            if (found) {
+              setShowSageChat(false);
+              onOpenCanvas(found.id);
+            }
+          } else {
+            // Direct canvas ID
+            console.log("[v0] Direct navigation to:", navigateTo);
             setShowSageChat(false);
-            onOpenCanvas(found.id);
+            onOpenCanvas(navigateTo);
           }
-        } else {
-          // Direct canvas ID
-          setShowSageChat(false);
-          onOpenCanvas(navigateTo);
         }
       }
     }
