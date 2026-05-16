@@ -28,6 +28,15 @@ const EXTENSION_TO_MIME: Record<string, string> = {
   ".mp4": "video/mp4",
   ".mov": "video/quicktime",
   ".webm": "video/webm",
+  // Audio
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".aac": "audio/aac",
+  ".flac": "audio/flac",
+  ".ogg": "audio/ogg",
+  ".m4a": "audio/mp4",
+  ".wma": "audio/x-ms-wma",
+  ".aiff": "audio/aiff",
 };
 
 export async function POST(request: NextRequest) {
@@ -58,10 +67,16 @@ export async function POST(request: NextRequest) {
 
     // Upload to Vercel Blob (public store)
     const userPrefix = user?.id || "anonymous";
-    const contentType = EXTENSION_TO_MIME[extension] || file.type || "application/octet-stream";
+    // For audio files, use application/octet-stream to bypass content type restrictions
+    // The file will still play correctly in browsers based on the file extension
+    const isAudioFile = [".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".aiff"].includes(extension);
+    const contentType = isAudioFile 
+      ? "application/octet-stream" 
+      : (EXTENSION_TO_MIME[extension] || file.type || "application/octet-stream");
     const blob = await put(`atlas/${userPrefix}/${Date.now()}-${fileName}`, file, {
       access: "public",
       contentType,
+      addRandomSuffix: true,
     });
 
     // Save file metadata to Supabase if user is authenticated

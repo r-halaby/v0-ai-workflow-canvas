@@ -95,6 +95,62 @@ const FileIcons: Record<string, React.ReactNode> = {
       <path d="M5 10L7 8L5 6H6.5L7.5 7.5L8.5 6H10L8 8L10 10H8.5L7.5 8.5L6.5 10H5Z" fill="white"/>
     </svg>
   ),
+  ".mp3": (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="16" height="16" rx="3" fill="#1DB954"/>
+      <path d="M5 11V5L7 6V10L5 11Z" fill="white"/>
+      <path d="M8 10V6L10 7V9L8 10Z" fill="white"/>
+      <path d="M11 9V7L12 7.5V8.5L11 9Z" fill="white"/>
+    </svg>
+  ),
+  ".wav": (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="16" height="16" rx="3" fill="#4A90D9"/>
+      <path d="M3 8H4V10H3V8ZM5 6H6V10H5V6ZM7 4H8V12H7V4ZM9 6H10V10H9V6ZM11 8H12V10H11V8Z" fill="white"/>
+    </svg>
+  ),
+  ".aac": (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="16" height="16" rx="3" fill="#FF6B35"/>
+      <path d="M5 11V5L7 6V10L5 11Z" fill="white"/>
+      <path d="M8 10V6L10 7V9L8 10Z" fill="white"/>
+      <path d="M11 9V7L12 7.5V8.5L11 9Z" fill="white"/>
+    </svg>
+  ),
+  ".flac": (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="16" height="16" rx="3" fill="#8B5CF6"/>
+      <path d="M3 8H4V10H3V8ZM5 6H6V10H5V6ZM7 4H8V12H7V4ZM9 6H10V10H9V6ZM11 8H12V10H11V8Z" fill="white"/>
+    </svg>
+  ),
+  ".ogg": (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="16" height="16" rx="3" fill="#E91E63"/>
+      <path d="M5 11V5L7 6V10L5 11Z" fill="white"/>
+      <path d="M8 10V6L10 7V9L8 10Z" fill="white"/>
+      <path d="M11 9V7L12 7.5V8.5L11 9Z" fill="white"/>
+    </svg>
+  ),
+  ".m4a": (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="16" height="16" rx="3" fill="#00BCD4"/>
+      <path d="M5 11V5L7 6V10L5 11Z" fill="white"/>
+      <path d="M8 10V6L10 7V9L8 10Z" fill="white"/>
+      <path d="M11 9V7L12 7.5V8.5L11 9Z" fill="white"/>
+    </svg>
+  ),
+  ".wma": (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="16" height="16" rx="3" fill="#00A4EF"/>
+      <path d="M3 8H4V10H3V8ZM5 6H6V10H5V6ZM7 4H8V12H7V4ZM9 6H10V10H9V6ZM11 8H12V10H11V8Z" fill="white"/>
+    </svg>
+  ),
+  ".aiff": (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="16" height="16" rx="3" fill="#A855F7"/>
+      <path d="M3 8H4V10H3V8ZM5 6H6V10H5V6ZM7 4H8V12H7V4ZM9 6H10V10H9V6ZM11 8H12V10H11V8Z" fill="white"/>
+    </svg>
+  ),
   default: (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M3 2C3 1.44772 3.44772 1 4 1H9L13 5V14C13 14.5523 12.5523 15 12 15H4C3.44772 15 3 14.5523 3 14V2Z" fill="#52525b"/>
@@ -149,9 +205,16 @@ export function FileNode({ id, data, selected }: NodeProps) {
   const VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".webm", ".mkv", ".m4v"];
   const isVideo = VIDEO_EXTENSIONS.includes(fileData.fileExtension?.toLowerCase() || "");
   
-  // File extensions that browsers cannot render as images (excludes videos which we handle separately)
+  // Audio file extensions
+  const AUDIO_EXTENSIONS = [".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".aiff"];
+  const isAudio = AUDIO_EXTENSIONS.includes(fileData.fileExtension?.toLowerCase() || "");
+  
+  // File extensions that browsers cannot render as images (excludes videos and audio which we handle separately)
   const NON_RENDERABLE_EXTENSIONS = [".ai", ".psd", ".fig", ".sketch", ".xd", ".indd", ".pdf"];
   const isNonRenderable = NON_RENDERABLE_EXTENSIONS.includes(fileData.fileExtension);
+  
+  // Get audio URL for audio files
+  const audioUrl = isAudio ? fileData.uploadedFile?.url : null;
   
   // Get preview image - use first preview image, uploaded file (only if renderable), or default
   const previewImage = fileData.previewImages?.[0] 
@@ -237,7 +300,37 @@ export function FileNode({ id, data, selected }: NodeProps) {
           className="relative w-full overflow-hidden"
           style={{ height: 140 }}
         >
-          {videoUrl ? (
+          {audioUrl ? (
+            <div 
+              className="w-full h-full flex flex-col items-center justify-center"
+              style={{ backgroundColor: "#1a1a1a" }}
+            >
+              {/* Waveform visualization */}
+              <div className="flex items-center justify-center gap-0.5 mb-3">
+                {[...Array(24)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 rounded-full"
+                    style={{
+                      height: `${Math.random() * 40 + 10}px`,
+                      backgroundColor: "#1DB954",
+                      opacity: 0.7 + Math.random() * 0.3,
+                    }}
+                  />
+                ))}
+              </div>
+              {/* Audio player */}
+              <audio
+                src={audioUrl}
+                controls
+                className="w-full px-3"
+                style={{ 
+                  height: 32,
+                  filter: "invert(1) hue-rotate(180deg)",
+                }}
+              />
+            </div>
+          ) : videoUrl ? (
             <video
               src={videoUrl}
               className="w-full h-full object-cover"

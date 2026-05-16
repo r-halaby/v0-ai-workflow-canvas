@@ -18,11 +18,14 @@ export type VectorFileExtension = ".svg" | ".eps" | ".pdf" | ".pdfx" | ".wmf" | 
 // File extension types - Video
 export type VideoFileExtension = ".mp4" | ".mov" | ".avi" | ".webm" | ".mkv";
 
+// File extension types - Audio
+export type AudioFileExtension = ".mp3" | ".wav" | ".aac" | ".flac" | ".ogg" | ".m4a" | ".wma" | ".aiff";
+
 // File extension types - Documents
 export type DocumentFileExtension = ".pptx" | ".doc" | ".docx" | ".txt" | ".md";
 
 // All file extensions
-export type FileExtension = DesignFileExtension | ImageFileExtension | VectorFileExtension | VideoFileExtension | DocumentFileExtension;
+export type FileExtension = DesignFileExtension | ImageFileExtension | VectorFileExtension | VideoFileExtension | AudioFileExtension | DocumentFileExtension;
 
 // Supported file extensions for upload validation
 export const SUPPORTED_EXTENSIONS: FileExtension[] = [
@@ -34,26 +37,30 @@ export const SUPPORTED_EXTENSIONS: FileExtension[] = [
   ".svg", ".eps", ".pdf", ".pdfx", ".wmf", ".emf", ".dxf",
   // Video
   ".mp4", ".mov", ".avi", ".webm", ".mkv",
+  // Audio
+  ".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".aiff",
   // Documents
   ".pptx", ".doc", ".docx", ".txt", ".md",
 ];
 
 // File category from extension
-export function getFileCategoryFromExtension(ext: string): "design" | "image" | "vector" | "video" | "document" {
+export function getFileCategoryFromExtension(ext: string): "design" | "image" | "vector" | "video" | "audio" | "document" {
   const designExts = [".fig", ".ai", ".psd", ".indd", ".xd", ".sketch", ".afdesign", ".afphoto", ".afpub", ".glyphs", ".procreate", ".studio"];
   const imageExts = [".png", ".jpg", ".jpeg", ".webp", ".tiff", ".tif", ".raw", ".cr2", ".arw", ".heic", ".gif", ".bmp", ".avif"];
   const vectorExts = [".svg", ".eps", ".pdf", ".pdfx", ".wmf", ".emf", ".dxf"];
   const videoExts = [".mp4", ".mov", ".avi", ".webm", ".mkv"];
+  const audioExts = [".mp3", ".wav", ".aac", ".flac", ".ogg", ".m4a", ".wma", ".aiff"];
   
   if (designExts.includes(ext)) return "design";
   if (imageExts.includes(ext)) return "image";
   if (vectorExts.includes(ext)) return "vector";
   if (videoExts.includes(ext)) return "video";
+  if (audioExts.includes(ext)) return "audio";
   return "document";
 }
 
 // File type categories
-export type FileTypeCategory = "design" | "document" | "video" | "image" | "brand";
+export type FileTypeCategory = "design" | "document" | "video" | "audio" | "image" | "brand";
 
 // Product colors
 export const PRODUCT_COLORS: Record<ProductType, string> = {

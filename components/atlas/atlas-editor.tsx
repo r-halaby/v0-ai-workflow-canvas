@@ -458,7 +458,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         year: "numeric",
       });
 
-      const nodeId = `file-${Date.now()}`;
+      const nodeId = `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const nodePosition = position || { x: 100 + nodes.length * 50, y: 100 + nodes.length * 30 };
 
       const newNode: AtlasNode = {
@@ -801,7 +801,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
       // Create individual file nodes from the moodboard images
       const newNodes: AtlasNode[] = moodboardData.images.map((img, index) => ({
-        id: `file-${Date.now()}-${index}`,
+        id: `file-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`,
         type: "file" as const,
         position: {
           x: basePosition.x + (index % 3) * 250,
@@ -1028,6 +1028,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
       // Find free positions that don't overlap with existing nodes
       const freePositions = findFreePositions(nodes, files.length);
       
+      const baseTimestamp = Date.now();
       const newNodes: AtlasNode[] = files.map((file, index) => {
         const label = file.fileName.replace(file.extension, "");
         const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
@@ -1035,7 +1036,7 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
         const previewImages = isImage && file.previewUrl ? [file.previewUrl] : undefined;
         
         return {
-          id: `file-${Date.now()}-${index}`,
+          id: `file-${baseTimestamp}-${index}-${Math.random().toString(36).substring(2, 9)}`,
           type: "file" as const,
           position: freePositions[index] || { x: 100 + index * 260, y: 100 },
           data: {
@@ -1151,9 +1152,10 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           const isImage = file.extension.match(/^\.(png|jpg|jpeg|gif|webp|avif)$/i);
           // Only use previewUrl for images - videos and other files should use default previews
           const previewImages = isImage && file.previewUrl ? [file.previewUrl] : undefined;
+          const dropTimestamp = Date.now();
           
           return {
-            id: `file-${Date.now()}-${index}`,
+            id: `file-${dropTimestamp}-${index}-${Math.random().toString(36).substring(2, 9)}`,
             type: "file" as const,
             position: freePositions[index] || { x: position.x + index * 260, y: position.y },
             data: {
