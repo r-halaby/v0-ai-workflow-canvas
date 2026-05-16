@@ -115,10 +115,10 @@ export function FileDetailModal({ isOpen, onClose, fileData, onUpdateFile }: Fil
     },
   ];
 
-  const tasks = fileData.tasks || [];
+  const tasks = Array.isArray(fileData.tasks) ? fileData.tasks : [];
   // Derive team members from task assignees (unique members who have been assigned tasks)
   const taskAssignees = tasks
-    .filter(task => task.assignee)
+    .filter(task => task && task.assignee)
     .map(task => task.assignee as WorkspaceMember);
   // Get unique assignees by ID
   const uniqueAssignees = Array.from(
