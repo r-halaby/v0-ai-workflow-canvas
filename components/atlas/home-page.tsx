@@ -3274,6 +3274,12 @@ All Frameworks
                 type="text"
                 value={sageInput}
                 onChange={(e) => setSageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && sageInput.trim() && sageStatus !== "streaming") {
+                    e.preventDefault();
+                    handleSageSubmit(e as unknown as React.FormEvent);
+                  }
+                }}
                 placeholder="Ask Sage anything..."
                 className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
                 style={{ fontFamily: "system-ui, Inter, sans-serif" }}
