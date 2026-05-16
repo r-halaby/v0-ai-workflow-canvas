@@ -508,7 +508,7 @@ export function MoodboardExpanded({ data, onClose, onUngroup, onDataChange }: Mo
             </div>
           )}
 
-          {/* Grid Layout - 1:1 aspect ratio with object-cover */}
+          {/* Grid Layout - 1:1 aspect ratio with object-cover for images and videos */}
           {layoutMode === "grid" && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {data.images?.map((img) => {
