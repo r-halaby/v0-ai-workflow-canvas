@@ -28,6 +28,15 @@ const EXTENSION_TO_MIME: Record<string, string> = {
   ".mp4": "video/mp4",
   ".mov": "video/quicktime",
   ".webm": "video/webm",
+  // Audio
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".aac": "audio/aac",
+  ".flac": "audio/flac",
+  ".ogg": "audio/ogg",
+  ".m4a": "audio/mp4",
+  ".wma": "audio/x-ms-wma",
+  ".aiff": "audio/aiff",
 };
 
 export async function POST(request: NextRequest) {
