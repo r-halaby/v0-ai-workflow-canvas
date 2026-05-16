@@ -421,6 +421,16 @@ freeformPositions?: Record<string, MoodboardImagePosition>; // imageId -> positi
     generatedAt: string;
   }
   
+  // AI Prompt node data - for generating images from source
+  export interface AIPromptNodeData {
+    sourceNodeId: string;
+    sourceImageUrl: string;
+    sourceFileName: string;
+    onGenerate?: (prompt: string, aspectRatio: string) => void;
+    onClose?: () => void;
+    onMockupsCreated?: (mockups: Array<{ imageUrl: string; name: string }>) => void;
+  }
+  
   // ============================================================================
   // SAGE DATA MODEL - Project Intelligence & Reasoning
   // ============================================================================
@@ -633,10 +643,10 @@ export const HEALTH_STATUS_COLORS: Record<SageHealthStatus, string> = {
 };
 
 // Atlas node type
-export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard" | "mockupImage";
+export type AtlasNodeType = "file" | "statusPill" | "text" | "sageChatbot" | "sageOverview" | "stakeholder" | "capacity" | "financial" | "projectHealth" | "pipeline" | "teamHealth" | "moodboard" | "mockupImage" | "aiPrompt";
 
 // Atlas workflow node - using generic data for multiple node types
-export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | MockupImageNodeData | Record<string, unknown>, AtlasNodeType>;
+export type AtlasNode = Node<FileNodeData | TextNodeData | SageChatbotNodeData | SageOverviewNodeData | StakeholderNodeData | CapacityNodeData | FinancialNodeData | ProjectHealthNodeData | PipelineNodeData | TeamHealthNodeData | MoodboardNodeData | MockupImageNodeData | AIPromptNodeData | Record<string, unknown>, AtlasNodeType>;
 
 // Filter state
 export interface FilterState {

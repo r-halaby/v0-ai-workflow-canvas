@@ -21,7 +21,7 @@ import { FileDetailModal } from "./file-detail-modal";
 import { UploadDialog } from "./upload-dialog";
 import { UploadProgress } from "./upload-progress";
 import { WorkspaceSettingsDialog } from "./workspace-settings";
-import { InlineMockupPrompt } from "./inline-mockup-prompt";
+
 import { MoodboardExpanded } from "./moodboard-expanded";
 import { PresentationViewer } from "./presentation-viewer";
 import { SaveFrameworkDialog } from "./save-template-dialog";
@@ -163,9 +163,8 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   // File detail modal state
   const [detailModalNodeId, setDetailModalNodeId] = useState<string | null>(null);
 
-  // Mockup generator state
-  const [mockupSourceFile, setMockupSourceFile] = useState<FileNodeData | null>(null);
-  const [mockupPromptPosition, setMockupPromptPosition] = useState<{ x: number; y: number } | null>(null);
+  // Mockup generator state - now using aiPrompt node
+  const [activeAIPromptNodeId, setActiveAIPromptNodeId] = useState<string | null>(null);
 
   // Moodboard state
   const [expandedMoodboardId, setExpandedMoodboardId] = useState<string | null>(null);
@@ -209,55 +208,96 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
   const [doubleClickPosition, setDoubleClickPosition] = useState<{ x: number; y: number } | null>(null);
   const [doubleClickMenuScreenPosition, setDoubleClickMenuScreenPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  // Create AI Prompt node connected to source file
+  const createAIPromptNode = useCallback((sourceNodeId: string, fileData: FileNodeData) => {
+    const sourceNode = nodes.find(n => n.id === sourceNodeId);
+    if (!sourceNode) return;
+    
+    const promptNodeId = `ai-prompt-${Date.now()}`;
+    const sourceImageUrl = fileData.uploadedFile?.url || fileData.previewImages?.[0] || "";
+    
+    // Position the prompt node to the right of source
+    const promptNode: AtlasNode = {
+      id: promptNodeId,
+      type: "aiPrompt",
+      position: {
+        x: sourceNode.position.x + 320,
+        y: sourceNode.position.y,
+      },
+      data: {
+        sourceNodeId,
+        sourceImageUrl,
+        sourceFileName: fileData.label || fileData.fileName || "Untitled",
+        onClose: () => {
+          // Remove the prompt node
+          setNodes(nds => nds.filter(n => n.id !== promptNodeId));
+          setEdges(eds => eds.filter(e => e.source !== promptNodeId && e.target !== promptNodeId));
+          setActiveAIPromptNodeId(null);
+        },
+        onMockupsCreated: (mockups: Array<{ imageUrl: string; name: string }>) => {
+          // Create mockup image nodes
+          const promptNode = nodes.find(n => n.id === promptNodeId);
+          const baseX = promptNode ? promptNode.position.x + 420 : sourceNode.position.x + 700;
+          const baseY = promptNode ? promptNode.position.y : sourceNode.position.y;
+          
+          const newMockupNodes: AtlasNode[] = mockups.map((mockup, index) => ({
+            id: `mockup-${Date.now()}-${index}`,
+            type: "mockupImage" as const,
+            position: { 
+              x: baseX, 
+              y: baseY + (index * 280)
+            },
+            data: {
+              label: mockup.name,
+              imageUrl: mockup.imageUrl,
+              sourceFileName: fileData.fileName,
+              generatedAt: "Just now",
+            },
+          }));
+          
+          // Create edges from prompt node to mockup nodes
+          const newEdges: Edge[] = newMockupNodes.map(mockupNode => ({
+            id: `edge-${promptNodeId}-${mockupNode.id}`,
+            source: promptNodeId,
+            target: mockupNode.id,
+            sourceHandle: "output",
+            targetHandle: "input",
+            style: { stroke: "#F0FE00", strokeWidth: 2 },
+            animated: true,
+          }));
+          
+          setNodes(nds => [...nds, ...newMockupNodes]);
+          setEdges(eds => [...eds, ...newEdges]);
+        },
+      },
+    };
+    
+    // Create edge from source to prompt node
+    const connectingEdge: Edge = {
+      id: `edge-${sourceNodeId}-${promptNodeId}`,
+      source: sourceNodeId,
+      target: promptNodeId,
+      sourceHandle: "source",
+      targetHandle: "input",
+      style: { stroke: "#666", strokeWidth: 2 },
+    };
+    
+    setNodes(nds => [...nds, promptNode]);
+    setEdges(eds => [...eds, connectingEdge]);
+    setActiveAIPromptNodeId(promptNodeId);
+  }, [nodes, setNodes, setEdges]);
+  
   // Listen for mockup generation events from file nodes
   useEffect(() => {
-    const handleMockupEvent = (e: CustomEvent<{ nodeId: string; fileData: FileNodeData; screenPosition?: { x: number; y: number } }>) => {
-      setMockupSourceFile(e.detail.fileData);
-      // Position the prompt near where the user clicked
-      if (e.detail.screenPosition) {
-        setMockupPromptPosition(e.detail.screenPosition);
-      } else {
-        // Fallback to center of screen
-        setMockupPromptPosition({ x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 100 });
-      }
+    const handleMockupEvent = (e: CustomEvent<{ nodeId: string; fileData: FileNodeData }>) => {
+      createAIPromptNode(e.detail.nodeId, e.detail.fileData);
     };
 
     window.addEventListener("atlas:generate-mockup", handleMockupEvent as EventListener);
     return () => {
       window.removeEventListener("atlas:generate-mockup", handleMockupEvent as EventListener);
     };
-  }, []);
-
-  // Handle creating nodes from generated mockups
-  const handleCreateMockupNodes = useCallback(
-    (mockups: Array<{ imageUrl: string; name: string }>) => {
-      // Find source node position if available
-      const sourceNode = mockupSourceFile ? nodes.find(n => 
-        n.type === "file" && (n.data as FileNodeData).label === mockupSourceFile.label
-      ) : null;
-      
-      const baseX = sourceNode ? sourceNode.position.x + 280 : 300;
-      const baseY = sourceNode ? sourceNode.position.y : 200;
-      
-      const newNodes: AtlasNode[] = mockups.map((mockup, index) => ({
-        id: `mockup-${Date.now()}-${index}`,
-        type: "mockupImage" as const,
-        position: { 
-          x: baseX + (index * 260), 
-          y: baseY 
-        },
-        data: {
-          label: mockup.name,
-          imageUrl: mockup.imageUrl,
-          sourceFileName: mockupSourceFile?.fileName,
-          generatedAt: "Just now",
-        },
-      }));
-
-      setNodes((nds) => [...nds, ...newNodes]);
-    },
-    [nodes, mockupSourceFile, setNodes]
-  );
+  }, [createAIPromptNode]);
 
   // Current user (first member for demo)
   const currentUser = workspaceSettings.members[0] || WORKSPACE_MEMBERS[0];
@@ -1394,18 +1434,17 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
 
 const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collateral") => {
   if (type === "mockup") {
-  const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
-  if (fileNode) {
-  setMockupSourceFile(fileNode.data as FileNodeData);
-  setMockupPromptPosition(doubleClickMenuScreenPosition || { x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 100 });
-  } else {
-  alert("Please upload an image first to generate mockups from.");
-  }
+    const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
+    if (fileNode) {
+      createAIPromptNode(fileNode.id, fileNode.data as FileNodeData);
+    } else {
+      alert("Please upload an image first to generate mockups from.");
+    }
   } else if (type === "collateral") {
-  alert("Collateral generation coming soon!");
+    alert("Collateral generation coming soon!");
   }
   closeDoubleClickMenu();
-  }, [nodes, doubleClickMenuScreenPosition, closeDoubleClickMenu]);
+}, [nodes, createAIPromptNode, closeDoubleClickMenu]);
 
   const handleNodesChangeWrapper = useCallback(
     (changes: NodeChange<AtlasNode>[]) => {
@@ -1529,17 +1568,13 @@ const handleDoubleClickOpenAIGenerate = useCallback((type: "mockup" | "collatera
 onAddOperationalNode={handleAddOperationalNode}
   onOpenAIGenerate={(type) => {
     if (type === "mockup") {
-      // Find first file node with an image to use as source
       const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
       if (fileNode) {
-        setMockupSourceFile(fileNode.data as FileNodeData);
-        setMockupPromptPosition({ x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 100 });
+        createAIPromptNode(fileNode.id, fileNode.data as FileNodeData);
       } else {
-        // No file found - show alert
         alert("Please upload an image first to generate mockups from.");
       }
     } else if (type === "collateral") {
-      // TODO: Implement collateral generation
       alert("Collateral generation coming soon!");
     }
   }}
@@ -1559,11 +1594,9 @@ presentationMode={presentationMode}
   onUploadFile={(files) => handleFileDrop(files, { x: 400, y: 300 })}
   onOpenAIGenerate={(type) => {
     if (type === "mockup") {
-      // Find first file node with an image to use as source
       const fileNode = nodes.find(n => n.type === "file" && (n.data as FileNodeData).uploadedFile?.url);
       if (fileNode) {
-        setMockupSourceFile(fileNode.data as FileNodeData);
-        setMockupPromptPosition({ x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 100 });
+        createAIPromptNode(fileNode.id, fileNode.data as FileNodeData);
       } else {
         alert("Please upload an image first to generate mockups from.");
       }
@@ -1682,22 +1715,7 @@ presentationMode={presentationMode}
         );
       })()}
 
-{/* Inline Mockup Prompt */}
-  {mockupSourceFile && mockupPromptPosition && (
-  <InlineMockupPrompt
-    isOpen={true}
-    onClose={() => {
-      setMockupSourceFile(null);
-      setMockupPromptPosition(null);
-    }}
-    position={mockupPromptPosition}
-    sourceImageUrl={mockupSourceFile.uploadedFile?.url || mockupSourceFile.previewImages?.[0] || ""}
-    sourceFileName={mockupSourceFile.label || "Untitled"}
-    onMockupsGenerated={handleCreateMockupNodes}
-  />
-  )}
-
-      {/* Version Conflict Dialog */}
+{/* Version Conflict Dialog */}
       {versionConflict && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div 
