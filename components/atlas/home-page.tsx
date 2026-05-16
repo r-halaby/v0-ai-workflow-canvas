@@ -110,7 +110,7 @@ function WorkspaceCanvasView({ nodes, groups, onOpenCanvas }: WorkspaceCanvasVie
   );
 }
 
-function UserSection() {
+function UserSection({ profilePicture }: { profilePicture?: string }) {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
@@ -140,10 +140,14 @@ function UserSection() {
     <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
       <div className="flex items-center gap-3">
         <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold overflow-hidden"
           style={{ backgroundColor: "#F0FE00", color: "#121212" }}
         >
-          {user.email?.charAt(0).toUpperCase() || "U"}
+          {profilePicture ? (
+            <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            user.email?.charAt(0).toUpperCase() || "U"
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm text-white truncate" style={{ fontFamily: "system-ui, Inter, sans-serif" }}>
@@ -181,9 +185,10 @@ interface HomePageProps {
   onCanvasesChange: (canvases: Canvas[]) => void;
   frameworks?: CanvasFramework[];
   onFrameworksChange?: (frameworks: CanvasFramework[]) => void;
+  onRemoveFramework?: (frameworkId: string) => void;
 }
 
-export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange }: HomePageProps) {
+export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange, onRemoveFramework }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
@@ -436,6 +441,7 @@ const deleteCanvas = (canvasId: string) => {
 
   // Community page only shows frameworks with visibility: "community"
   const filteredFrameworks = useMemo(() => {
+    console.log("[v0] filteredFrameworks - total frameworks:", frameworks.length, "with visibility:", frameworks.map(f => ({ name: f.name, visibility: f.visibility })));
     return frameworks.filter(f => {
       // Only show community-visible frameworks in the Community page
       if (f.visibility !== "community") return false;
@@ -795,7 +801,7 @@ const deleteCanvas = (canvasId: string) => {
         </div>
 
         {/* User Section */}
-        <UserSection />
+        <UserSection profilePicture={workspaceSettings.branding?.profilePicture} />
         
         {/* Bottom actions */}
         <div className="p-3 border-t" style={{ borderColor: "#222222" }}>
@@ -1166,18 +1172,34 @@ All Frameworks
                               </div>
                             </div>
 
-{/* Open Framework Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleOpenFramework(framework)}
-                              className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90"
-                              style={{
-                                backgroundColor: "#F0FE00",
-                                fontFamily: "system-ui, Inter, sans-serif",
-                              }}
-                            >
-                              Open
-                            </button>
+{/* Actions */}
+                            <div className="flex items-center gap-2">
+                              {/* Delete Button - only show for user's own frameworks */}
+                              {framework.createdBy.id === currentUserId && onRemoveFramework && (
+                                <button
+                                  type="button"
+                                  onClick={() => onRemoveFramework(framework.id)}
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                                  title="Remove framework"
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M2 4H14M5.5 4V2.5C5.5 2.22386 5.72386 2 6 2H10C10.2761 2 10.5 2.22386 10.5 2.5V4M12.5 4V13.5C12.5 13.7761 12.2761 14 12 14H4C3.72386 14 3.5 13.7761 3.5 13.5V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </button>
+                              )}
+                              {/* Open Framework Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenFramework(framework)}
+                                className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#0a0a0a] transition-colors hover:opacity-90"
+                                style={{
+                                  backgroundColor: "#F0FE00",
+                                  fontFamily: "system-ui, Inter, sans-serif",
+                                }}
+                              >
+                                Open
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>

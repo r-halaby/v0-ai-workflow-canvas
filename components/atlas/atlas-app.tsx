@@ -98,6 +98,10 @@ export function AtlasApp() {
     setFrameworks((prev) => [framework, ...prev]);
   }, []);
 
+  const handleRemoveFramework = useCallback((frameworkId: string) => {
+    setFrameworks((prev) => prev.filter((f) => f.id !== frameworkId));
+  }, []);
+
   const activeCanvas = canvases.find((c) => c.id === activeCanvasId);
 
   if (view === "canvas" && activeCanvas) {
@@ -122,6 +126,7 @@ export function AtlasApp() {
       onCanvasesChange={setCanvases}
       frameworks={frameworks}
       onFrameworksChange={setFrameworks}
+      onRemoveFramework={handleRemoveFramework}
     />
   );
 }
