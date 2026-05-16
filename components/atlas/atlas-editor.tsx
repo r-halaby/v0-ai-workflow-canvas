@@ -234,11 +234,10 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
           setEdges(eds => eds.filter(e => e.source !== promptNodeId && e.target !== promptNodeId));
           setActiveAIPromptNodeId(null);
         },
-        onMockupsCreated: (mockups: Array<{ imageUrl: string; name: string }>) => {
-          // Create mockup image nodes
-          const promptNode = nodes.find(n => n.id === promptNodeId);
-          const baseX = promptNode ? promptNode.position.x + 420 : sourceNode.position.x + 700;
-          const baseY = promptNode ? promptNode.position.y : sourceNode.position.y;
+        onMockupsCreated: (mockups: Array<{ imageUrl: string; name: string }>, prompt: string) => {
+          // Position mockups to the right of the source node
+          const baseX = sourceNode.position.x + 320;
+          const baseY = sourceNode.position.y;
           
           const newMockupNodes: AtlasNode[] = mockups.map((mockup, index) => ({
             id: `mockup-${Date.now()}-${index}`,
@@ -251,23 +250,26 @@ function AtlasEditorInner({ canvas, onCanvasChange, onBack, workspaceSettings, o
               label: mockup.name,
               imageUrl: mockup.imageUrl,
               sourceFileName: fileData.fileName,
+              prompt: prompt,
               generatedAt: "Just now",
             },
           }));
           
-          // Create edges from prompt node to mockup nodes
+          // Create edges from SOURCE node directly to mockup nodes
           const newEdges: Edge[] = newMockupNodes.map(mockupNode => ({
-            id: `edge-${promptNodeId}-${mockupNode.id}`,
-            source: promptNodeId,
+            id: `edge-${sourceNodeId}-${mockupNode.id}`,
+            source: sourceNodeId,
             target: mockupNode.id,
-            sourceHandle: "output",
+            sourceHandle: "source",
             targetHandle: "input",
             style: { stroke: "#F0FE00", strokeWidth: 2 },
             animated: true,
           }));
           
-          setNodes(nds => [...nds, ...newMockupNodes]);
-          setEdges(eds => [...eds, ...newEdges]);
+          // Remove the prompt node and its edge, then add mockup nodes
+          setNodes(nds => [...nds.filter(n => n.id !== promptNodeId), ...newMockupNodes]);
+          setEdges(eds => [...eds.filter(e => e.source !== promptNodeId && e.target !== promptNodeId), ...newEdges]);
+          setActiveAIPromptNodeId(null);
         },
       },
     };

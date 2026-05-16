@@ -2,15 +2,15 @@
 
 import { memo, useState, useCallback } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Sparkles, ChevronDown, Send, X, Loader2 } from "lucide-react";
+import { ChevronDown, Send, X, Loader2, Image } from "lucide-react";
 
 export interface AIPromptNodeData {
   sourceNodeId: string;
   sourceImageUrl: string;
   sourceFileName: string;
-  onGenerate?: (prompt: string, aspectRatio: string) => void;
+  onGenerate?: (prompt: string, aspectRatio: string, variations: number) => void;
   onClose?: () => void;
-  onMockupsCreated?: (mockups: Array<{ imageUrl: string; name: string }>) => void;
+  onMockupsCreated?: (mockups: Array<{ imageUrl: string; name: string }>, prompt: string) => void;
 }
 
 const ASPECT_RATIOS = [
@@ -22,6 +22,8 @@ const ASPECT_RATIOS = [
   { label: "21:9", value: "21:9", width: 1024, height: 440 },
 ];
 
+const VARIATION_OPTIONS = [1, 2, 3, 4];
+
 const SUGGESTIONS = [
   "Put this on a billboard in Times Square",
   "Show this on a laptop screen in a coffee shop",
@@ -30,15 +32,16 @@ const SUGGESTIONS = [
   "Show as a poster on a city wall",
 ];
 
-function AIPromptNodeComponent({ data, id }: NodeProps) {
+function AIPromptNodeComponent({ data }: NodeProps) {
   const nodeData = data as AIPromptNodeData;
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [variations, setVariations] = useState(2);
   const [showRatioDropdown, setShowRatioDropdown] = useState(false);
+  const [showVariationsDropdown, setShowVariationsDropdown] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedRatio = ASPECT_RATIOS.find(r => r.value === aspectRatio) || ASPECT_RATIOS[1];
   const placeholderSuggestion = SUGGESTIONS[Math.floor(Math.random() * SUGGESTIONS.length)];
 
   const handleGenerate = useCallback(async () => {
@@ -54,7 +57,7 @@ function AIPromptNodeComponent({ data, id }: NodeProps) {
         body: JSON.stringify({
           prompt: prompt.trim(),
           sourceImageUrl: nodeData.sourceImageUrl,
-          variations: 1,
+          variations: variations,
           aspectRatio: aspectRatio,
         }),
       });
@@ -70,16 +73,16 @@ function AIPromptNodeComponent({ data, id }: NodeProps) {
         nodeData.onMockupsCreated?.(
           result.images.map((img: { url: string }, index: number) => ({
             imageUrl: img.url,
-            name: `${nodeData.sourceFileName} - ${prompt.slice(0, 30)}${prompt.length > 30 ? "..." : ""} (${index + 1})`,
-          }))
+            name: `${nodeData.sourceFileName} - ${prompt.slice(0, 25)}${prompt.length > 25 ? "..." : ""} (${index + 1})`,
+          })),
+          prompt
         );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
-    } finally {
       setIsGenerating(false);
     }
-  }, [prompt, aspectRatio, nodeData, isGenerating]);
+  }, [prompt, aspectRatio, variations, nodeData, isGenerating]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -112,43 +115,19 @@ function AIPromptNodeComponent({ data, id }: NodeProps) {
         }}
       />
 
-      {/* Output handle - for generated images */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="output"
-        style={{
-          width: 12,
-          height: 12,
-          background: "#F0FE00",
-          border: "2px solid #333",
-          right: -6,
-        }}
-      />
-
       {/* Header Toolbar */}
       <div
         className="flex items-center justify-between px-3 py-2"
         style={{ borderBottom: "1px solid #333" }}
       >
         <div className="flex items-center gap-2">
-          {/* Auto Mode */}
-          <button
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors"
-            style={{
-              backgroundColor: "#2a2a2a",
-              color: "#F0FE00",
-            }}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Auto</span>
-            <ChevronDown className="w-3 h-3 opacity-60" />
-          </button>
-
           {/* Aspect Ratio Selector */}
           <div className="relative">
             <button
-              onClick={() => setShowRatioDropdown(!showRatioDropdown)}
+              onClick={() => {
+                setShowRatioDropdown(!showRatioDropdown);
+                setShowVariationsDropdown(false);
+              }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/10"
               style={{
                 backgroundColor: "#2a2a2a",
@@ -181,6 +160,52 @@ function AIPromptNodeComponent({ data, id }: NodeProps) {
                     }}
                   >
                     {ratio.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Variations Selector */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowVariationsDropdown(!showVariationsDropdown);
+                setShowRatioDropdown(false);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/10"
+              style={{
+                backgroundColor: "#2a2a2a",
+                color: "#fff",
+              }}
+            >
+              <Image className="w-3.5 h-3.5" />
+              <span>{variations}</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+
+            {showVariationsDropdown && (
+              <div
+                className="absolute top-full left-0 mt-1 py-1 rounded-lg z-50"
+                style={{
+                  backgroundColor: "#2a2a2a",
+                  border: "1px solid #444",
+                  minWidth: 100,
+                }}
+              >
+                {VARIATION_OPTIONS.map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => {
+                      setVariations(num);
+                      setShowVariationsDropdown(false);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-sm hover:bg-white/10 transition-colors"
+                    style={{
+                      color: num === variations ? "#F0FE00" : "#fff",
+                    }}
+                  >
+                    {num} {num === 1 ? "image" : "images"}
                   </button>
                 ))}
               </div>
@@ -257,10 +282,7 @@ function AIPromptNodeComponent({ data, id }: NodeProps) {
             )}
           </div>
           <span className="text-xs" style={{ color: "#666" }}>
-            @
-          </span>
-          <span className="text-xs" style={{ color: "#666" }}>
-            #
+            {nodeData.sourceFileName}
           </span>
         </div>
 
