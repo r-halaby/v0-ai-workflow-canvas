@@ -179,9 +179,11 @@ interface HomePageProps {
   onWorkspaceSettingsChange: (settings: WorkspaceSettings) => void;
   canvases: Canvas[];
   onCanvasesChange: (canvases: Canvas[]) => void;
+  frameworks?: CanvasFramework[];
+  onFrameworksChange?: (frameworks: CanvasFramework[]) => void;
 }
 
-export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange }: HomePageProps) {
+export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsChange, canvases, onCanvasesChange, frameworks: externalFrameworks, onFrameworksChange }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>("all");
   const [activeView, setActiveView] = useState<HomeView>("home");
@@ -200,7 +202,10 @@ export function HomePage({ onOpenCanvas, workspaceSettings, onWorkspaceSettingsC
   const [showSageChat, setShowSageChat] = useState(false);
 const [sageMessage, setSageMessage] = useState("");
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [frameworks, setFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
+  // Use external frameworks if provided, otherwise use local state
+  const [localFrameworks, setLocalFrameworks] = useState<CanvasFramework[]>(SAMPLE_FRAMEWORKS);
+  const frameworks = externalFrameworks ?? localFrameworks;
+  const setFrameworks = onFrameworksChange ?? setLocalFrameworks;
   const [selectedCategory, setSelectedCategory] = useState<FrameworkCategory | "all">("all");
   const [viewingFramework, setViewingFramework] = useState<CanvasFramework | null>(null);
   const [selectedRibbonDay, setSelectedRibbonDay] = useState<number>(17); // Today is index 17
@@ -429,8 +434,11 @@ const deleteCanvas = (canvasId: string) => {
     onOpenCanvas(newCanvas.id);
   };
 
+  // Community page only shows frameworks with visibility: "community"
   const filteredFrameworks = useMemo(() => {
     return frameworks.filter(f => {
+      // Only show community-visible frameworks in the Community page
+      if (f.visibility !== "community") return false;
       if (selectedCategory !== "all" && f.category !== selectedCategory) return false;
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -441,6 +449,16 @@ const deleteCanvas = (canvasId: string) => {
       return true;
     }).sort((a, b) => b.upvotes - a.upvotes);
   }, [frameworks, selectedCategory, searchQuery]);
+  
+  // Private frameworks (visibility: "private") - only visible to the creator
+  const privateFrameworks = useMemo(() => {
+    return frameworks.filter(f => f.visibility === "private");
+  }, [frameworks]);
+  
+  // Workspace frameworks (visibility: "workspace") - visible to team members
+  const workspaceFrameworks = useMemo(() => {
+    return frameworks.filter(f => f.visibility === "workspace");
+  }, [frameworks]);
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -571,6 +589,48 @@ const deleteCanvas = (canvasId: string) => {
               Settings
             </button>
           </nav>
+
+          {/* My Frameworks Section - Shows private and workspace frameworks */}
+          {(privateFrameworks.length > 0 || workspaceFrameworks.length > 0) && (
+            <div className="mb-6">
+              <div
+                className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider"
+                style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+              >
+                My Frameworks
+              </div>
+              <div className="space-y-1">
+                {privateFrameworks.map((framework) => (
+                  <div
+                    key={framework.id}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors truncate"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <rect x="2" y="5" width="10" height="8" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M4 5V3.5C4 2.11929 5.11929 1 6.5 1H7.5C8.88071 1 10 2.11929 10 3.5V5" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                    <span className="truncate">{framework.name}</span>
+                  </div>
+                ))}
+                {workspaceFrameworks.map((framework) => (
+                  <div
+                    key={framework.id}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors truncate"
+                    style={{ fontFamily: "system-ui, Inter, sans-serif" }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <circle cx="5" cy="5" r="2" stroke="currentColor" strokeWidth="1.5"/>
+                      <circle cx="9" cy="5" r="2" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M2 12C2 10.3431 3.34315 9 5 9C6.65685 9 8 10.3431 8 12" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M6 12C6 10.3431 7.34315 9 9 9C10.6569 9 12 10.3431 12 12" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                    <span className="truncate">{framework.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Favorites Section */}
           {favoriteCanvases.length > 0 && (
